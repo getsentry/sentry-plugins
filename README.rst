@@ -17,8 +17,11 @@ Ensure you've configured GitHub auth in Sentry::
     # https://github.com/settings/applications/new
     GITHUB_APP_ID = ''
     GITHUB_API_SECRET = '
+    GITHUB_EXTENDED_PERMISSIONS = ['repo']
 
-Associate your account with GitHub (if you haven't already) via Account -> Identities.
+Associate your account with GitHub (if you haven't already) via Account -> Identities. If you had
+already associated your account, and you hadn't configured extended permissions, you'll need to
+disconnect and reconnect the account.
 
 You'll now see a new action on groups which allows quick creation of GitHub issues.
 
