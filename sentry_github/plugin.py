@@ -19,7 +19,7 @@ import urllib2
 class GitHubOptionsForm(forms.Form):
     # TODO: validate repo?
     repo = forms.CharField(label=_('Repository Name'),
-        widget=forms.TextInput(attrs={'class': 'span9', 'placeholder': 'e.g. getsentry/sentry'}),
+        widget=forms.TextInput(attrs={'class': 'span3', 'placeholder': 'e.g. getsentry/sentry'}),
         help_text=_('Enter your repository name, including the owner.'))
 
 
