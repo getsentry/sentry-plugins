@@ -20,7 +20,10 @@ Ensure you've configured GitHub auth in Sentry::
 
 Associate your account with GitHub (if you haven't already) via Account -> Identities.
 
-.. note:: If you have multiple GitHub identities associated in Sentry, the plugin will just select
-          one to use.
-
 You'll now see a new action on groups which allows quick creation of GitHub issues.
+
+Caveats
+-------
+
+If you have multiple GitHub identities associated in Sentry, the plugin will just select
+one to use.
