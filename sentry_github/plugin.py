@@ -80,7 +80,8 @@ class GitHubPlugin(IssuePlugin):
                     try:
                         msg = simplejson.loads(msg)
                         msg = msg['message']
-                    except:
+                    except Exception:
+                        # We failed, but we still want to report the original error
                         pass
             else:
                 msg = unicode(e)
