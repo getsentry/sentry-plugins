@@ -1,7 +1,7 @@
 sentry-github
 =============
 
-An extension for Sentry which integrates with GitHUb. Specifically, it allows you to easily create
+An extension for Sentry which integrates with GitHub. Specifically, it allows you to easily create
 issues from events within Sentry.
 
 
