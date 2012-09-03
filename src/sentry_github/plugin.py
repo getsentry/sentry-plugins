@@ -10,10 +10,8 @@ from django import forms
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 from sentry.plugins.bases.issue import IssuePlugin
-from social_auth.models import UserSocialAuth
 
 import sentry_github
-import urllib
 import urllib2
 
 
@@ -34,21 +32,18 @@ class GitHubPlugin(IssuePlugin):
     conf_title = title
     conf_key = 'github'
     project_conf_form = GitHubOptionsForm
+    auth_provider = 'github'
 
     def is_configured(self, request, project, **kwargs):
-        if not self.get_option('repo', project):
-            return False
-
-        return UserSocialAuth.objects.filter(user=request.user, provider='github').exists()
+        return bool(self.get_option('repo', project))
 
     def get_new_issue_title(self, **kwargs):
         return 'Create GitHub issue'
 
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
-        try:
-            auth = UserSocialAuth.objects.filter(user=request.user, provider='github')[0]
-        except IndexError:
+        auth = self.get_auth_for_user(user=request.user)
+        if auth is None:
             raise forms.ValidationError(_('You have not yet associated GitHub with your account.'))
 
         repo = self.get_option('repo', group.project)
