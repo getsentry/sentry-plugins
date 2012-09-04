@@ -38,7 +38,7 @@ class GitHubPlugin(IssuePlugin):
         return bool(self.get_option('repo', project))
 
     def get_new_issue_title(self, **kwargs):
-        return 'Create GitHub issue'
+        return 'Create GitHub Issue'
 
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
