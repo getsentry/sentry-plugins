@@ -23,9 +23,14 @@ class GitHubOptionsForm(forms.Form):
 
 
 class GitHubPlugin(IssuePlugin):
-    author = 'David Cramer'
-    author_url = 'https://github.com/getsentry/sentry-github'
+    author = 'Sentry Team'
+    author_url = 'https://github.com/getsentry/sentry'
     version = sentry_github.VERSION
+    description = "Integrate GitHub issues by linking a repository to a project."
+    resource_links = [
+        ('Bug Tracker', 'https://github.com/getsentry/sentry-github/issues'),
+        ('Source', 'https://github.com/getsentry/sentry-github'),
+    ]
 
     slug = 'github'
     title = _('GitHub')
