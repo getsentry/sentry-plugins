@@ -22,7 +22,7 @@ install_requires = [
 
 setup(
     name='sentry-github',
-    version='0.1.1',
+    version='0.1.2',
     author='David Cramer',
     author_email='dcramer@gmail.com',
     url='http://github.com/getsentry/sentry-github',
