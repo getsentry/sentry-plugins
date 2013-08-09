@@ -12,7 +12,7 @@ Install the package via ``pip``::
 
     pip install sentry-github
 
-You'll have to create an application in GitHub to get the app ID and API secret. Use the following for the Authentication redirect URL 
+You'll have to create an application in GitHub to get the app ID and API secret. Use the following for the Authentication redirect URL::
 
     <URL_TO_SENTRY>/account/settings/social/complete/github/
 
