@@ -76,7 +76,7 @@ class GitHubPlugin(IssuePlugin):
         except Exception, e:
             if isinstance(e, urllib2.HTTPError):
                 msg = e.read()
-                if 'application/json' in e.headers['Content-Type']:
+                if 'application/json' in e.headers.get('Content-Type', ''):
                     try:
                         msg = simplejson.loads(msg)
                         msg = msg['message']
