@@ -7,9 +7,9 @@ sentry_github.plugin
 """
 
 from django import forms
-from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 from sentry.plugins.bases.issue import IssuePlugin
+from sentry.utils import json
 
 import sentry_github
 import urllib2
@@ -55,7 +55,7 @@ class GitHubPlugin(IssuePlugin):
 
         url = 'https://api.github.com/repos/%s/issues' % (repo,)
 
-        data = simplejson.dumps({
+        data = json.dumps({
           "title": form_data['title'],
           "body": form_data['description'],
           # "assignee": form_data['asignee'],
@@ -78,7 +78,7 @@ class GitHubPlugin(IssuePlugin):
                 msg = e.read()
                 if 'application/json' in e.headers.get('Content-Type', ''):
                     try:
-                        msg = simplejson.loads(msg)
+                        msg = json.loads(msg)
                         msg = msg['message']
                     except Exception:
                         # We failed, but we still want to report the original error
@@ -88,7 +88,7 @@ class GitHubPlugin(IssuePlugin):
             raise forms.ValidationError(_('Error communicating with GitHub: %s') % (msg,))
 
         try:
-            data = simplejson.load(resp)
+            data = json.load(resp)
         except Exception, e:
             raise forms.ValidationError(_('Error decoding response from GitHub: %s') % (e,))
 
