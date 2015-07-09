@@ -5,14 +5,14 @@ sentry_github.plugin
 :copyright: (c) 2012 by the Sentry Team, see AUTHORS for more details.
 :license: BSD, see LICENSE for more details.
 """
-
+import requests
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from sentry.plugins.bases.issue import IssuePlugin
+from sentry.http import safe_urlopen, safe_urlread
 from sentry.utils import json
 
 import sentry_github
-import urllib2
 
 
 class GitHubOptionsForm(forms.Form):
@@ -55,7 +55,7 @@ class GitHubPlugin(IssuePlugin):
 
         url = 'https://api.github.com/repos/%s/issues' % (repo,)
 
-        data = json.dumps({
+        json_data = {
           "title": form_data['title'],
           "body": form_data['description'],
           # "assignee": form_data['asignee'],
@@ -64,35 +64,28 @@ class GitHubPlugin(IssuePlugin):
           #   "Label1",
           #   "Label2"
           # ]
-        })
+        }
 
-        req = urllib2.Request(url, data)
-        req.add_header('User-Agent', 'sentry-github/%s' % self.version)
-        req.add_header('Authorization', 'token %s' % auth.tokens['access_token'])
-        req.add_header('Content-Type', 'application/json')
-
+        req_headers = {
+            'Authorization': 'token %s' % auth.tokens['access_token'],
+        }
         try:
-            resp = urllib2.urlopen(req)
-        except Exception, e:
-            if isinstance(e, urllib2.HTTPError):
-                msg = e.read()
-                if 'application/json' in e.headers.get('Content-Type', ''):
-                    try:
-                        msg = json.loads(msg)
-                        msg = msg['message']
-                    except Exception:
-                        # We failed, but we still want to report the original error
-                        pass
-            else:
-                msg = unicode(e)
+            req = safe_urlopen(url, json=json_data, headers=req_headers)
+            body = safe_urlread(req)
+        except requests.RequestException as e:
+            msg = unicode(e)
             raise forms.ValidationError(_('Error communicating with GitHub: %s') % (msg,))
 
         try:
-            data = json.load(resp)
-        except Exception, e:
-            raise forms.ValidationError(_('Error decoding response from GitHub: %s') % (e,))
+            json_resp = json.loads(body)
+        except ValueError as e:
+            msg = unicode(e)
+            raise forms.ValidationError(_('Error communicating with GitHub: %s') % (msg,))
 
-        return data['number']
+        if req.status_code > 399:
+            raise forms.ValidationError(json_resp['message'])
+
+        return json_resp['number']
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GH-%s' % issue_id
