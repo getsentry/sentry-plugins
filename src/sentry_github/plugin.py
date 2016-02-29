@@ -58,7 +58,7 @@ class GitHubPlugin(IssuePlugin):
     auth_provider = 'github'
 
     def is_configured(self, request, project, **kwargs):
-        return bool(self.get_option('repo', project)) and bool(self.get_option('endpoint', project))
+        return bool(self.get_option('repo', project))
 
     def get_new_issue_title(self, **kwargs):
         return 'Create GitHub Issue'
@@ -70,7 +70,7 @@ class GitHubPlugin(IssuePlugin):
             raise forms.ValidationError(_('You have not yet associated GitHub with your account.'))
 
         repo = self.get_option('repo', group.project)
-        endpoint = self.get_option('endpoint', group.project)
+        endpoint = self.get_option('endpoint', group.project) or 'https://api.github.com'
 
         url = '%s/repos/%s/issues' % (endpoint, repo,)
 
@@ -112,6 +112,6 @@ class GitHubPlugin(IssuePlugin):
     def get_issue_url(self, group, issue_id, **kwargs):
         # XXX: get_option may need tweaked in Sentry so that it can be pre-fetched in bulk
         repo = self.get_option('repo', group.project)
-        github_url = self.get_option('github_url', group.project)
+        github_url = self.get_option('github_url', group.project) or 'https://github.com'
 
         return '%s/%s/issues/%s' % (github_url, repo, issue_id)
