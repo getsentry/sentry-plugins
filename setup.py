@@ -13,7 +13,9 @@ from setuptools import setup, find_packages
 
 
 tests_require = [
-    'nose',
+    'exam',
+    'flake8>=2.0,<2.1',
+    'responses',
 ]
 
 install_requires = [
@@ -33,15 +35,13 @@ setup(
     packages=find_packages('src'),
     zip_safe=False,
     install_requires=install_requires,
-    tests_require=tests_require,
-    extras_require={'test': tests_require},
-    test_suite='runtests.runtests',
+    extras_require={'tests': tests_require},
     include_package_data=True,
     entry_points={
-       'sentry.apps': [
+        'sentry.apps': [
             'github = sentry_github',
         ],
-       'sentry.plugins': [
+        'sentry.plugins': [
             'github = sentry_github.plugin:GitHubPlugin'
         ],
     },

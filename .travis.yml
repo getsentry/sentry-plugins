@@ -1,0 +1,22 @@
+sudo: false
+language: python
+services:
+- memcached
+- postgresql
+- redis-server
+python:
+- '2.7'
+cache: pip
+deploy:
+  provider: pypi
+  user: getsentry
+  password:
+    secure: Cckg3cvzfGBAKuSZ++eDLrezxxZCMBs97ZnDHhfLxpwbMhZXquXmkQHoOmd/7qUq5Yijdzz7XQb17qh3rlE+WcB+htmd+m3QEu2YIk8BwFFVE5CeRus7ALlNsYyn0dWv8wpbqGVihpF1pbKlIY+NUDD4MTICTTQrMU4CfpPEE6E=
+  on:
+    tags: true
+  distributions: sdist bdist_wheel
+install:
+- make install-tests
+script:
+- flake8
+- py.test
