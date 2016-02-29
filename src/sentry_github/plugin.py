@@ -17,19 +17,19 @@ import sentry_github
 
 class GitHubOptionsForm(forms.Form):
     repo = forms.CharField(
-            label=_('Repository Name'),
-            widget=forms.TextInput(attrs={'placeholder': 'e.g. getsentry/sentry'}),
-            help_text=_('Enter your repository name, including the owner.'))
+        label=_('Repository Name'),
+        widget=forms.TextInput(attrs={'placeholder': 'e.g. getsentry/sentry'}),
+        help_text=_('Enter your repository name, including the owner.'))
     endpoint = forms.CharField(
-            label=_('GitHub API Endpoint'),
-            widget=forms.TextInput(attrs={'placeholder': 'https://api.github.com'}),
-            initial='https://api.github.com',
-            help_text=_('Enter the base URL to the GitHub API.'))
+        label=_('GitHub API Endpoint'),
+        widget=forms.TextInput(attrs={'placeholder': 'https://api.github.com'}),
+        initial='https://api.github.com',
+        help_text=_('Enter the base URL to the GitHub API.'))
     github_url = forms.CharField(
-            label=_('GitHub Base URL'),
-            widget=forms.TextInput(attrs={'placeholder': 'https://github.com'}),
-            initial='https://github.com',
-            help_text=_('Enter the base URL to the GitHub for generating issue links.'))
+        label=_('GitHub Base URL'),
+        widget=forms.TextInput(attrs={'placeholder': 'https://github.com'}),
+        initial='https://github.com',
+        help_text=_('Enter the base URL to the GitHub for generating issue links.'))
 
     def clean_endpoint(self):
         data = self.cleaned_data['endpoint']
@@ -75,14 +75,14 @@ class GitHubPlugin(IssuePlugin):
         url = '%s/repos/%s/issues' % (endpoint, repo,)
 
         json_data = {
-          "title": form_data['title'],
-          "body": form_data['description'],
-          # "assignee": form_data['asignee'],
-          # "milestone": 1,
-          # "labels": [
-          #   "Label1",
-          #   "Label2"
-          # ]
+            "title": form_data['title'],
+            "body": form_data['description'],
+            # "assignee": form_data['asignee'],
+            # "milestone": 1,
+            # "labels": [
+            #   "Label1",
+            #   "Label2"
+            # ]
         }
 
         req_headers = {
