@@ -8,7 +8,7 @@ sentry_github.plugin
 import requests
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from sentry.plugins.bases.issue import IssuePlugin
+from sentry.plugins.bases.issue import IssuePlugin, NewIssueForm
 from sentry.http import safe_urlopen, safe_urlread
 from sentry.utils import json
 
@@ -40,10 +40,19 @@ class GitHubOptionsForm(forms.Form):
         return data.rstrip('/')
 
 
+class GitHubNewIssueForm(NewIssueForm):
+    assignee = forms.ChoiceField(choices=tuple(), required=False)
+
+    def __init__(self, assignee_choices, *args, **kwargs):
+        super(GitHubNewIssueForm, self).__init__(*args, **kwargs)
+        self.fields['assignee'].choices = assignee_choices
+
+
 class GitHubPlugin(IssuePlugin):
     author = 'Sentry Team'
     author_url = 'https://github.com/getsentry/sentry'
     version = sentry_github.VERSION
+    new_issue_form = GitHubNewIssueForm
     description = "Integrate GitHub issues by linking a repository to a project."
     resource_links = [
         ('Bug Tracker', 'https://github.com/getsentry/sentry-github/issues'),
@@ -63,8 +72,40 @@ class GitHubPlugin(IssuePlugin):
     def get_new_issue_title(self, **kwargs):
         return 'Create GitHub Issue'
 
-    def create_issue(self, request, group, form_data, **kwargs):
-        # TODO: support multiple identities via a selection input in the form?
+    def get_new_issue_read_only_fields(self, **kwargs):
+        group = kwargs.get('group')
+        if group:
+            return [{'label': 'Github Repository', 'value': self.get_option('repo', group.project)}]
+        return []
+
+    def get_allowed_assignees(self, request, group):
+        try:
+            req = self.make_api_request(request, group, 'assignees')
+            body = safe_urlread(req)
+        except requests.RequestException as e:
+            return tuple()
+
+        try:
+            json_resp = json.loads(body)
+        except ValueError as e:
+            return tuple()
+
+        if req.status_code > 399:
+            return tuple()
+
+        users = tuple((u['login'], u['login']) for u in json_resp)
+
+        return (('', 'Unassigned'),) + users
+
+    def get_new_issue_form(self, request, group, event, **kwargs):
+        """
+        Return a Form for the "Create new issue" page.
+        """
+        return self.new_issue_form(self.get_allowed_assignees(request, group),
+                                   request.POST or None,
+                                   initial=self.get_initial_form_data(request, group, event))
+
+    def make_api_request(self, request, group, github_api, json_data=None):
         auth = self.get_auth_for_user(user=request.user)
         if auth is None:
             raise forms.ValidationError(_('You have not yet associated GitHub with your account.'))
@@ -72,24 +113,24 @@ class GitHubPlugin(IssuePlugin):
         repo = self.get_option('repo', group.project)
         endpoint = self.get_option('endpoint', group.project) or 'https://api.github.com'
 
-        url = '%s/repos/%s/issues' % (endpoint, repo,)
-
-        json_data = {
-            "title": form_data['title'],
-            "body": form_data['description'],
-            # "assignee": form_data['asignee'],
-            # "milestone": 1,
-            # "labels": [
-            #   "Label1",
-            #   "Label2"
-            # ]
-        }
+        url = '%s/repos/%s/%s' % (endpoint, repo, github_api,)
 
         req_headers = {
             'Authorization': 'token %s' % auth.tokens['access_token'],
         }
+        return safe_urlopen(url, json=json_data, headers=req_headers)
+
+
+    def create_issue(self, request, group, form_data, **kwargs):
+        # TODO: support multiple identities via a selection input in the form?
+        json_data = {
+            "title": form_data['title'],
+            "body": form_data['description'],
+            "assignee": form_data.get('assignee'),
+        }
+
         try:
-            req = safe_urlopen(url, json=json_data, headers=req_headers)
+            req = self.make_api_request(request, group, 'issues', json_data=json_data)
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = unicode(e)
