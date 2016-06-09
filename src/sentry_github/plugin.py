@@ -82,12 +82,12 @@ class GitHubPlugin(IssuePlugin):
         try:
             req = self.make_api_request(request, group, 'assignees')
             body = safe_urlread(req)
-        except requests.RequestException as e:
+        except requests.RequestException:
             return tuple()
 
         try:
             json_resp = json.loads(body)
-        except ValueError as e:
+        except ValueError:
             return tuple()
 
         if req.status_code > 399:
@@ -119,7 +119,6 @@ class GitHubPlugin(IssuePlugin):
             'Authorization': 'token %s' % auth.tokens['access_token'],
         }
         return safe_urlopen(url, json=json_data, headers=req_headers)
-
 
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
