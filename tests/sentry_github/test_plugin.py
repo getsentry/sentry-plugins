@@ -65,4 +65,5 @@ class GitHubPluginTest(TestCase):
         assert payload == {
             'title': 'Hello',
             'body': 'Fix this.',
+            'assignee': None
         }
