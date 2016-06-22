@@ -1,0 +1,27 @@
+{% extends "sentry/plugins/bases/issue/create_issue.html" %}
+
+{% block meta %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('form .issue-selector').each(function(i, el) {
+                var $el = $(el);
+                $el.select2({
+                    placeholder: 'Start typing to search for an issue',
+                    minimumInputLength: 1,
+                    ajax: {
+                        quietMillis: 100,
+                        url: '?autocomplete_query=1',
+                        dataType: 'json',
+                        data: function(q) {
+                            return {q: q};
+                        },
+                        results: function(data) {
+                            return {results: data.issues};
+                        }
+                    }
+                })
+            });
+        });
+    </script>
+{% endblock %}
