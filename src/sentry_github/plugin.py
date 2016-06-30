@@ -163,7 +163,7 @@ class GitHubPlugin(IssuePlugin):
         req_headers = {
             'Authorization': 'token %s' % auth.tokens['access_token'],
         }
-        return safe_urlopen(url, json=json_data, headers=req_headers)
+        return safe_urlopen(url, json=json_data, headers=req_headers, allow_redirects=True)
 
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
