@@ -16,11 +16,10 @@ tests_require = [
     'exam',
     'flake8>=2.0,<2.1',
     'responses',
+    'sentry>=8.6.0',
 ]
 
-install_requires = [
-    'sentry>=7.0.0',
-]
+install_requires = []
 
 setup(
     name='sentry-github',
