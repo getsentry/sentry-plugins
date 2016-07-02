@@ -111,7 +111,7 @@ class GitHubPlugin(IssuePlugin):
     def get_allowed_assignees(self, request, group):
         try:
             url = self.build_api_url(group, 'assignees')
-            req = self.make_api_request(request, url)
+            req = self.make_api_request(request.user, url)
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = unicode(e)
@@ -155,8 +155,8 @@ class GitHubPlugin(IssuePlugin):
 
         return url
 
-    def make_api_request(self, request, url, json_data=None):
-        auth = self.get_auth_for_user(user=request.user)
+    def make_api_request(self, user, url, json_data=None):
+        auth = self.get_auth_for_user(user=user)
         if auth is None:
             raise forms.ValidationError(_('You have not yet associated GitHub with your account.'))
 
@@ -175,7 +175,7 @@ class GitHubPlugin(IssuePlugin):
 
         try:
             url = self.build_api_url(group, 'issues')
-            req = self.make_api_request(request, url, json_data=json_data)
+            req = self.make_api_request(request.user, url, json_data=json_data)
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = unicode(e)
@@ -198,7 +198,7 @@ class GitHubPlugin(IssuePlugin):
             return
         url = '%s/%s/comments' % (self.build_api_url(group, 'issues'), form_data['issue_id'])
         try:
-            req = self.make_api_request(request, url, json_data={'body': comment})
+            req = self.make_api_request(request.user, url, json_data={'body': comment})
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = unicode(e)
@@ -225,7 +225,7 @@ class GitHubPlugin(IssuePlugin):
 
     def get_issue_title_by_id(self, request, group, issue_id):
         url = '%s/%s' % (self.build_api_url(group, 'issues'), issue_id)
-        req = self.make_api_request(request, url)
+        req = self.make_api_request(request.user, url)
 
         body = safe_urlread(req)
         json_resp = json.loads(body)
@@ -242,7 +242,7 @@ class GitHubPlugin(IssuePlugin):
             url = '%s/search/issues?%s' % (endpoint, urlencode({'q': query}))
 
             try:
-                req = self.make_api_request(request, url)
+                req = self.make_api_request(request.user, url)
                 body = safe_urlread(req)
             except requests.RequestException as e:
                 msg = unicode(e)
