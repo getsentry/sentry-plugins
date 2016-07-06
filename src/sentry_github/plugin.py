@@ -7,54 +7,19 @@ sentry_github.plugin
 """
 import requests
 from urllib import urlencode
-from django import forms
-from django.contrib import messages
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
-from sentry.plugins.base import JSONResponse
-from sentry.plugins.bases.issue import IssuePlugin, NewIssueForm
+from rest_framework.response import Response
+from django.conf.urls import url
+from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
 from sentry.http import safe_urlopen, safe_urlread
 from sentry.utils import json
 from sentry.utils.http import absolute_uri
 
 import sentry_github
 
-
-class GitHubOptionsForm(forms.Form):
-    # TODO: validate repo?
-    repo = forms.CharField(label=_('Repository Name'),
-        widget=forms.TextInput(attrs={'placeholder': 'e.g. getsentry/sentry'}),
-        help_text=_('Enter your repository name, including the owner.'))
-
-
-class GitHubNewIssueForm(NewIssueForm):
-    assignee = forms.ChoiceField(choices=tuple(), required=False)
-
-    def __init__(self, assignee_choices, *args, **kwargs):
-        super(GitHubNewIssueForm, self).__init__(*args, **kwargs)
-        self.fields['assignee'].choices = assignee_choices
-
-
-class GitHubExistingIssueForm(forms.Form):
-    issue_id = forms.CharField(
-        label=_('Issue'),
-        widget=forms.TextInput(attrs={'class': 'issue-selector'}),
-        help_text=mark_safe(_('You can use any syntax supported by GitHub\'s '
-                              '<a href="https://help.github.com/articles/searching-issues/" '
-                              'target="_blank">issue search</a>.')))
-    comment = forms.CharField(
-        label=_('GitHub Comment'),
-        widget=forms.Textarea,
-        required=False,
-        help_text=_('Leave blank if you don\'t want to add a comment to the GitHub issue'))
-
-
-class GitHubPlugin(IssuePlugin):
+class GitHubPlugin(IssuePlugin2):
     author = 'Sentry Team'
     author_url = 'https://github.com/getsentry/sentry'
     version = sentry_github.VERSION
-    new_issue_form = GitHubNewIssueForm
-    link_issue_form = GitHubExistingIssueForm
     description = "Integrate GitHub issues by linking a repository to a project."
     resource_links = [
         ('Bug Tracker', 'https://github.com/getsentry/sentry-github/issues'),
@@ -62,89 +27,104 @@ class GitHubPlugin(IssuePlugin):
     ]
 
     slug = 'github'
-    title = _('GitHub')
+    title = 'GitHub'
     conf_title = title
     conf_key = 'github'
-    project_conf_form = GitHubOptionsForm
     auth_provider = 'github'
-    create_issue_template = 'sentry_github/create_github_issue.html'
-    can_unlink_issues = True
-    can_link_existing_issues = True
+
+    def get_group_urls(self):
+        _patterns = super(GitHubPlugin, self).get_group_urls()
+        _patterns.append(url(r'^(?:issues|groups)/(?P<issue_id>\d+)/plugin/autocomplete/{slug}'.format(slug=self.slug),
+                             IssueGroupActionEndpoint.as_view(view_method_name='view_autocomplete', plugin=self)))
+        return _patterns
 
     def is_configured(self, request, project, **kwargs):
         return bool(self.get_option('repo', project))
 
-    def get_new_issue_title(self, **kwargs):
-        return 'Link GitHub Issue'
+    def get_new_issue_fields(self, request, group, event, **kwargs):
+        fields = super(GitHubPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
+        return [{
+            'name': 'repo',
+            'label': 'GitHub Repository',
+            'default': self.get_option('repo', group.project),
+            'type': 'text',
+            'readonly': True
+        }] + fields + [{
+            'name': 'assignee',
+            'label': 'Assignee',
+            'default': '',
+            'type': 'select',
+            'required': False,
+            'choices': self.get_allowed_assignees(request, group)
+        }]
 
-    def get_unlink_issue_title(self, **kwargs):
-        return 'Unlink GitHub Issue'
+    def get_link_existing_issue_fields(self, request, group, event, **kwargs):
+        return [{
+            'name': 'issue_id',
+            'label': 'Issue',
+            'default': '',
+            'type': 'select',
+            'has_autocomplete': True,
+            'help': ('You can use any syntax supported by GitHub\'s '
+                     '<a href="https://help.github.com/articles/searching-issues/" '
+                     'target="_blank">issue search.</a>')
+        }, {
+            'name': 'comment',
+            'label': 'Comment',
+            'default': absolute_uri(group.get_absolute_url()),
+            'type': 'textarea',
+            'help': ('Leave blank if you don\'t want to '
+                     'add a comment to the GitHub issue.'),
+            'required': False
+        }]
 
-    def get_new_issue_read_only_fields(self, **kwargs):
-        group = kwargs.get('group')
-        if group:
-            return [{'label': 'Github Repository', 'value': self.get_option('repo', group.project)}]
-        return []
-
-    def handle_api_error(self, request, error):
-        msg = _('Error communicating with GitHub: %s') % error
-        messages.add_message(request, messages.ERROR, msg)
+    def handle_api_error(self, error):
+        msg = u'Error communicating with GitHub: %s' % error
+        status = 400 if isinstance(error, PluginError) else 502
+        return Response({
+            'error_type': 'validation',
+            'errors': [{'__all__': msg}],
+        }, status=status)
 
     def get_allowed_assignees(self, request, group):
         try:
-            url = self.build_api_url(group, 'assignees')
-            req = self.make_api_request(request.user, url)
+            _url = self.build_api_url(group, 'assignees')
+            req = self.make_api_request(request.user, _url)
             body = safe_urlread(req)
-        except requests.RequestException as e:
-            msg = unicode(e)
-            self.handle_api_error(request, msg)
-            return tuple()
+        except (requests.RequestException, PluginError) as e:
+            return self.handle_api_error(e)
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
-            msg = unicode(e)
-            self.handle_api_error(request, msg)
-            return tuple()
+            return self.handle_api_error(e)
 
         if req.status_code > 399:
-            self.handle_api_error(request, json_resp.get('message', ''))
-            return tuple()
+            return self.handle_api_error(json_resp.get('message', ''))
 
         users = tuple((u['login'], u['login']) for u in json_resp)
 
         return (('', 'Unassigned'),) + users
 
-    def get_initial_link_form_data(self, request, group, event, **kwargs):
-        return {'comment': absolute_uri(group.get_absolute_url())}
-
-    def get_new_issue_form(self, request, group, event, **kwargs):
-        """
-        Return a Form for the "Create new issue" page.
-        """
-        return self.new_issue_form(self.get_allowed_assignees(request, group),
-                                   request.POST or None,
-                                   initial=self.get_initial_form_data(request, group, event))
-
     def build_api_url(self, group, github_api, query_params=None):
         repo = self.get_option('repo', group.project)
 
-        url = 'https://api.github.com/repos/%s/%s' % (repo, github_api)
+        _url = 'https://api.github.com/repos/%s/%s' % (repo, github_api)
 
         if query_params:
-            url = '%s?%s' % (url, urlencode(query_params))
+            _url = '%s?%s' % (_url, urlencode(query_params))
 
-        return url
+        return _url
 
-    def make_api_request(self, user, url, json_data=None):
+    def make_api_request(self, user, _url, json_data=None):
         auth = self.get_auth_for_user(user=user)
         if auth is None:
-            raise forms.ValidationError(_('You have not yet associated GitHub with your account.'))
+            raise PluginError('You have not yet associated GitHub with your account.')
 
         req_headers = {
             'Authorization': 'token %s' % auth.tokens['access_token'],
         }
-        return safe_urlopen(url, json=json_data, headers=req_headers, allow_redirects=True)
+        return safe_urlopen(_url, json=json_data, headers=req_headers, allow_redirects=True)
 
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
@@ -155,21 +135,21 @@ class GitHubPlugin(IssuePlugin):
         }
 
         try:
-            url = self.build_api_url(group, 'issues')
-            req = self.make_api_request(request.user, url, json_data=json_data)
+            _url = self.build_api_url(group, 'issues')
+            req = self.make_api_request(request.user, _url, json_data=json_data)
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = unicode(e)
-            raise forms.ValidationError(_('Error communicating with GitHub: %s') % (msg,))
+            raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
             msg = unicode(e)
-            raise forms.ValidationError(_('Error communicating with GitHub: %s') % (msg,))
+            raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         if req.status_code > 399:
-            raise forms.ValidationError(json_resp['message'])
+            raise PluginError(json_resp['message'])
 
         return json_resp['number']
 
@@ -177,22 +157,22 @@ class GitHubPlugin(IssuePlugin):
         comment = form_data.get('comment')
         if not comment:
             return
-        url = '%s/%s/comments' % (self.build_api_url(group, 'issues'), form_data['issue_id'])
+        _url = '%s/%s/comments' % (self.build_api_url(group, 'issues'), form_data['issue_id'])
         try:
-            req = self.make_api_request(request.user, url, json_data={'body': comment})
+            req = self.make_api_request(request.user, _url, json_data={'body': comment})
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = unicode(e)
-            raise forms.ValidationError(_('Error communicating with GitHub: %s') % (msg,))
+            raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
             msg = unicode(e)
-            raise forms.ValidationError(_('Error communicating with GitHub: %s') % (msg,))
+            raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         if req.status_code > 399:
-            raise forms.ValidationError(json_resp['message'])
+            raise PluginError(json_resp['message'])
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GH-%s' % issue_id
@@ -204,41 +184,47 @@ class GitHubPlugin(IssuePlugin):
         return 'https://github.com/%s/issues/%s' % (repo, issue_id)
 
     def get_issue_title_by_id(self, request, group, issue_id):
-        url = '%s/%s' % (self.build_api_url(group, 'issues'), issue_id)
-        req = self.make_api_request(request.user, url)
+        _url = '%s/%s' % (self.build_api_url(group, 'issues'), issue_id)
+        req = self.make_api_request(request.user, _url)
 
         body = safe_urlread(req)
         json_resp = json.loads(body)
         return json_resp['title']
 
-    def view(self, request, group, **kwargs):
-        if request.GET.get('autocomplete_query'):
-            query = request.GET.get('q')
-            if not query:
-                return JSONResponse({'issues': []})
-            repo = self.get_option('repo', group.project)
-            query = 'repo:%s %s' % (repo, query)
-            url = 'https://api.github.com/search/issues?%s' % (urlencode({'q': query}),)
+    def view_autocomplete(self, request, group, **kwargs):
+        field = request.GET.get('autocomplete_field')
+        query = request.GET.get('autocomplete_query')
+        if field != 'issue_id' or not query:
+            return Response({'issue_id': []})
 
-            try:
-                req = self.make_api_request(request.user, url)
-                body = safe_urlread(req)
-            except requests.RequestException as e:
-                msg = unicode(e)
-                self.handle_api_error(request, msg)
-                return JSONResponse({}, status_code=502)
+        repo = self.get_option('repo', group.project)
+        query = 'repo:%s %s' % (repo, query)
+        _url = 'https://api.github.com/search/issues?%s' % (urlencode({'q': query}),)
 
-            try:
-                json_resp = json.loads(body)
-            except ValueError as e:
-                msg = unicode(e)
-                self.handle_api_error(request, msg)
-                return JSONResponse({}, status_code=502)
+        try:
+            req = self.make_api_request(request.user, _url)
+            body = safe_urlread(req)
+        except (requests.RequestException, PluginError) as e:
+            return self.handle_api_error(e)
 
-            issues = [{
-                'text': '(#%s) %s' % (i['number'], i['title']),
-                'id': i['number']
-            } for i in json_resp.get('items', [])]
-            return JSONResponse({'issues': issues})
+        try:
+            json_resp = json.loads(body)
+        except ValueError as e:
+            return self.handle_api_error(e)
 
-        return super(GitHubPlugin, self).view(request, group, **kwargs)
+        issues = [{
+            'text': '(#%s) %s' % (i['number'], i['title']),
+            'id': i['number']
+        } for i in json_resp.get('items', [])]
+
+        return Response({field: issues})
+
+    def get_configure_plugin_fields(self, request, project, **kwargs):
+        return [{
+            'name': 'repo',
+            'label': 'Repository Name',
+            'default': self.get_option('repo', project),
+            'type': 'text',
+            'placeholder': 'e.g. getsentry/sentry',
+            'help': 'Enter your repository name, including the owner.'
+        }]
