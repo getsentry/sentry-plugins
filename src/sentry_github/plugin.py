@@ -21,28 +21,10 @@ import sentry_github
 
 
 class GitHubOptionsForm(forms.Form):
-    repo = forms.CharField(
-        label=_('Repository Name'),
+    # TODO: validate repo?
+    repo = forms.CharField(label=_('Repository Name'),
         widget=forms.TextInput(attrs={'placeholder': 'e.g. getsentry/sentry'}),
         help_text=_('Enter your repository name, including the owner.'))
-    endpoint = forms.CharField(
-        label=_('GitHub API Endpoint'),
-        widget=forms.TextInput(attrs={'placeholder': 'https://api.github.com'}),
-        initial='https://api.github.com',
-        help_text=_('Enter the base URL to the GitHub API.'))
-    github_url = forms.CharField(
-        label=_('GitHub Base URL'),
-        widget=forms.TextInput(attrs={'placeholder': 'https://github.com'}),
-        initial='https://github.com',
-        help_text=_('Enter the base URL to the GitHub for generating issue links.'))
-
-    def clean_endpoint(self):
-        data = self.cleaned_data['endpoint']
-        return data.rstrip('/')
-
-    def clean_github_url(self):
-        data = self.cleaned_data['github_url']
-        return data.rstrip('/')
 
 
 class GitHubNewIssueForm(NewIssueForm):
@@ -146,9 +128,8 @@ class GitHubPlugin(IssuePlugin):
 
     def build_api_url(self, group, github_api, query_params=None):
         repo = self.get_option('repo', group.project)
-        endpoint = self.get_option('endpoint', group.project) or 'https://api.github.com'
 
-        url = '%s/repos/%s/%s' % (endpoint, repo, github_api,)
+        url = 'https://api.github.com/repos/%s/%s' % (repo, github_api)
 
         if query_params:
             url = '%s?%s' % (url, urlencode(query_params))
@@ -219,9 +200,8 @@ class GitHubPlugin(IssuePlugin):
     def get_issue_url(self, group, issue_id, **kwargs):
         # XXX: get_option may need tweaked in Sentry so that it can be pre-fetched in bulk
         repo = self.get_option('repo', group.project)
-        github_url = self.get_option('github_url', group.project) or 'https://github.com'
 
-        return '%s/%s/issues/%s' % (github_url, repo, issue_id)
+        return 'https://github.com/%s/issues/%s' % (repo, issue_id)
 
     def get_issue_title_by_id(self, request, group, issue_id):
         url = '%s/%s' % (self.build_api_url(group, 'issues'), issue_id)
@@ -238,8 +218,7 @@ class GitHubPlugin(IssuePlugin):
                 return JSONResponse({'issues': []})
             repo = self.get_option('repo', group.project)
             query = 'repo:%s %s' % (repo, query)
-            endpoint = self.get_option('endpoint', group.project) or 'https://api.github.com'
-            url = '%s/search/issues?%s' % (endpoint, urlencode({'q': query}))
+            url = 'https://api.github.com/search/issues?%s' % (urlencode({'q': query}),)
 
             try:
                 req = self.make_api_request(request.user, url)

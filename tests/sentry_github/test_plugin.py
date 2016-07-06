@@ -30,8 +30,6 @@ class GitHubPluginTest(TestCase):
         self.plugin.set_option('repo', 'getsentry/sentry', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
         assert self.plugin.get_issue_url(group, 1) == 'https://github.com/getsentry/sentry/issues/1'
-        self.plugin.set_option('github_url', 'http://example.com', self.project)
-        assert self.plugin.get_issue_url(group, 1) == 'http://example.com/getsentry/sentry/issues/1'
 
     def test_is_configured(self):
         assert self.plugin.is_configured(None, self.project) is False
