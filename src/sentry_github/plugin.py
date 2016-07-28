@@ -34,8 +34,9 @@ class GitHubPlugin(IssuePlugin2):
 
     def get_group_urls(self):
         _patterns = super(GitHubPlugin, self).get_group_urls()
-        _patterns.append(url(r'^(?:issues|groups)/(?P<issue_id>\d+)/plugin/autocomplete/{slug}'.format(slug=self.slug),
-                             IssueGroupActionEndpoint.as_view(view_method_name='view_autocomplete', plugin=self)))
+        _patterns.append(url(r'^autocomplete',
+                             IssueGroupActionEndpoint.as_view(view_method_name='view_autocomplete',
+                                                              plugin=self)))
         return _patterns
 
     def is_configured(self, request, project, **kwargs):
