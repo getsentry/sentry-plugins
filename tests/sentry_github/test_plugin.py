@@ -6,6 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.forms import ValidationError
 from django.test import RequestFactory
 from django.test.utils import override_settings
+from sentry.plugins.bases.issue2 import PluginError
 from sentry.testutils import TestCase
 from sentry.utils import json
 from social_auth.models import UserSocialAuth
@@ -48,7 +49,7 @@ class GitHubPluginTest(TestCase):
             'title': 'Hello',
             'description': 'Fix this.',
         }
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(PluginError):
             self.plugin.create_issue(request, group, form_data)
 
         request.user = self.user
