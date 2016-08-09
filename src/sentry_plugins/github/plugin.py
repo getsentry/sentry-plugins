@@ -1,5 +1,5 @@
 """
-sentry_github.plugin
+github.plugin
 ~~~~~~~~~~~~~~~~~~~~
 
 :copyright: (c) 2012 by the Sentry Team, see AUTHORS for more details.
@@ -14,16 +14,16 @@ from sentry.http import safe_urlopen, safe_urlread
 from sentry.utils import json
 from sentry.utils.http import absolute_uri
 
-import sentry_github
+import sentry_plugins
 
 class GitHubPlugin(IssuePlugin2):
     author = 'Sentry Team'
     author_url = 'https://github.com/getsentry/sentry'
-    version = sentry_github.VERSION
+    version = sentry_plugins.VERSION
     description = "Integrate GitHub issues by linking a repository to a project."
     resource_links = [
-        ('Bug Tracker', 'https://github.com/getsentry/sentry-github/issues'),
-        ('Source', 'https://github.com/getsentry/sentry-github'),
+        ('Bug Tracker', 'https://github.com/getsentry/sentry-plugins/issues'),
+        ('Source', 'https://github.com/getsentry/sentry-plugins'),
     ]
 
     slug = 'github'

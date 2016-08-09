@@ -1,16 +1,11 @@
-sentry-github
+sentry-plugins
 =============
 
-An extension for Sentry which integrates with GitHub. Specifically, it allows you to easily create
-issues from events within Sentry.
+Extensions for Sentry. Includes GitHub.
 
 
-Install
--------
-
-Install the package via ``pip``::
-
-    pip install sentry-github
+GitHub Install
+--------------
 
 You'll have to create an application in GitHub to get the app ID and API secret. Use the following for the Authentication redirect URL::
 
@@ -25,7 +20,7 @@ Ensure you've configured GitHub auth in Sentry::
 If the callback URL you've registered with Github uses HTTPS, you'll need this in your config::
 
     SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
-    
+
 If your server is behind a reverse proxy, you'll need to enable the X-Forwarded-Proto
 and X-Forwarded-Host headers, and use this config::
 
