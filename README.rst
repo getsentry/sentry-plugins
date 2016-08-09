@@ -5,7 +5,7 @@ Extensions for Sentry. Includes GitHub.
 
 
 GitHub Install
--------
+--------------
 
 You'll have to create an application in GitHub to get the app ID and API secret. Use the following for the Authentication redirect URL::
 
