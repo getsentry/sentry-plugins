@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import responses
 from exam import fixture
 from django.contrib.auth.models import AnonymousUser
-from django.forms import ValidationError
 from django.test import RequestFactory
 from django.test.utils import override_settings
 from sentry.plugins.bases.issue2 import PluginError
@@ -11,7 +10,7 @@ from sentry.testutils import TestCase
 from sentry.utils import json
 from social_auth.models import UserSocialAuth
 
-from sentry_github.plugin import GitHubPlugin
+from sentry_plugins.github.plugin import GitHubPlugin
 
 
 class GitHubPluginTest(TestCase):

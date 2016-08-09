@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-sentry-github
+sentry-plugins
 =============
 
 An extension for Sentry which integrates with GitHub. Specifically, it allows you to easily create
@@ -22,12 +22,12 @@ tests_require = [
 install_requires = []
 
 setup(
-    name='sentry-github',
+    name='sentry-plugins',
     version='0.1.2',
     author='David Cramer',
     author_email='dcramer@gmail.com',
-    url='http://github.com/getsentry/sentry-github',
-    description='A Sentry extension which integrates with GitHub.',
+    url='http://github.com/getsentry/sentry-plugins',
+    description='A collection of Sentry extensions',
     long_description=__doc__,
     license='BSD',
     package_dir={'': 'src'},
@@ -38,10 +38,10 @@ setup(
     include_package_data=True,
     entry_points={
         'sentry.apps': [
-            'github = sentry_github',
+            'github = sentry_plugins.github',
         ],
         'sentry.plugins': [
-            'github = sentry_github.plugin:GitHubPlugin'
+            'github = sentry_plugins.github.plugin:GitHubPlugin'
         ],
     },
     classifiers=[
