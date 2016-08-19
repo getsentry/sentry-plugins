@@ -199,8 +199,8 @@ class GitHubPlugin(IssuePlugin2):
             return Response({'issue_id': []})
 
         repo = self.get_option('repo', group.project)
-        query = 'repo:%s %s' % (repo, query)
-        _url = 'https://api.github.com/search/issues?%s' % (urlencode({'q': query}),)
+        query = (u'repo:%s %s' % (repo, query)).encode('utf-8')
+        _url = 'https://api.github.com/search/issues?%s' % urlencode({'q': query})
 
         try:
             req = self.make_api_request(request.user, _url)
