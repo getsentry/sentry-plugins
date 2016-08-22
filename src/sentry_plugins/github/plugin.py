@@ -84,7 +84,7 @@ class GitHubPlugin(IssuePlugin2):
         status = 400 if isinstance(error, PluginError) else 502
         return Response({
             'error_type': 'validation',
-            'errors': [{'__all__': msg}],
+            'errors': {'__all__': msg},
         }, status=status)
 
     def get_allowed_assignees(self, request, group):
@@ -93,15 +93,15 @@ class GitHubPlugin(IssuePlugin2):
             req = self.make_api_request(request.user, _url)
             body = safe_urlread(req)
         except (requests.RequestException, PluginError) as e:
-            return self.handle_api_error(e)
+            raise PluginError(u'Error communicating with GitHub: %s' % e)
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
-            return self.handle_api_error(e)
+            raise PluginError(u'Error communicating with GitHub: %s' % e)
 
         if req.status_code > 399:
-            return self.handle_api_error(json_resp.get('message', ''))
+            raise PluginError(u'Error communicating with GitHub: %s' % json_resp.get('message', ''))
 
         users = tuple((u['login'], u['login']) for u in json_resp)
 
