@@ -25,6 +25,7 @@ tests_require = [
     'flake8>=2.0,<2.1',
     'responses',
     'sentry>=8.6.0',
+    'pyjwt>=0.3.2',
 ]
 
 install_requires = [
@@ -94,11 +95,13 @@ setup(
             'github = sentry_plugins.github',
             'pivotal = sentry_plugins.pivotal',
             'hipchat_ac = sentry_plugins.hipchat_ac',
+            'jira_ac = sentry_plugins.jira_ac',
         ],
         'sentry.plugins': [
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
             'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',
+            'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin'
         ],
     },
     classifiers=[
