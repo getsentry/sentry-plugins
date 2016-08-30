@@ -1,20 +1,19 @@
-"""
-github.plugin
-~~~~~~~~~~~~~~~~~~~~
+from __future__ import absolute_import
 
-:copyright: (c) 2012 by the Sentry Team, see AUTHORS for more details.
-:license: BSD, see LICENSE for more details.
-"""
 import requests
-from urllib import urlencode
-from rest_framework.response import Response
+import six
+
 from django.conf.urls import url
+from rest_framework.response import Response
+from six.moves.urllib.parse import urlencode
+
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
 from sentry.http import safe_urlopen, safe_urlread
 from sentry.utils import json
 from sentry.utils.http import absolute_uri
 
 import sentry_plugins
+
 
 class GitHubPlugin(IssuePlugin2):
     author = 'Sentry Team'
@@ -140,13 +139,13 @@ class GitHubPlugin(IssuePlugin2):
             req = self.make_api_request(request.user, _url, json_data=json_data)
             body = safe_urlread(req)
         except requests.RequestException as e:
-            msg = unicode(e)
+            msg = six.text_type(e)
             raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
-            msg = unicode(e)
+            msg = six.text_type(e)
             raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         if req.status_code > 399:
@@ -163,13 +162,13 @@ class GitHubPlugin(IssuePlugin2):
             req = self.make_api_request(request.user, _url, json_data={'body': comment})
             body = safe_urlread(req)
         except requests.RequestException as e:
-            msg = unicode(e)
+            msg = six.text_type(e)
             raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
-            msg = unicode(e)
+            msg = six.text_type(e)
             raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
         if req.status_code > 399:

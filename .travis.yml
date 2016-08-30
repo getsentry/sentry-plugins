@@ -18,5 +18,5 @@ deploy:
 install:
 - make install-tests
 script:
-- flake8
+- make lint
 - py.test

@@ -9,6 +9,8 @@ issues from events within Sentry.
 :copyright: (c) 2012 by the Sentry Team, see AUTHORS for more details.
 :license: BSD, see LICENSE for more details.
 """
+from __future__ import absolute_import
+
 from setuptools import setup, find_packages
 
 
