@@ -214,4 +214,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['hipchat_ac']
+    complete_apps = ['sentry_hipchat_ac']
