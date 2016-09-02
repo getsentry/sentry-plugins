@@ -22,7 +22,7 @@ class Migration(SchemaMigration):
             ('event', self.gf('sentry.db.models.fields.foreignkey.FlexibleForeignKey')(related_name='hipchat_mentioned_events', null=True, to=orm['sentry.Event'])),
             ('tenant', self.gf('sentry.db.models.fields.foreignkey.FlexibleForeignKey')(to=orm['sentry_hipchat_ac.Tenant'])),
         ))
-        db.send_create_signal(u'hipchat_ac', ['MentionedEvent'])
+        db.send_create_signal(u'sentry_hipchat_ac', ['MentionedEvent'])
 
 
     models = {
@@ -112,4 +112,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['hipchat_ac']
+    complete_apps = ['sentry_hipchat_ac']
