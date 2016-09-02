@@ -17,7 +17,7 @@ class Migration(SchemaMigration):
             ('tenant', self.gf('sentry.db.models.fields.foreignkey.FlexibleForeignKey')(to=orm['sentry_hipchat_ac.Tenant'])),
             ('last_mentioned', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
         ))
-        db.send_create_signal(u'sentry_hipchat_ac', ['MentionedEvent'])
+        db.send_create_signal(u'hipchat_ac', ['MentionedEvent'])
 
         # Adding model 'Tenant'
         db.create_table(u'sentry_hipchat_ac_tenant', (
@@ -34,7 +34,7 @@ class Migration(SchemaMigration):
             ('installed_from', self.gf('django.db.models.fields.CharField')(max_length=250)),
             ('auth_user', self.gf('sentry.db.models.fields.foreignkey.FlexibleForeignKey')(related_name='hipchat_tenant_set', null=True, to=orm['sentry.User'])),
         ))
-        db.send_create_signal(u'sentry_hipchat_ac', ['Tenant'])
+        db.send_create_signal(u'hipchat_ac', ['Tenant'])
 
         # Adding M2M table for field organizations on 'Tenant'
         m2m_table_name = db.shorten_name(u'sentry_hipchat_ac_tenant_organizations')
@@ -214,4 +214,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['sentry_hipchat_ac']
+    complete_apps = ['hipchat_ac']
