@@ -13,7 +13,6 @@ from __future__ import absolute_import
 
 from setuptools import setup, find_packages
 
-
 tests_require = [
     'exam',
     'flake8>=2.0,<2.1',
@@ -21,7 +20,7 @@ tests_require = [
     'sentry>=8.6.0',
 ]
 
-install_requires = []
+install_requires = ['pyvotal>=0.2.1, <0.3.0']
 
 setup(
     name='sentry-plugins',
@@ -41,9 +40,11 @@ setup(
     entry_points={
         'sentry.apps': [
             'github = sentry_plugins.github',
+            'pivotal = sentry_plugins.pivotal'
         ],
         'sentry.plugins': [
-            'github = sentry_plugins.github.plugin:GitHubPlugin'
+            'github = sentry_plugins.github.plugin:GitHubPlugin',
+            'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin'
         ],
     },
     classifiers=[
