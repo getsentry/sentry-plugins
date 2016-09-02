@@ -20,7 +20,10 @@ tests_require = [
     'sentry>=8.6.0',
 ]
 
-install_requires = ['pyvotal>=0.2.1, <0.3.0']
+install_requires = [
+    'pyvotal>=0.2.1, <0.3.0',
+    'PyJWT',
+]
 
 setup(
     name='sentry-plugins',
