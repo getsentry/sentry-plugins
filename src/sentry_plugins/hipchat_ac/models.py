@@ -125,7 +125,7 @@ class Tenant(BaseModel):
         'sentry.Project', related_name='hipchat_tenant_set')
 
     class Meta:
-        app_label = 'sentry_hipchat_ac'
+        app_label = 'hipchat_ac'
         db_table = 'sentry_hipchat_ac_tenant'
 
     def get_token(self, token_only=True, scopes=None):
