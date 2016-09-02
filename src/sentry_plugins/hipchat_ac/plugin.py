@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import sentry_plugins
 
 from django.conf import settings
+from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.template.context import RequestContext
@@ -108,8 +109,8 @@ class HipchatPlugin(NotifyPlugin):
 
     def get_project_urls(self):
         return [
-            (r'^tenants/', HipchatTenantsEndpoint.as_view(plugin=self)),
-            (r'^test-config/', HipchatTestConfigEndpoint.as_view(plugin=self)),
+            url(r'^tenants/', HipchatTenantsEndpoint.as_view(plugin=self)),
+            url(r'^test-config/', HipchatTestConfigEndpoint.as_view(plugin=self)),
         ]
 
     def get_metadata(self):
