@@ -1,5 +1,7 @@
+.DS_Store
 *.pyc
 *.egg-info/
 /dist
 /build
-*.DS_Store
+/node_modules
+/src/sentry_plugins/*/static/*/dist

@@ -40,11 +40,13 @@ setup(
     entry_points={
         'sentry.apps': [
             'github = sentry_plugins.github',
-            'pivotal = sentry_plugins.pivotal'
+            'pivotal = sentry_plugins.pivotal',
+            'hipchat_ac = sentry_plugins.hipchat_ac',
         ],
         'sentry.plugins': [
             'github = sentry_plugins.github.plugin:GitHubPlugin',
-            'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin'
+            'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
+            'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',
         ],
     },
     classifiers=[

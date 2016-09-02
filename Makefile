@@ -23,4 +23,7 @@ lint-js:
 	${SENTRY_PATH}/bin/lint --js static/getsentry/
 	@echo ""
 
+test: install-tests
+	py.test
+
 .PHONY: develop install-tests

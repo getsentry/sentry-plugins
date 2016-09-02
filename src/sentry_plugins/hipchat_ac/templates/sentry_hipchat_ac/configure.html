@@ -1,0 +1,45 @@
+{% extends "sentry_hipchat_ac/configure_layout.html" %}
+{% block body %}
+  {% if tenant.auth_user %}
+    <h3>Authorization</h3>
+    <p>
+      This room is authenticated as <strong>{{ tenant.auth_user.username }}</strong> and
+      was authorized to have access to the following organizations:
+      {% for org in available_orgs %}
+        <strong>{{ org.name }}</strong>{% if not forloop.last %},{% endif %}
+      {% endfor %}
+      &nbsp; (<a href="{% url 'sentry-hipchat-ac-sign-out' %}?signed_request={{ context.signed_request }}">Deauthorize</a>)
+    <h3>Notifications</h3>
+    <p>
+      Select the projects you want to notifications from:
+    <form action="" method="post">
+      {% csrf_token %}
+      <div class="generic-list">
+        {{ project_select_form.projects }}
+      </div>
+      <button type="submit" class="btn">Save changes</button>
+    </form>
+  {% else %}
+    <p class="intro">
+      Welcome to Sentry for Hipchat. Before we can get going, you need to
+      associate this Hipchat room with a Sentry account.
+    {% if current_user.is_authenticated %}
+    <p>
+      You are currently signed in as <strong>{{ current_user.username }}</strong>.
+      <a href="{% url 'sentry-logout' %}">Change user?</a>
+    <h3>Choose which organizations the integration will have access to:</h3>
+    <form action="" method="post">
+      {% csrf_token %}
+      <div class="generic-list">
+        {{ grant_form.orgs.errors }}
+        {{ grant_form.orgs }}
+      </div>
+      <button type="submit" class="btn">Grant access</button>
+    </form>
+    {% else %}
+    <p>
+      <a href="{% url 'sentry-login' %}" class="btn centered">Connect with Sentry</a>
+    </p>
+    {% endif %}
+  {% endif %}
+{% endblock %}

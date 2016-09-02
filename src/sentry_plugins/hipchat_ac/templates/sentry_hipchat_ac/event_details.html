@@ -1,0 +1,144 @@
+{% extends "sentry_hipchat_ac/layout.html"  %}
+{% load sentry_helpers %}
+{% block body %}
+  <script>
+    function openEvent(id) {
+      var token = $('meta[name="token"]').attr('value');
+      var params = 'signed_request=' + encodeURIComponent(token) + '&event=' + id;
+      document.location.search = params;
+    }
+
+    function backToRecentEvents() {
+      // navigate locally.  this only happens if we're already on the
+      // recent events glance.
+      var token = $('meta[name="token"]').attr('value');
+      document.location.href = '{% url "sentry-hipchat-ac-recent-events" %}?signed_request=' + token;
+      return false;
+    }
+
+    AP.register({
+      "message.sentry.event-details": function(message) {
+        openEvent(message.metadata.event);
+      }
+    });
+  </script>
+  {% if bad_event %}
+    <div class="aui-page-panel">
+      <div class="aui-page-panel-inner">
+        <section class="aui-page-panel-content">
+          <h3>Issue not Found</h3>
+        </section>
+      </div>
+    </div>
+  {% endif %}
+  {% if event %}
+    <div class="aui-page-panel">
+      <div class="aui-page-panel-inner">
+        <section class="aui-page-panel-content">
+          {% if from_recent %}
+          <p class="back"><a href="#" onclick="return backToRecentEvents()">Back to Recent Issues</a>
+          {% endif %}
+          <h3>{{ event.error }}</h3>
+          <p class="culprit">{{ event.culprit }}
+          <p><a href="{{ group.get_absolute_url }}" target="_blank" class="btn orange">View in Sentry</a>
+          {% url 'sentry-stream' group.project.organization.slug group.project.slug as project_link %}
+
+          <hr>
+          <ul class="tag-list">
+          {% for tag_key, tag_value in tags %}
+            <li>
+              <strong>{{ tag_key }}</strong>
+              <em>=</em>
+              <span><a href="{% absolute_uri project_link %}?{{ tag_key }}={{ tag_value }}">{{ tag_value }}</a> {% if tag_value|is_url %}<a href="{{ tag_value }}" class="icon-share"></a>{% endif %}</span>
+            </li>
+          {% endfor %}
+          </ul>
+
+          {% if interfaces.exc %}
+          <hr>
+          <div class="interface">
+            <h4 class="title">Exception</h4>
+            <pre>{{ interfaces.exc_as_string }}</pre>
+          </div>
+          {% endif %}
+
+          {% if interfaces.http %}
+          <hr>
+          <div class="interface">
+            <h4 class="title">Request</h4>
+            <table>
+              <tbody>
+                <tr>
+                  <th>URL</th>
+                    <td><a href="{{ interfaces.http.full_url }}">{{ interfaces.http.url }}</a></td>
+                </tr>
+                {% if interfaces.http.method %}
+                  <tr>
+                    <th>Method</th>
+                    <td>{{ method }}</td>
+                  </tr>
+                {% endif %}
+                <tr>
+                  <th>Query</th>
+                  <td>
+                    <code>{{ interfaces.http.query_string }}</code>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if interfaces.user %}
+          <hr>
+          <div class="interface">
+            {% if interfaces.user.email %}
+              <img src="{% gravatar_url interfaces.user.email size 64 %}" class="avatar">
+            {% endif %}
+            <h4 class="title">User</h4>
+            <table>
+              <colgroup>
+                <col style="width:110px;">
+              </colgroup>
+              <tbody>
+                {% if interfaces.user.id %}
+                  <tr>
+                    <th>ID:</th>
+                    <td class="code">{{ interfaces.user.id }}</td>
+                  </tr>
+                  {% endif %}
+                {% if interfaces.user.ip_address %}
+                  <tr>
+                    <th>IP Address:</th>
+                    <td class="code">{{ interfaces.user.ip_address }}</td>
+                  </tr>
+                {% endif %}
+                {% if interfaces.user.username %}
+                  <tr>
+                    <th>Username:</th>
+                    <td class="code">{{ interfaces.user.username }}</td>
+                  </tr>
+                {% endif %}
+                {% if interfaces.user.email %}
+                  <tr>
+                    <th>Email:</th>
+                    <td class="code">{{ interfaces.user.email }}</td>
+                  </tr>
+                {% endif %}
+                {% if interfaces.user.data %}
+                  {% for key, value in interfaces.user.data.iteritems %}
+                    <tr>
+                      <th>{{ key|titlize }}</th>
+                      <td class="code">{{ value }}</td>
+                    </tr>
+                  {% endfor %}
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </section>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

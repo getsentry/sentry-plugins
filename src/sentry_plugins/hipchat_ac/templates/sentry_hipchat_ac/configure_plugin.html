@@ -1,0 +1,61 @@
+{% if plugin_test_results %}
+<h4>Test Results</h4>
+<pre>{{ plugin_test_results }}</pre>
+{% endif %}
+
+<p>
+  Hipchat notifications are managed through Hipchat itself.  After you
+  added the Sentry integration directly into Hipchat you can add projects
+  directly from there to your rooms.
+<p>
+  This page only shows in which rooms the project shows up.  To add or
+  remove them, you need to use the integration configuration page.
+<p>
+  If you use the cloud hosted hipchat installation, you can one-click
+  install the integration:
+<p><a href="{{ install_url }}" class="btn btn-primary" target="_blank">Enable Integration</a>
+<p>
+  Alternatively to add the Sentry integration to Hipchat click on “Install an
+  integration from a descriptor URL” on your room in Hipchat and add the
+  following descriptor URL:
+<pre>{{ descriptor }}</pre>
+{% if on_premise %}
+  <!-- todo: marketplace link -->
+{% endif %}
+<h2>Active Rooms</h2>
+{% if not tenants %}
+<p>The plugin is currently not active in any rooms.
+{% else %}
+  <table class="table" style="font-size: 14px;">
+    <thead>
+      <tr>
+        <th>Room</th>
+        {# <th>Hipchat instance</th> #}
+        <th>By</th>
+        {% if plugin.is_testable %}
+        <th>Test</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+    {% for tenant in tenants %}
+      <tr>
+        <td><strong>{{ tenant.room_name }}</strong> <br>
+        <small>(id: {{ tenant.room_id }}; owner: {{ tenant.room_owner_name }})</small></td>
+        {# <td>{{ tenant.installed_from }}</td> #}
+        <td>{{ tenant.auth_user.username }}</td>
+        {% if plugin.is_testable %}
+        <td><form action="" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-default" name="action_test">Test</button>
+        </form></td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p>
+    You can add or remove rooms directly from within Hipchat.  If you
+    disable the plugin here, all associations are automatically deleted
+    and this project will no longer notify in any rooms.
+{% endif %}

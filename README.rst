@@ -1,11 +1,18 @@
 sentry-plugins
-=============
+==============
 
-Extensions for Sentry. Includes GitHub.
+Extensions for Sentry. Includes GitHub, and HipChat.
 
+Install the package via ``pip``::
 
-GitHub Install
---------------
+    pip install https://github.com/getsentry/sentry-plugins/archive/master.zip
+
+Run migrations after installation is complete
+
+    sentry upgrade
+
+GitHub
+------
 
 You'll have to create an application in GitHub to get the app ID and API secret. Use the following for the Authentication redirect URL::
 
@@ -34,8 +41,27 @@ disconnect and reconnect the account.
 
 You'll now see a new action on groups which allows quick creation of GitHub issues.
 
+
 Caveats
--------
+~~~~~~~
 
 If you have multiple GitHub identities associated in Sentry, the plugin will just select
 one to use.
+
+
+HipChat
+-------
+
+Go to your project's configuration page (Projects -> [Project]) and select the
+Hipchat tab. Enter the required credentials and click save changes.
+
+Development
+~~~~~~~~~~~
+
+Create a tunnel to localhost using something like https://ngrok.com/download::
+
+    ngrok http 8000
+
+Start Sentry with the following parameters set::
+
+    AC_BASE_URL=https://<xxx>.ngrok.io HTTPS=on sentry runserver

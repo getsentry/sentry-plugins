@@ -1,0 +1,15 @@
+{% extends "sentry_hipchat_ac/configure_layout.html" %}
+{% block body %}
+  <h3>Deauthorize Room</h3>
+  <p>
+    This room is authenticated as <strong>{{ tenant.auth_user.username }}</strong>.  If
+    you confirm the sign-out the room will no longer receive any notifications and you
+    will need to re-authenticate.
+  <p>
+    Do you wish to continue?
+  <form action="" method="post">
+    {% csrf_token %}
+      <button type="submit" class="btn" name="yes">Yes, sign out</button>
+      <button type="submit" class="btn cancel" name="no">No</button>
+  </form>
+{% endblock %}

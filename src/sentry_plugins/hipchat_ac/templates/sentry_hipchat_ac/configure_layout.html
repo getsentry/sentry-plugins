@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="token" value="{{ context.signed_request }}">
+    <script src="https://www.hipchat.com/atlassian-connect/all{% if hipchat_debug %}-debug{% endif %}.js"></script>
+    <link rel="stylesheet" href="https://www.hipchat.com/atlassian-connect/all{% if hipchat_debug %}-debug{% endif %}.css">
+    <link href="{% url 'sentry-media' "sentry_hipchat_ac" "css/sentry-hipchat-ac.css" %}" type="text/css" rel="stylesheet"/>
+  </head>
+  <body>
+    <div id="page">
+      {% block body %}{% endblock %}
+    </div>
+  </body>
+</html>

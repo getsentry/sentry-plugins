@@ -1,0 +1,270 @@
+/*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section,summary{display:block}audio,canvas,progress,video{display:inline-block;vertical-align:baseline}audio:not([controls]){display:none;height:0}[hidden],template{display:none}a{background-color:transparent}a:active,a:hover{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}dfn{font-style:italic}h1{font-size:2em;margin:.67em 0}mark{background:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}img{border:0}svg:not(:root){overflow:hidden}figure{margin:1em 40px}hr{box-sizing:content-box;height:0}pre{overflow:auto}code,kbd,pre,samp{font-family:monospace,monospace;font-size:1em}button,input,optgroup,select,textarea{color:inherit;font:inherit;margin:0}button{overflow:visible}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}input{line-height:normal}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{height:auto}input[type="search"]{-webkit-appearance:textfield;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}legend{border:0;padding:0}textarea{overflow:auto}optgroup{font-weight:bold}table{border-collapse:collapse;border-spacing:0}td,th{padding:0}
+
+
+/* Type */
+
+body {
+  color: #3d4649;
+  font-size: 16px;
+  font-family: "Avenir Next", "Avenir", helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, ol, pre {
+  margin: 0 0 15px;
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h4 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+strong {
+  font-weight: 600;
+}
+
+.centered {
+  text-align: center;
+}
+
+.intro {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+a,
+a:visited {
+  color: #0e9ae6;
+}
+
+a:hover,
+a:active {
+  color: #0779b8;
+}
+
+/* Layout */
+
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 20px -20px;
+}
+
+.aui-page-panel {
+  font-size: 14px;
+  margin: -1px 0 0;
+}
+
+.aui-page-panel .avatar {
+  float: right;
+  border-radius: 3px;
+  width: 32px;
+  height: 32px;
+  position: relative;
+  top: -4px;
+}
+
+.dialog-header {
+  padding: 0 30px;
+}
+
+/* Tables */
+
+table th {
+  font-weight: 600;
+  text-align: left;
+}
+
+table td {
+  padding: 4px 0;
+}
+
+.interface table th {
+  width: 110px;
+}
+
+/* Forms */
+
+.btn {
+  display: inline-block;
+  background: none;
+  border-radius: 3px;
+  line-height: 1;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #fff !important;
+  background-color: #15a7f6;
+  border: 1px solid #0780c2;
+  margin-top: 5px;
+}
+
+.btn.centered {
+  display: block;
+  margin: 20px auto;
+  width: 160px;
+}
+
+.btn.orange {
+  background: #fb4226;
+  border-color: #bf3a26;
+}
+
+.btn.cancel {
+  background: #e8535a;
+  border: 1px solid #c23037;
+}
+
+.btn.minidelete {
+  float: right;
+  background: #e8535a;
+  border: 1px solid #c23037;
+  font-size: 0;
+  padding: 0!important;
+  width: 18px!important;
+  height: 18px!important;
+  line-height: 18px!important;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 0 10px 10px!important;
+}
+
+.btn.minidelete:before {
+  content: "×";
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* Lists */
+
+.generic-list,
+.generic-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.generic-list li {
+  line-height: 1;
+  margin-bottom: 3px;
+  background: #f7f8f9;
+  border-radius: 3px;
+  padding: 10px 15px;
+  font-weight: 500;
+}
+
+.generic-list label {
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.generic-list li label {
+  font-weight: 500;
+  margin-bottom: 0;
+  font-size: 100%;
+}
+
+.generic-list li label input {
+  margin-right: 5px;
+}
+
+.sentry-logo {
+  display: block;
+  width: 96px;
+  margin: 0 auto 30px;
+}
+
+.errorlist li {
+  background: #f9e6e7;
+  color: #e8535a;
+}
+
+.tag-list {
+  list-style-type: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tag-list li {
+  display: inline-block;
+  margin: 0 10px 5px 0;
+  vertical-align: middle;
+}
+
+.tag-list li a {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.event-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.event-list .divider {
+  display: inline-block;
+  margin: 0 5px;
+  border-left: 1px solid #ddd;
+  height: 12px;
+  position: relative;
+  top: 3px;
+}
+
+.event-list li {
+  padding: 0 20px 10px;
+  margin: 0 -20px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.event-list li.empty {
+  text-align: center;
+}
+
+.event-list li:last-child {
+  margin-bottom: 0;
+  border: 0;
+  padding-bottom: 0;
+}
+
+.event-list li:last-child:first-child {
+  padding-bottom: 0;
+}
+
+.event-list h4 {
+  font-weight: 500;
+}
+
+.event-list h4, .event-list p {
+  margin: 0;
+}
+
+.event-list p {
+  line-height: 1.6;
+}
+
+.event-list p.meta {
+  font-size: 90%;
+}
