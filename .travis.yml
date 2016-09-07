@@ -18,7 +18,6 @@ env:
   - SENTRY_SKIP_BACKEND_VALIDATION=1
 install:
 # we want to test against sentry master
-- pip install https://github.com/getsentry/sentry/archive/master.zip
 - make install-tests
 - pip freeze
 script:

@@ -1,2 +1,8 @@
 include setup.py README.rst MANIFEST.in LICENSE
+recursive-include src/sentry_plugins *.html
+recursive-include src/sentry_plugins *.js
+recursive-include src/sentry_plugins *.jsx
+recursive-include src/sentry_plugins *.css
+recursive-include src/sentry_plugins *.js.gz
+recursive-include src/sentry_plugins *.js.map
 global-exclude *~

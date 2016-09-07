@@ -2,6 +2,7 @@ SENTRY_PATH := `python -c 'import sentry; print sentry.__file__.rsplit("/", 3)[0
 
 develop: setup-git
 	pip install "pip>=7"
+	pip install -e git+https://github.com/getsentry/sentry.git#egg=sentry[dev]
 	pip install -e .
 	npm install
 
