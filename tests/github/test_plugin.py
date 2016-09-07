@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import responses
+
 from exam import fixture
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
