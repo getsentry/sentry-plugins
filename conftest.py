@@ -2,10 +2,13 @@ from __future__ import absolute_import
 
 from django.conf import settings
 
-# Run tests against sqlite for simplicity
 import os
+import sys
 
+# Run tests against sqlite for simplicity
 os.environ.setdefault('DB', 'sqlite')
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 pytest_plugins = ['sentry.utils.pytest']
 
