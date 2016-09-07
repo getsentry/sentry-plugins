@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import six
+
 from django.utils.html import escape
 
 from sentry.models import Activity, User, Event
@@ -127,7 +129,7 @@ def _make_event_card(group, event, title=None, subtitle=None,
             'url@2x': ICON2X,
         },
         'metadata': {
-            'event': str(event.id),
+            'event': six.text_type(event.id),
             'sentry_message_type': 'event',
         },
         'attributes': attributes,

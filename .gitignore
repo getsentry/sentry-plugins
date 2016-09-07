@@ -1,4 +1,5 @@
 .DS_Store
+ghostdriver.log
 *.pyc
 *.egg-info/
 /dist

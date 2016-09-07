@@ -7,8 +7,7 @@ from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.template.context import RequestContext
-from urllib import quote as url_quote
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse, quote
 
 from sentry import options
 from sentry.plugins import plugins
@@ -104,7 +103,7 @@ class HipchatPlugin(NotifyPlugin):
     def get_install_url(self):
         return (
             'https://www.hipchat.com/addons/install?url=' +
-            url_quote(absolute_uri(reverse('sentry-hipchat-ac-descriptor')))
+            quote(absolute_uri(reverse('sentry-hipchat-ac-descriptor')))
         )
 
     def get_project_urls(self):

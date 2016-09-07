@@ -1,14 +1,15 @@
 from __future__ import absolute_import
 
-import jwt
-import time
 import json
+import jwt
 import logging
 import requests
+import six
+import time
 
 from django.db import models
 from django.core.cache import cache
-from urlparse import urlparse, urljoin
+from six.moves.urllib.parse import urlparse, urljoin
 
 from requests.auth import HTTPBasicAuth
 from datetime import timedelta
@@ -198,7 +199,7 @@ class Tenant(BaseModel):
         room = requests.get(urljoin(self.api_base_url, 'room/%s') %
                             self.room_id, headers=headers, timeout=5).json()
         self.room_name = room['name']
-        self.room_owner_id = str(room['owner']['id'])
+        self.room_owner_id = six.text_type(room['owner']['id'])
         self.room_owner_name = room['owner']['name']
         if commit:
             self.save()
@@ -355,7 +356,7 @@ class Context(object):
             except (ValueError, Event.DoesNotExist):
                 return None
             group = event.group
-            if str(group.id) != group_id:
+            if six.text_type(group.id) != group_id:
                 return None
         else:
             try:

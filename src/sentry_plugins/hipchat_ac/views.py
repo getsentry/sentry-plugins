@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 
-import re
 import json
+import re
 import requests
+import six
 
 from functools import update_wrapper
 from django import forms
@@ -269,7 +270,7 @@ class GrantAccessForm(forms.Form):
         self.user = request.user
         self.tenant = tenant
         self.all_orgs = Organization.objects.get_for_user(request.user)
-        org_choices = [(str(x.id), x.name) for x in self.all_orgs]
+        org_choices = [(six.text_type(x.id), x.name) for x in self.all_orgs]
         if request.method == 'POST':
             forms.Form.__init__(self, request.POST)
         else:
@@ -277,7 +278,7 @@ class GrantAccessForm(forms.Form):
         self.fields['orgs'].choices = org_choices
 
     def clean_orgs(self):
-        rv = [org for org in self.all_orgs if str(org.id) in
+        rv = [org for org in self.all_orgs if six.text_type(org.id) in
               self.cleaned_data['orgs']]
         if not rv:
             raise forms.ValidationError('You need to select at least one '
@@ -305,9 +306,9 @@ class ProjectSelectForm(forms.Form):
                                               with_projects=True)
             for team, projects in teams:
                 for project in projects:
-                    project_choices.append((str(project.id), '%s | %s / %s' % (
+                    project_choices.append((six.text_type(project.id), '%s | %s / %s' % (
                         org.name, team.name, project.name)))
-                    self.projects_by_id[str(project.id)] = project
+                    self.projects_by_id[six.text_type(project.id)] = project
 
         project_choices.sort(key=lambda x: x[1].lower())
 
@@ -315,7 +316,7 @@ class ProjectSelectForm(forms.Form):
             forms.Form.__init__(self, request.POST)
         else:
             forms.Form.__init__(self, initial={
-                'projects': [str(x.id) for x in tenant.projects.all()],
+                'projects': [six.text_type(x.id) for x in tenant.projects.all()],
             })
 
         self.fields['projects'].choices = project_choices
@@ -327,7 +328,7 @@ class ProjectSelectForm(forms.Form):
         new_projects = []
         removed_projects = []
 
-        for project_id, project in self.projects_by_id.iteritems():
+        for project_id, project in six.iteritems(self.projects_by_id):
             if project_id in self.cleaned_data['projects']:
                 if enable_plugin_for_tenant(project, self.tenant):
                     new_projects.append(project)
@@ -520,7 +521,7 @@ def assign_event(request, context):
                 if 'assign' in request.POST:
                     assignee = next((
                         x for x in member_list
-                        if str(x.id) == request.POST['assigned_to']), None)
+                        if six.text_type(x.id) == request.POST['assigned_to']), None)
                     if assignee is not None:
                         GroupAssignee.objects.assign(event.group, assignee)
                 elif 'deassign' in request.POST:

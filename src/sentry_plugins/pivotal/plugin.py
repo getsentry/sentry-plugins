@@ -1,13 +1,8 @@
-"""
-pivotal.plugin
-~~~~~~~~~~~~~
+from __future__ import absolute_import
 
-:copyright: (c) 2016 by the Sentry Team, see AUTHORS for more details.
-:license: BSD, see LICENSE for more details.
-"""
-from rest_framework.response import Response
 from django.conf.urls import url
 from django.utils.encoding import force_text
+from rest_framework.response import Response
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
 
 import sentry_plugins

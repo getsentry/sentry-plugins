@@ -6,17 +6,23 @@ services:
 - redis-server
 python:
 - '2.7'
-cache: pip
-deploy:
-  provider: pypi
-  user: getsentry
-  password:
-    secure: Cckg3cvzfGBAKuSZ++eDLrezxxZCMBs97ZnDHhfLxpwbMhZXquXmkQHoOmd/7qUq5Yijdzz7XQb17qh3rlE+WcB+htmd+m3QEu2YIk8BwFFVE5CeRus7ALlNsYyn0dWv8wpbqGVihpF1pbKlIY+NUDD4MTICTTQrMU4CfpPEE6E=
-  on:
-    tags: true
-  distributions: sdist bdist_wheel
+cache:
+  directories:
+  - node_modules
+  - $HOME/.cache/pip/wheels
+  - $HOME/virtualenv/python2.7/src
+env:
+  global:
+  - PIP_DISABLE_PIP_VERSION_CHECK=on
+  - SENTRY_LIGHT_BUILD=1
+  - SENTRY_SKIP_BACKEND_VALIDATION=1
 install:
+# we want to test against sentry master
+- pip install https://github.com/getsentry/sentry/archive/master.zip
 - make install-tests
+- pip freeze
 script:
 - make lint
 - py.test
+after_success:
+- codecov -e TEST_SUITE
