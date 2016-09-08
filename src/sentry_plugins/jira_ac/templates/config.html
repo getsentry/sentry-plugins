@@ -7,7 +7,9 @@
         <section class="aui-page-panel-content">
           {% if is_configured %}
             <section class="aui-page-panel-item">
-              This plugin has already been configured, but you can update the configuration.
+              <div class="aui-message aui-message-info">
+                  <p>This plugin has already been configured, but you can update the Sentry organization.</p>
+              </div>
             </section>
           {% endif %}
             <form class="aui" action="" method="post">
@@ -16,6 +18,7 @@
                 <div class="field-group">
                   {{ field.errors }}
                   {{ field.label_tag }} {{ field }}
+                  <div class="description">Choose which Sentry Organization to link</div>
                 </div>
               {% endfor %}
               <div class="field-group">

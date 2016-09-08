@@ -5,12 +5,16 @@
     <div class="aui-page-panel">
       <div class="aui-page-panel-inner">
         <div class="aui-group">
-          In order to use this plugin, you must be signed into Sentry.
+          <div class="aui-message aui-message-info">
+              <p>In order to use this plugin, you must be signed into Sentry.</p>
+          </div>
         </div>
         <div class="aui-group">
-          <a class="aui-button aui-button-primary" href="{{ login_url }}" target="_blank">
-            Sign In to Sentry
-          </a>
+          <div class="aui-item">
+            <a class="aui-button aui-button-default" href="{{ login_url }}" target="_blank">
+              Sign In to Sentry
+            </a>
+          </div>
         </div>
       </div>
     </div>

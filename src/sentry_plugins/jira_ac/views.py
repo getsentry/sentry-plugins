@@ -61,6 +61,13 @@ class JiraUIWidgetView(BaseJiraWidgetView):
 
         org = jira_auth.organization
         context = self.get_context()
+        if org is None:
+            context.update({
+                'error_message': ('You still need to configure this plugin, which '
+                                  'can be done from the Manage Add-ons page.')
+            })
+            return self.get_response('error.html', context)
+
         context.update({
             'sentry_api_url': absolute_uri('/api/0/organizations/%s/users/issues/' % (org.slug,)),
             'issue_key': self.request.GET.get('issueKey')
