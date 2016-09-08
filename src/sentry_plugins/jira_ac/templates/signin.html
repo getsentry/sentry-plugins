@@ -1,7 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <a href="{{ login_url }}" target="_blank">Sign In</a> to view related Sentry issues
+  <div id="login">
+    <div class="aui-page-panel">
+      <div class="aui-page-panel-inner">
+        <div class="aui-group">
+          In order to use this plugin, you must be signed into Sentry.
+        </div>
+        <div class="aui-group">
+          <a class="aui-button aui-button-primary" href="{{ login_url }}" target="_blank">
+            Sign In to Sentry
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 {% block javascript %}
   <script type="text/javascript">

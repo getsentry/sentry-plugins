@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sentry.plugins import Plugin
 
 import sentry_plugins
@@ -17,7 +19,6 @@ class JiraACPlugin(Plugin):
     title = 'JIRA Atlassian Connect'
     conf_title = title
     conf_key = 'jira-ac'
-
 
     def get_url_module(self):
         return 'sentry_plugins.jira_ac.urls'

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import json
 
 from six.moves.urllib.parse import urlparse
@@ -19,6 +21,7 @@ from sentry_plugins.jira_ac.utils import get_jira_auth_from_request, JIRAError
 
 
 JIRA_KEY = '%s.jira_ac' % (urlparse(absolute_uri()).hostname,)
+
 
 class BaseJiraWidgetView(View):
     jira_auth = None
