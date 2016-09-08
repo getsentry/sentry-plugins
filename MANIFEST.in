@@ -1,4 +1,4 @@
-include setup.py README.rst MANIFEST.in LICENSE
+include setup.py src/sentry_plugins/assets.json README.rst MANIFEST.in LICENSE
 recursive-include src/sentry_plugins *.html
 recursive-include src/sentry_plugins *.js
 recursive-include src/sentry_plugins *.jsx

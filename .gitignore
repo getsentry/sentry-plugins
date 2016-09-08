@@ -6,3 +6,4 @@ ghostdriver.log
 /build
 /node_modules
 /src/sentry_plugins/*/static/*/dist
+/src/sentry_plugins/assets.json

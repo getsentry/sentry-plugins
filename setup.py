@@ -11,7 +11,14 @@ issues from events within Sentry.
 """
 from __future__ import absolute_import
 
+from distutils.command.build import build as BuildCommand
 from setuptools import setup, find_packages
+from setuptools.command.sdist import sdist as SDistCommand
+from setuptools.command.develop import develop as DevelopCommand
+
+from sentry.utils.distutils import (
+    BuildAssetsCommand
+)
 
 tests_require = [
     'exam',
@@ -25,6 +32,47 @@ install_requires = [
     'PyJWT',
 ]
 
+
+class BuildAssetsCommand(BuildAssetsCommand):
+    def get_dist_paths(self):
+        return [
+            'src/sentry_plugins/hipchat_ac/static/hipchat_ac/dist',
+        ]
+
+
+class SentrySDistCommand(SDistCommand):
+    sub_commands = SDistCommand.sub_commands + \
+        [('build_assets', None)]
+
+    def run(self):
+        cmd_obj = self.distribution.get_command_obj('build_assets')
+        cmd_obj.asset_json_path = 'sentry_plugins/assets.json'
+        SDistCommand.run(self)
+
+
+class SentryBuildCommand(BuildCommand):
+    def run(self):
+        BuildCommand.run(self)
+        cmd_obj = self.distribution.get_command_obj('build_assets')
+        cmd_obj.asset_json_path = 'sentry_plugins/assets.json'
+        self.run_command('build_assets')
+
+
+class SentryDevelopCommand(DevelopCommand):
+    def run(self):
+        DevelopCommand.run(self)
+        cmd_obj = self.distribution.get_command_obj('build_assets')
+        cmd_obj.asset_json_path = 'sentry_plugins/assets.json'
+        self.run_command('build_assets')
+
+
+cmdclass = {
+    'sdist': SentrySDistCommand,
+    'develop': SentryDevelopCommand,
+    'build': SentryBuildCommand,
+    'build_assets': BuildAssetsCommand,
+}
+
 setup(
     name='sentry-plugins',
     version='0.1.2',
@@ -37,6 +85,7 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages('src'),
     zip_safe=False,
+    cmdclass=cmdclass,
     install_requires=install_requires,
     extras_require={'tests': tests_require},
     include_package_data=True,

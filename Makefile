@@ -13,6 +13,15 @@ setup-git:
 	git config branch.autosetuprebase always
 	cd .git/hooks && ln -sf ../../hooks/* ./
 
+clean:
+	@echo "--> Cleaning static cache"
+	rm -f src/sentry_plugins/*/static/dist
+	@echo "--> Cleaning pyc files"
+	find . -name "*.pyc" -delete
+	@echo "--> Cleaning python build artifacts"
+	rm -rf build/ dist/ src/sentry_plugins/assets.json
+	@echo ""
+
 lint: lint-js lint-python
 
 lint-python:
