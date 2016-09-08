@@ -9,6 +9,8 @@ class Hipchat extends plugins.BasePlugin {
     }
 }
 
+Hipchat.displayName = 'Hipchat';
+
 plugins.add('hipchat-ac', Hipchat);
 
 export default Hipchat;
