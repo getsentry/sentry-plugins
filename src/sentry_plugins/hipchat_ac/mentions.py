@@ -74,13 +74,18 @@ def clear_tenant_mentions(tenant):
 
 def clear_project_mentions(tenant, projects):
     client = cluster.get_routing_client()
-    ids = [x.id for x in projects]
+    project_ids = set([x.id for x in projects])
     key = get_key(tenant)
-    items = client.zrange(key, 0, -1)
+    ids = client.zrange(key, 0, -1)
+    with cluster.map() as map_client:
+        items = [map_client.get('%s:%s' % (key, id)) for id in ids]
+    items = [json.loads(x.value) for x in items if x.value is not None]
+
     to_remove = []
     for item in items:
-        if json.loads(item)['project'] in ids:
-            to_remove.append(item)
+        if item['project'] in project_ids:
+            to_remove.append('%s/%s' % (item['group'], item['event'] or '-'))
+
     if to_remove:
         client.zrem(key, *to_remove)
 
