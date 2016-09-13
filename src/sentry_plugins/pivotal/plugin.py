@@ -13,7 +13,7 @@ GENERIC_ERROR = "Error communicating with Pivotal Tracker"
 
 class PivotalPlugin(IssuePlugin2):
     author = 'Sentry Team'
-    author_url = 'https://github.com/getsentry/sentry'
+    author_url = 'https://github.com/getsentry/sentry-plugins'
     version = sentry_plugins.VERSION
     description = "Integrate Pivotal Tracker stories by linking a project and account."
     resource_links = [

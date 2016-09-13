@@ -17,7 +17,7 @@ import sentry_plugins
 
 class GitHubPlugin(IssuePlugin2):
     author = 'Sentry Team'
-    author_url = 'https://github.com/getsentry/sentry'
+    author_url = 'https://github.com/getsentry/sentry-plugins'
     version = sentry_plugins.VERSION
     description = "Integrate GitHub issues by linking a repository to a project."
     resource_links = [
