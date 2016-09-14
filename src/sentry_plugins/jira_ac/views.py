@@ -146,7 +146,7 @@ class JiraDescriptorView(View):
             'baseUrl': absolute_uri(),
             'vendor': {
                 'name': 'Sentry',
-                'url': 'http://getsentry.com'
+                'url': 'https://sentry.io'
             },
             'authentication': {
                 'type': 'jwt'
