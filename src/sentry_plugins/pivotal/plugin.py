@@ -4,11 +4,14 @@ from django.conf.urls import url
 from django.utils.encoding import force_text
 from rest_framework.response import Response
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
+from sentry.http import safe_urlopen, safe_urlread
+from sentry.utils import json
+import requests
+import six
+from six.moves.urllib.parse import urlencode
+
 
 import sentry_plugins
-import pyvotal
-
-GENERIC_ERROR = "Error communicating with Pivotal Tracker"
 
 
 class PivotalPlugin(IssuePlugin2):
@@ -36,9 +39,6 @@ class PivotalPlugin(IssuePlugin2):
     def is_configured(self, request, project, **kwargs):
         return all(self.get_option(k, project) for k in ('token', 'project'))
 
-    def get_api_client(self, project):
-        return pyvotal.PTracker(token=self.get_option('token', project))
-
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
         return [{
             'name': 'issue_id',
@@ -57,57 +57,103 @@ class PivotalPlugin(IssuePlugin2):
             'required': False
         }]
 
+    def handle_api_error(self, error):
+        msg = u'Error communicating with Pivotal Tracker'
+        status = 400 if isinstance(error, PluginError) else 502
+        return Response({
+            'error_type': 'validation',
+            'errors': {'__all__': msg},
+        }, status=status)
+
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
         query = request.GET.get('autocomplete_query')
         if field != 'issue_id' or not query:
             return Response({'issue_id': []})
-        client = self.get_api_client(group.project)
+        query = query.encode('utf-8')
+        _url = '%s?%s' % (self.build_api_url(group, 'search'), urlencode({'query': query}))
+        try:
+            req = self.make_api_request(group.project, _url)
+            body = safe_urlread(req)
+        except (requests.RequestException, PluginError) as e:
+            return self.handle_api_error(e)
 
         try:
-            project = client.projects.get(self.get_option('project', group.project))
-            stories = project.stories.all()
-        except (pyvotal.exceptions.PyvotalException, pyvotal.exceptions.AccessDenied) as error:
-            status = 400 if isinstance(error, PluginError) else 502
-            return Response({'error_type': 'validation',
-                     'errors': [{'__all__': GENERIC_ERROR}],
-                     }, status=status)
-        issues = []
-        query = query.lower()
-        for story in stories:
-            if query in story.name.lower() or query in story.description.lower():
-                issues.append({'text': '(#%s) %s)' % (story.id, story.name),
-                               'id': story.id})
+            json_resp = json.loads(body)
+
+        except ValueError as e:
+            return self.handle_api_error(e)
+
+        resp = json_resp.get('stories', {})
+        stories = resp.get('stories', [])
+        issues = [{
+            'text': '(#%s) %s' % (i['id'], i['name']),
+            'id': i['id']
+        } for i in stories]
+
         return Response({field: issues})
 
     def link_issue(self, request, group, form_data, **kwargs):
         comment = form_data.get('comment')
         if not comment:
             return
-        client = self.get_api_client(group.project)
+        _url = '%s/%s/comments' % (self.build_api_url(group, 'stories'), form_data['issue_id'])
+        try:
+            req = self.make_api_request(group.project, _url, json_data={"text": comment})
+            body = safe_urlread(req)
+        except requests.RequestException as e:
+            msg = six.text_type(e)
+            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
 
         try:
-            project = client.projects.get(self.get_option('project', group.project))
-            story = project.stories.get(form_data['issue_id'])
-            story.add_note(comment)
-        except (pyvotal.exceptions.PyvotalException, pyvotal.exceptions.AccessDenied):
-            raise PluginError(GENERIC_ERROR)
+            json_resp = json.loads(body)
+        except ValueError as e:
+            msg = six.text_type(e)
+            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
+
+        if req.status_code > 399:
+            raise PluginError(json_resp['error'])
+
+    def build_api_url(self, group, pivotal_api=None):
+        project = self.get_option('project', group.project)
+
+        _url = 'https://www.pivotaltracker.com/services/v5/projects/%s/%s' % (project, pivotal_api)
+
+        return _url
+
+    def make_api_request(self, project, _url, json_data=None):
+        req_headers = {
+            'X-TrackerToken': str(self.get_option('token', project)),
+            'Content-Type': 'application/json',
+        }
+        return safe_urlopen(_url, json=json_data, headers=req_headers, allow_redirects=True)
 
     def create_issue(self, request, group, form_data, **kwargs):
-        client = self.get_api_client(group.project)
-        story = client.Story()
-        story.story_type = "bug"
-        story.name = force_text(form_data['title'], errors='replace')
-        story.description = force_text(form_data['description'], errors='replace')
-        story.labels = "sentry"
+        json_data = {
+            "story_type": "bug",
+            "name": force_text(form_data['title'], encoding='utf-8', errors='replace'),
+            "description": force_text(form_data['description'], encoding='utf-8', errors='replace'),
+            "labels": ["sentry"],
+        }
 
         try:
-            project = client.projects.get(self.get_option('project', group.project))
-            story = project.stories.add(story)
-        except (pyvotal.exceptions.PyvotalException, pyvotal.exceptions.AccessDenied):
-            raise PluginError(GENERIC_ERROR)
+            _url = self.build_api_url(group, 'stories')
+            req = self.make_api_request(group.project, _url, json_data=json_data)
+            body = safe_urlread(req)
+        except requests.RequestException as e:
+            msg = six.text_type(e)
+            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
 
-        return story.id
+        try:
+            json_resp = json.loads(body)
+        except ValueError as e:
+            msg = six.text_type(e)
+            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
+
+        if req.status_code > 399:
+            raise PluginError(json_resp['error'])
+
+        return json_resp['id']
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return '#%s' % issue_id
@@ -116,11 +162,12 @@ class PivotalPlugin(IssuePlugin2):
         return 'https://www.pivotaltracker.com/story/show/%s' % issue_id
 
     def get_issue_title_by_id(self, request, group, issue_id):
-        client = self.get_api_client(group.project)
-        project = client.projects.get(self.get_option('project', group.project))
-        story = project.stories.get(issue_id)
+        _url = '%s/%s' % (self.build_api_url(group, 'stories'), issue_id)
+        req = self.make_api_request(group.project, _url)
 
-        return story.name
+        body = safe_urlread(req)
+        json_resp = json.loads(body)
+        return json_resp['name']
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
         return [{
