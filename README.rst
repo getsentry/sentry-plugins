@@ -51,7 +51,7 @@ one to use.
 GitLab
 ------
 
-Go to your project's configuration page (Projects -> [Project] -> ISsue Tracking) and select
+Go to your project's configuration page (Projects -> [Project] -> Issue Tracking) and select
 GitLab. Enter the required credentials and click save changes.
 
 It's recommended to create a specific user for Sentry with only `Reporter` privileges on your projects.
