@@ -48,6 +48,14 @@ Caveats
 If you have multiple GitHub identities associated in Sentry, the plugin will just select
 one to use.
 
+GitLab
+------
+
+Go to your project's configuration page (Projects -> [Project] -> ISsue Tracking) and select
+GitLab. Enter the required credentials and click save changes.
+
+It's recommended to create a specific user for Sentry with only `Reporter` privileges on your projects.
+
 
 HipChat
 -------
