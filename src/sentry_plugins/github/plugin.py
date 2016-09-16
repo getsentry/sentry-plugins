@@ -23,12 +23,12 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
     auth_provider = 'github'
 
     def get_group_urls(self):
-        return super(GitHubPlugin, self).get_group_urls() + (
+        return super(GitHubPlugin, self).get_group_urls() + [
             (r'^autocomplete', IssueGroupActionEndpoint.as_view(
                 view_method_name='view_autocomplete',
                 plugin=self,
             )),
-        )
+        ]
 
     def is_configured(self, request, project, **kwargs):
         return bool(self.get_option('repo', project))

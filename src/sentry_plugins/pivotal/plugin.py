@@ -21,12 +21,12 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
     conf_key = 'pivotal'
 
     def get_group_urls(self):
-        return super(PivotalPlugin, self).get_group_urls() + (
+        return super(PivotalPlugin, self).get_group_urls() + [
             (r'^autocomplete', IssueGroupActionEndpoint.as_view(
                 view_method_name='view_autocomplete',
                 plugin=self,
             )),
-        )
+        ]
 
     def is_configured(self, request, project, **kwargs):
         return all(self.get_option(k, project) for k in ('token', 'project'))
