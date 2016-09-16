@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 
-import sentry_plugins
-
 import six
 
 from sentry.exceptions import PluginError
 from sentry.plugins.bases.issue2 import IssuePlugin2
 from sentry.utils.http import absolute_uri
 
+from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 
 from .client import GitLabClient
@@ -18,16 +17,8 @@ ERR_INTERNAL = 'An internal error occurred with the integration and the Sentry t
 ERR_UNAUTHORIZED = 'Unauthorized: either your access token was invalid or you do not have access'
 
 
-class GitLabPlugin(IssuePlugin2):
-    author = 'Sentry Team'
-    author_url = 'https://github.com/getsentry/sentry'
-    version = sentry_plugins.VERSION
+class GitLabPlugin(CorePluginMixin, IssuePlugin2):
     description = 'Integrate GitLab issues by linking a repository to a project'
-    resource_links = [
-        ('Bug Tracker', 'https://github.com/getsentry/sentry-plugins/issues'),
-        ('Source', 'https://github.com/getsentry/sentry-plugins'),
-    ]
-
     slug = 'gitlab'
     title = 'GitLab'
     conf_title = title

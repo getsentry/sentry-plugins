@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import requests
 import six
 
-from django.conf.urls import url
 from rest_framework.response import Response
 from six.moves.urllib.parse import urlencode
 
@@ -12,19 +11,11 @@ from sentry.http import safe_urlopen, safe_urlread
 from sentry.utils import json
 from sentry.utils.http import absolute_uri
 
-import sentry_plugins
+from sentry_plugins.base import CorePluginMixin
 
 
-class GitHubPlugin(IssuePlugin2):
-    author = 'Sentry Team'
-    author_url = 'https://github.com/getsentry/sentry-plugins'
-    version = sentry_plugins.VERSION
-    description = "Integrate GitHub issues by linking a repository to a project."
-    resource_links = [
-        ('Bug Tracker', 'https://github.com/getsentry/sentry-plugins/issues'),
-        ('Source', 'https://github.com/getsentry/sentry-plugins'),
-    ]
-
+class GitHubPlugin(CorePluginMixin, IssuePlugin2):
+    description = 'Integrate GitHub issues by linking a repository to a project.'
     slug = 'github'
     title = 'GitHub'
     conf_title = title
@@ -32,11 +23,12 @@ class GitHubPlugin(IssuePlugin2):
     auth_provider = 'github'
 
     def get_group_urls(self):
-        _patterns = super(GitHubPlugin, self).get_group_urls()
-        _patterns.append(url(r'^autocomplete',
-                             IssueGroupActionEndpoint.as_view(view_method_name='view_autocomplete',
-                                                              plugin=self)))
-        return _patterns
+        return super(GitHubPlugin, self).get_group_urls() + (
+            (r'^autocomplete', IssueGroupActionEndpoint.as_view(
+                view_method_name='view_autocomplete',
+                plugin=self,
+            )),
+        )
 
     def is_configured(self, request, project, **kwargs):
         return bool(self.get_option('repo', project))

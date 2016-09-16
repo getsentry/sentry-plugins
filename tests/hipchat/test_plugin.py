@@ -16,6 +16,9 @@ class HipchatPluginTest(TestCase):
     def request(self):
         return RequestFactory()
 
+    def test_conf_key(self):
+        assert self.plugin.conf_key == 'hipchat-ac'
+
     def test_is_configured(self):
         assert self.plugin.is_configured(self.project) is False
         self.plugin.set_option('tenants', [1], self.project)
