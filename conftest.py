@@ -19,6 +19,7 @@ def pytest_configure(config):
         'sentry_plugins.github',
         'sentry_plugins.gitlab',
         'sentry_plugins.pivotal',
+        'sentry_plugins.teamwork',
     )
 
     # TODO(dcramer): we need a PluginAPITestCase that can do register/unregister
@@ -27,7 +28,9 @@ def pytest_configure(config):
     from sentry_plugins.gitlab.plugin import GitLabPlugin
     from sentry_plugins.hipchat_ac.plugin import HipchatPlugin
     from sentry_plugins.pivotal.plugin import PivotalPlugin
+    from sentry_plugins.teamwork.plugin import TeamworkPlugin
     plugins.register(HipchatPlugin)
     plugins.register(GitHubPlugin)
     plugins.register(GitLabPlugin)
     plugins.register(PivotalPlugin)
+    plugins.register(TeamworkPlugin)

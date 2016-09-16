@@ -96,13 +96,15 @@ setup(
             'pivotal = sentry_plugins.pivotal',
             'hipchat_ac = sentry_plugins.hipchat_ac',
             'jira_ac = sentry_plugins.jira_ac',
+            'teamwork = sentry_plugins.teamwork',
         ],
         'sentry.plugins': [
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin',
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
             'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',
-            'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin'
+            'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin',
+            'teamwork = sentry_plugins.teamwork.plugin:TeamworkPlugin',
         ],
     },
     classifiers=[
