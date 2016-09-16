@@ -11,6 +11,9 @@ class PivotalPluginTest(TestCase):
     def plugin(self):
         return PivotalPlugin()
 
+    def test_conf_key(self):
+        assert self.plugin.conf_key == 'pivotal'
+
     def test_get_issue_label(self):
         group = self.create_group(message='Hello world', culprit='foo.bar')
         assert self.plugin.get_issue_label(group, 1) == '#1'

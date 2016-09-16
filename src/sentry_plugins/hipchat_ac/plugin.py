@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 
-import sentry_plugins
-
 from django.conf import settings
-from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.template.context import RequestContext
@@ -13,6 +10,8 @@ from sentry import options
 from sentry.plugins import plugins
 from sentry.plugins.bases.notify import NotifyPlugin
 from sentry.utils.http import absolute_uri
+
+from sentry_plugins.base import CorePluginMixin
 
 from .cards import make_event_notification, make_activity_notification
 from .endpoints.tenants import HipchatTenantsEndpoint
@@ -76,17 +75,9 @@ def disable_plugin_for_tenant(project, tenant):
     return rv
 
 
-class HipchatPlugin(NotifyPlugin):
-    author = 'Sentry'
-    author_url = 'https://github.com/getsentry/sentry-plugins'
-    version = sentry_plugins.VERSION
+class HipchatPlugin(CorePluginMixin, NotifyPlugin):
     description = 'Bring Sentry to HipChat.'
-    resource_links = [
-        ('Bug Tracker', 'https://github.com/getsentry/sentry-plugins/issues'),
-        ('Source', 'https://github.com/getsentry/sentry-plugins'),
-    ]
     slug = 'hipchat-ac'
-    # TODO: shorten the title
     title = 'HipChat'
     conf_title = title
     conf_key = 'hipchat-ac'
@@ -108,8 +99,8 @@ class HipchatPlugin(NotifyPlugin):
 
     def get_project_urls(self):
         return [
-            url(r'^tenants/', HipchatTenantsEndpoint.as_view(plugin=self)),
-            url(r'^test-config/', HipchatTestConfigEndpoint.as_view(plugin=self)),
+            (r'^tenants/', HipchatTenantsEndpoint.as_view(plugin=self)),
+            (r'^test-config/', HipchatTestConfigEndpoint.as_view(plugin=self)),
         ]
 
     def get_metadata(self):

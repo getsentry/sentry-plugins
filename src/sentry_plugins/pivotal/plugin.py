@@ -1,40 +1,32 @@
 from __future__ import absolute_import
 
-from django.conf.urls import url
+import requests
+import six
+
 from django.utils.encoding import force_text
 from rest_framework.response import Response
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
 from sentry.http import safe_urlopen, safe_urlread
 from sentry.utils import json
-import requests
-import six
 from six.moves.urllib.parse import urlencode
 
+from sentry_plugins.base import CorePluginMixin
 
-import sentry_plugins
 
-
-class PivotalPlugin(IssuePlugin2):
-    author = 'Sentry Team'
-    author_url = 'https://github.com/getsentry/sentry-plugins'
-    version = sentry_plugins.VERSION
-    description = "Integrate Pivotal Tracker stories by linking a project and account."
-    resource_links = [
-        ('Bug Tracker', 'https://github.com/getsentry/sentry-plugins/issues'),
-        ('Source', 'https://github.com/getsentry/sentry-plugins'),
-    ]
-
+class PivotalPlugin(CorePluginMixin, IssuePlugin2):
+    description = 'Integrate Pivotal Tracker stories by linking a project and account.'
     slug = 'pivotal'
     title = 'Pivotal Tracker'
     conf_title = title
     conf_key = 'pivotal'
 
     def get_group_urls(self):
-        _patterns = super(PivotalPlugin, self).get_group_urls()
-        _patterns.append(url(r'^autocomplete',
-                             IssueGroupActionEndpoint.as_view(view_method_name='view_autocomplete',
-                                                              plugin=self)))
-        return _patterns
+        return super(PivotalPlugin, self).get_group_urls() + [
+            (r'^autocomplete', IssueGroupActionEndpoint.as_view(
+                view_method_name='view_autocomplete',
+                plugin=self,
+            )),
+        ]
 
     def is_configured(self, request, project, **kwargs):
         return all(self.get_option(k, project) for k in ('token', 'project'))
@@ -123,17 +115,17 @@ class PivotalPlugin(IssuePlugin2):
 
     def make_api_request(self, project, _url, json_data=None):
         req_headers = {
-            'X-TrackerToken': str(self.get_option('token', project)),
+            'X-TrackerToken': six.text_type(self.get_option('token', project)),
             'Content-Type': 'application/json',
         }
         return safe_urlopen(_url, json=json_data, headers=req_headers, allow_redirects=True)
 
     def create_issue(self, request, group, form_data, **kwargs):
         json_data = {
-            "story_type": "bug",
-            "name": force_text(form_data['title'], encoding='utf-8', errors='replace'),
-            "description": force_text(form_data['description'], encoding='utf-8', errors='replace'),
-            "labels": ["sentry"],
+            'story_type': 'bug',
+            'name': force_text(form_data['title'], encoding='utf-8', errors='replace'),
+            'description': force_text(form_data['description'], encoding='utf-8', errors='replace'),
+            'labels': ['sentry'],
         }
 
         try:
