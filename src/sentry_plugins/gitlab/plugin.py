@@ -25,17 +25,35 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
     conf_key = 'gitlab'
 
     def is_configured(self, request, project, **kwargs):
-        return bool(self.get_option('gitlab_repo', project))
+        return bool(
+            self.get_option('gitlab_repo', project) and
+            self.get_option('gitlab_token', project) and
+            self.get_option('gitlab_url', project)
+        )
 
     def get_new_issue_fields(self, request, group, event, **kwargs):
         fields = super(GitLabPlugin, self).get_new_issue_fields(
             request, group, event, **kwargs)
-        return fields + [{
+        return [{
             'name': 'repo',
-            'label': 'GitLab Repository',
+            'label': 'Repository',
             'default': self.get_option('gitlab_repo', group.project),
             'type': 'text',
             'readonly': True
+        }] + fields + [{
+            'name': 'assignee',
+            'label': 'Assignee',
+            'default': '',
+            'type': 'select',
+            'required': False,
+            'choices': self.get_allowed_assignees(request, group),
+        }, {
+            'name': 'labels',
+            'label': 'Issue Labels',
+            'default': self.get_option('gitlab_labels', group.project),
+            'type': 'text',
+            'placeholder': 'e.g. high, bug',
+            'required': False,
         }]
 
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
@@ -55,6 +73,17 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
             'required': False
         }]
 
+    def get_allowed_assignees(self, request, group):
+        repo = self.get_option('gitlab_repo', group.project)
+        client = self.get_client(group.project)
+        try:
+            response = client.list_project_members(repo)
+        except ApiError as e:
+            self.raise_error(e)
+        users = tuple((u['id'], u['username']) for u in response)
+
+        return (('', '(Unassigned)'),) + users
+
     def get_new_issue_title(self, **kwargs):
         return 'Create GitLab Issue'
 
@@ -66,7 +95,6 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
 
     def create_issue(self, request, group, form_data, **kwargs):
         repo = self.get_option('gitlab_repo', group.project)
-        labels = self.get_option('gitlab_labels', group.project)
 
         client = self.get_client(group.project)
 
@@ -74,12 +102,13 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
             response = client.create_issue(repo, {
                 'title': form_data['title'],
                 'description': form_data['description'],
-                'labels': labels,
+                'labels': form_data.get('labels'),
+                'assignee_id': form_data.get('assignee'),
             })
         except Exception as e:
             self.raise_error(e)
 
-        return response['id']
+        return response['iid']
 
     def link_issue(self, request, group, form_data, **kwargs):
         comment = form_data.get('comment')
