@@ -82,6 +82,7 @@ Enable the plugin by adding it in the Add-on Management page in JIRA.
 
 Development
 ~~~~~~~~~~~
-Use https://ngrok.com to expose your local Sentry to the internet. Update your config.yml to use your ngrok url: `system.url-prefix: 'https://<xxx>.ngrok.io'`
+Use https://ngrok.com to expose your local Sentry to the internet. Update your config.yml to use your ngrok url:
+    system.url-prefix: 'https://<xxx>.ngrok.io'
 
 From the manage add-on page in JIRA, choose 'Upload add-on' and copy the URL for the descriptor view.
