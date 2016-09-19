@@ -394,7 +394,7 @@ def configure(request, context):
 
     if not request.user.is_authenticated():
         if request.method == 'POST':
-            auth.initiate_login(request, next_uri=request.get_full_path())
+            auth.initiate_login(request, next_url=request.get_full_path())
             return HttpResponseRedirect(auth.get_login_url())
 
     elif context.tenant.auth_user is None and request.user.is_authenticated():
