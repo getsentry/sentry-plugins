@@ -16,10 +16,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
 from sentry import options
-from sentry.utils.http import absolute_uri
 from sentry.models import (
     Organization, Team, User, OrganizationMember, GroupAssignee
 )
+from sentry.utils import auth
+from sentry.utils.http import absolute_uri
 
 from .utils import JsonResponse, IS_DEBUG
 from .models import Tenant, Context
@@ -388,18 +389,15 @@ def cors(f):
 @allow_frame
 @with_context
 def configure(request, context):
-    # XXX: this is a bit terrible because it means the login url is
-    # already set at the time we visit this page.  This can have some
-    # stupid consequences when opening up the login page seaprately in a
-    # different tab later.  Ideally we could pass the login url through as
-    # a URL parameter instead but this is currently not securely possible.
-    request.session['_next'] = request.get_full_path()
-
     grant_form = None
     project_select_form = None
 
-    if context.tenant.auth_user is None and \
-       request.user.is_authenticated():
+    if not request.user.is_authenticated():
+        if request.method == 'POST':
+            auth.initiate_login(request, next_uri=request.get_full_path())
+            return HttpResponseRedirect(auth.get_login_url())
+
+    elif context.tenant.auth_user is None and request.user.is_authenticated():
         grant_form = GrantAccessForm(context.tenant, request)
         if request.method == 'POST' and grant_form.is_valid():
             grant_form.save_changes()

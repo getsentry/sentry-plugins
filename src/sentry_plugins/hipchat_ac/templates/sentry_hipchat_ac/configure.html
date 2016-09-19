@@ -37,9 +37,11 @@
       <button type="submit" class="btn">Grant access</button>
     </form>
     {% else %}
-    <p>
-      <a href="{% url 'sentry-login' %}" class="btn centered">Connect with Sentry</a>
-    </p>
+    <form action="" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="op" value="login" />
+      <button type="submit" class="btn btn-primary">Authenticate with Sentry</button>
+    </form>
     {% endif %}
   {% endif %}
 {% endblock %}
