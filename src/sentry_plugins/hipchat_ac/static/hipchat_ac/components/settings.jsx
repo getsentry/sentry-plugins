@@ -1,5 +1,5 @@
 import React from 'react';
-import {LoadingError, LoadingIndicator, plugins} from 'sentry';
+import {i18n, IndicatorStore, LoadingError, LoadingIndicator, plugins} from 'sentry';
 
 class Settings extends plugins.BasePlugin.DefaultSettings {
   constructor(props) {
@@ -37,6 +37,7 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
 
   // TODO(dcramer): move this to Sentry core
   onTest() {
+    let loadingIndicator = IndicatorStore.add(i18n.t('Saving changes..'));
     this.api.request(`${this.getPluginEndpoint()}test-config/`, {
       method: 'POST',
       success: (data) => {
@@ -51,6 +52,9 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
             message: 'An unknown error occurred while testing this integration.',
           },
         });
+      },
+      complete: () => {
+        IndicatorStore.remove(loadingIndicator);
       }
     });
   }
