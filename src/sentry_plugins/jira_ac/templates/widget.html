@@ -41,9 +41,8 @@
               var $issuesEl = $('#sentry-issues'),
                   $reporter = $('#reporter'),
                   count = issues.length > MAX_ISSUES ? '5+' : issues.length;
-
               $reporter.append(AJS.template.load('reporter-template').fill({
-                avatarURL: reporter.avatarUrls['24x24'],
+                avatarURL: reporter.avatarUrls['48x48'],
                 email: email,
                 count: (count + ' issue' + (issues.length === 1 ? '' : 's') +
                         (issues.length ? ':' : ''))

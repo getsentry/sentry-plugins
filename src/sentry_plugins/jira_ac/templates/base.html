@@ -14,29 +14,38 @@
     }
 
     .reporter {
-      margin-top: 10px;
+      position: relative;
     }
 
     .reporter img {
       border-radius: 3px;
+      position: absolute;
+      left: 0;
+      top: 4px;
+      width: 32px;
+      height: 32px;
     }
 
     .reporter span {
-      display: inline-block;
-      padding-left: 8px;
-      vertical-align: top;
+      display: block;
+      padding-left: 42px;
+      min-height: 32px;
     }
 
     .aui-item.error-level {
-      padding-top: 5px;
-      width: 15px;
+      padding-top: 2px;
+      width: 14px;
     }
 
     .aui-item.error-level span {
-      width: 15px;
-      height: 15px;
+      width: 14px;
+      height: 14px;
       display: inline-block;
       border-radius: 30px;
+    }
+
+    .aui-group>.aui-item+.aui-item {
+      padding-left: 10px;
     }
 
     .aui-item.error-level .sentry-error {
@@ -56,7 +65,7 @@
     }
 
     .last-seen {
-      color: #999999;
+      color: #999ca0;
     }
 
     #login .aui-page-panel {
