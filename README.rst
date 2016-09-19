@@ -72,4 +72,4 @@ Create a tunnel to localhost using something like https://ngrok.com/download::
 
 Start Sentry with the following parameters set::
 
-    AC_BASE_URL=https://<xxx>.ngrok.io HTTPS=on sentry runserver
+    AC_BASE_URL=https://<xxx>.ngrok.io HTTPS=on sentry devserver
