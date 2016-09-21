@@ -35,7 +35,7 @@ class GitHubClient(object):
 
     def get_issue(self, repo, issue_id):
         return self.request(
-            'POST',
+            'GET',
             '/repos/{}/issues/{}'.format(repo, issue_id),
         )
 
