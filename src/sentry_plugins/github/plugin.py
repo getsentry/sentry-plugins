@@ -1,17 +1,32 @@
 from __future__ import absolute_import
 
-import requests
 import six
 
 from rest_framework.response import Response
-from six.moves.urllib.parse import urlencode
 
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
-from sentry.http import safe_urlopen, safe_urlread
-from sentry.utils import json
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.exceptions import ApiError, ApiUnauthorized
+
+from .client import GitHubClient
+
+ERR_INTERNAL = (
+    'An internal error occurred with the integration and the Sentry team has'
+    ' been notified'
+)
+
+ERR_UNAUTHORIZED = (
+    'Unauthorized: either your access token was invalid or you do not have'
+    ' access'
+)
+
+ERR_404 = (
+    'GitHub returned a 404 Not Found error. If this repository exists, ensure'
+    ' you have access to it and that Sentry is being allowed to read data from'
+    ' this organization (Account Settings > Authorized Applications > Sentry).'
+)
 
 
 class GitHubPlugin(CorePluginMixin, IssuePlugin2):
@@ -70,101 +85,84 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             'required': False
         }]
 
+    def get_client(self, project, user):
+        auth = self.get_auth_for_user(user=user)
+        if auth is None:
+            raise PluginError(ERR_UNAUTHORIZED)
+        return GitHubClient(token=auth.tokens['access_token'])
+
     def handle_api_error(self, error):
-        msg = u'Error communicating with GitHub: %s' % error
         status = 400 if isinstance(error, PluginError) else 502
         return Response({
             'error_type': 'validation',
-            'errors': {'__all__': msg},
+            'errors': {'__all__': self.message_from_error(error)},
         }, status=status)
 
+    def message_from_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            return ERR_UNAUTHORIZED
+        elif isinstance(exc, ApiError):
+            if exc.code == 404:
+                return (ERR_404)
+            return ('Error Communicating with GitHub (HTTP %s): %s' % (
+                exc.code,
+                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
+            ))
+        else:
+            return ERR_INTERNAL
+
+    def raise_error(self, exc):
+        if not isinstance(exc, ApiError):
+            self.logger.exception(six.text_type(exc))
+        raise PluginError(self.message_from_error(exc))
+
     def get_allowed_assignees(self, request, group):
+        client = self.get_client(group.project, request.user)
         try:
-            _url = self.build_api_url(group, 'assignees')
-            req = self.make_api_request(request.user, _url)
-            body = safe_urlread(req)
-        except (requests.RequestException, PluginError) as e:
-            raise PluginError(u'Error communicating with GitHub: %s' % e)
+            response = client.list_assignees(
+                repo=self.get_option('repo', group.project),
+            )
+        except Exception as e:
+            self.raise_error(e)
 
-        try:
-            json_resp = json.loads(body)
-        except ValueError as e:
-            raise PluginError(u'Error communicating with GitHub: %s' % e)
-
-        if req.status_code > 399:
-            raise PluginError(u'Error communicating with GitHub: %s' % json_resp.get('message', ''))
-
-        users = tuple((u['login'], u['login']) for u in json_resp)
+        users = tuple((u['login'], u['login']) for u in response)
 
         return (('', 'Unassigned'),) + users
 
-    def build_api_url(self, group, github_api, query_params=None):
-        repo = self.get_option('repo', group.project)
-
-        _url = 'https://api.github.com/repos/%s/%s' % (repo, github_api)
-
-        if query_params:
-            _url = '%s?%s' % (_url, urlencode(query_params))
-
-        return _url
-
-    def make_api_request(self, user, _url, json_data=None):
-        auth = self.get_auth_for_user(user=user)
-        if auth is None:
-            raise PluginError('You have not yet associated GitHub with your account.')
-
-        req_headers = {
-            'Authorization': 'token %s' % auth.tokens['access_token'],
-        }
-        return safe_urlopen(_url, json=json_data, headers=req_headers, allow_redirects=True)
-
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
-        json_data = {
-            "title": form_data['title'],
-            "body": form_data['description'],
-            "assignee": form_data.get('assignee'),
-        }
+        client = self.get_client(group.project, request.user)
 
         try:
-            _url = self.build_api_url(group, 'issues')
-            req = self.make_api_request(request.user, _url, json_data=json_data)
-            body = safe_urlread(req)
-        except requests.RequestException as e:
-            msg = six.text_type(e)
-            raise PluginError('Error communicating with GitHub: %s' % (msg,))
+            response = client.create_issue(
+                repo=self.get_option('repo', group.project),
+                data={
+                    'title': form_data['title'],
+                    'body': form_data['description'],
+                    'assignee': form_data.get('assignee'),
+                },
+            )
+        except Exception as e:
+            self.raise_error(e)
 
-        try:
-            json_resp = json.loads(body)
-        except ValueError as e:
-            msg = six.text_type(e)
-            raise PluginError('Error communicating with GitHub: %s' % (msg,))
-
-        if req.status_code > 399:
-            raise PluginError(json_resp['message'])
-
-        return json_resp['number']
+        return response['number']
 
     def link_issue(self, request, group, form_data, **kwargs):
         comment = form_data.get('comment')
         if not comment:
             return
-        _url = '%s/%s/comments' % (self.build_api_url(group, 'issues'), form_data['issue_id'])
-        try:
-            req = self.make_api_request(request.user, _url, json_data={'body': comment})
-            body = safe_urlread(req)
-        except requests.RequestException as e:
-            msg = six.text_type(e)
-            raise PluginError('Error communicating with GitHub: %s' % (msg,))
 
+        client = self.get_client(group.project, request.user)
         try:
-            json_resp = json.loads(body)
-        except ValueError as e:
-            msg = six.text_type(e)
-            raise PluginError('Error communicating with GitHub: %s' % (msg,))
-
-        if req.status_code > 399:
-            raise PluginError(json_resp['message'])
+            client.create_comment(
+                repo=self.get_option('repo', group.project),
+                issue_id=form_data['issue_id'],
+                data={
+                    'body': comment,
+                },
+            )
+        except Exception as e:
+            self.raise_error(e)
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GH-%s' % issue_id
@@ -176,12 +174,17 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
         return 'https://github.com/%s/issues/%s' % (repo, issue_id)
 
     def get_issue_title_by_id(self, request, group, issue_id):
-        _url = '%s/%s' % (self.build_api_url(group, 'issues'), issue_id)
-        req = self.make_api_request(request.user, _url)
+        client = self.get_client(group.project, request.user)
 
-        body = safe_urlread(req)
-        json_resp = json.loads(body)
-        return json_resp['title']
+        try:
+            response = client.get_issue(
+                repo=self.get_option('repo', group.project),
+                issue_id=issue_id,
+            )
+        except Exception as e:
+            return self.handle_api_error(e)
+
+        return response['title']
 
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
@@ -190,24 +193,19 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             return Response({'issue_id': []})
 
         repo = self.get_option('repo', group.project)
-        query = (u'repo:%s %s' % (repo, query)).encode('utf-8')
-        _url = 'https://api.github.com/search/issues?%s' % urlencode({'q': query})
+        client = self.get_client(group.project, request.user)
 
         try:
-            req = self.make_api_request(request.user, _url)
-            body = safe_urlread(req)
-        except (requests.RequestException, PluginError) as e:
-            return self.handle_api_error(e)
-
-        try:
-            json_resp = json.loads(body)
-        except ValueError as e:
+            response = client.search_issues(
+                query=(u'repo:%s %s' % (repo, query)).encode('utf-8'),
+            )
+        except Exception as e:
             return self.handle_api_error(e)
 
         issues = [{
             'text': '(#%s) %s' % (i['number'], i['title']),
             'id': i['number']
-        } for i in json_resp.get('items', [])]
+        } for i in response.get('items', [])]
 
         return Response({field: issues})
 
