@@ -14,8 +14,12 @@ class HipchatTenantsTest(APITestCase, HipchatFixture):
             project.slug,
         )
 
-        tenant = self.create_tenant(
+        tenant1 = self.create_tenant(
             auth_user=self.user,
+            projects=[project],
+        )
+        tenant2 = self.create_tenant(
+            auth_user=None,
             projects=[project],
         )
 
@@ -24,5 +28,8 @@ class HipchatTenantsTest(APITestCase, HipchatFixture):
         response = self.client.get(url)
 
         assert response.status_code == 200
-        assert len(response.data) == 1
-        assert response.data[0]['id'] == tenant.id
+        assert len(response.data) == 2
+        assert response.data[0]['id'] == tenant1.id
+        assert response.data[0]['authUser']['id'] == str(self.user.id)
+        assert response.data[1]['id'] == tenant2.id
+        assert response.data[1]['authUser'] is None

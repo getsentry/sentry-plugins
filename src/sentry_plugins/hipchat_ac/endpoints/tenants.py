@@ -25,5 +25,5 @@ class HipchatTenantsEndpoint(PluginProjectEndpoint):
                 'name': t.auth_user.get_display_name(),
                 'username': t.auth_user.username,
                 'email': t.auth_user.email,
-            },
+            } if t.auth_user else None,
         } for t in queryset])

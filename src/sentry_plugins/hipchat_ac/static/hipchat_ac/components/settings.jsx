@@ -90,7 +90,7 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
                     <strong>{tenant.room.name}</strong><br />
                     <small>(id: {tenant.room.id}; owner: {tenant.room.owner.name})</small>
                   </td>
-                  <td>{tenant.authUser.username}</td>
+                  <td>{tenant.authUser && tenant.authUser.username || '(unknown)'}</td>
                   {isTestable &&
                     <td>
                       <a className="btn btn-default btn-sm"
