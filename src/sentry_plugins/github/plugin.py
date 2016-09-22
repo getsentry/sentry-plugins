@@ -148,21 +148,31 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
         return response['number']
 
     def link_issue(self, request, group, form_data, **kwargs):
-        comment = form_data.get('comment')
-        if not comment:
-            return
-
         client = self.get_client(group.project, request.user)
         try:
-            client.create_comment(
+            issue = client.get_issue(
                 repo=self.get_option('repo', group.project),
                 issue_id=form_data['issue_id'],
-                data={
-                    'body': comment,
-                },
             )
         except Exception as e:
             self.raise_error(e)
+
+        comment = form_data.get('comment')
+        if comment:
+            try:
+                client.create_comment(
+                    repo=self.get_option('repo', group.project),
+                    issue_id=form_data['issue_id'],
+                    data={
+                        'body': comment,
+                    },
+                )
+            except Exception as e:
+                self.raise_error(e)
+
+        return {
+            'title': issue['title']
+        }
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GH-%s' % issue_id
@@ -172,19 +182,6 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
         repo = self.get_option('repo', group.project)
 
         return 'https://github.com/%s/issues/%s' % (repo, issue_id)
-
-    def get_issue_title_by_id(self, request, group, issue_id):
-        client = self.get_client(group.project, request.user)
-
-        try:
-            response = client.get_issue(
-                repo=self.get_option('repo', group.project),
-                issue_id=issue_id,
-            )
-        except Exception as e:
-            return self.handle_api_error(e)
-
-        return response['title']
 
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
