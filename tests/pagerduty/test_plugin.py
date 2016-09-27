@@ -19,7 +19,7 @@ SUCCESS = """{
 }"""
 
 
-class HipchatPluginTest(TestCase):
+class PagerDutyPluginTest(TestCase):
     @fixture
     def plugin(self):
         return PagerDutyPlugin()
