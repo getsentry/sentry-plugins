@@ -18,6 +18,7 @@ def pytest_configure(config):
         'sentry_plugins.hipchat_ac',
         'sentry_plugins.github',
         'sentry_plugins.gitlab',
+        'sentry_plugins.pagerduty',
         'sentry_plugins.pivotal',
     )
 
@@ -26,8 +27,10 @@ def pytest_configure(config):
     from sentry_plugins.github.plugin import GitHubPlugin
     from sentry_plugins.gitlab.plugin import GitLabPlugin
     from sentry_plugins.hipchat_ac.plugin import HipchatPlugin
+    from sentry_plugins.pagerduty.plugin import PagerDutyPlugin
     from sentry_plugins.pivotal.plugin import PivotalPlugin
     plugins.register(HipchatPlugin)
     plugins.register(GitHubPlugin)
     plugins.register(GitLabPlugin)
+    plugins.register(PagerDutyPlugin)
     plugins.register(PivotalPlugin)
