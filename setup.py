@@ -103,7 +103,7 @@ setup(
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin',
             'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',
-            'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin'
+            'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin',
             'pagerduty = sentry_plugins.pagerduty.plugin:PagerDutyPlugin',
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
             'pushover = sentry_plugins.pushover.plugin:PushoverPlugin',
