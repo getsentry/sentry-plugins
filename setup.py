@@ -97,6 +97,7 @@ setup(
             'jira_ac = sentry_plugins.jira_ac',
             'pagerduty = sentry_plugins.pagerduty',
             'pivotal = sentry_plugins.pivotal',
+            'pushover = sentry_plugins.pushover',
         ],
         'sentry.plugins': [
             'github = sentry_plugins.github.plugin:GitHubPlugin',
@@ -105,6 +106,7 @@ setup(
             'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin'
             'pagerduty = sentry_plugins.pagerduty.plugin:PagerDutyPlugin',
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
+            'pushover = sentry_plugins.pushover.plugin:PushoverPlugin',
         ],
     },
     classifiers=[
