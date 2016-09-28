@@ -54,13 +54,12 @@ class GitLabClient(object):
             data=data,
         )
 
-    def create_note(self, repo, issue_id, data):
-        issue = self.get_issue(repo, issue_id)
+    def create_note(self, repo, global_issue_id, data):
         return self.request(
             'POST',
             '/projects/{}/issues/{}/notes'.format(
                 quote(repo, safe=''),
-                issue['id'],
+                global_issue_id,
             ),
             data=data,
         )

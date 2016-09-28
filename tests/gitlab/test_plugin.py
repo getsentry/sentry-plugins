@@ -3,10 +3,7 @@ from __future__ import absolute_import
 import responses
 
 from exam import fixture
-from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
-from django.test.utils import override_settings
-from sentry.plugins.bases.issue2 import PluginError
 from sentry.testutils import TestCase
 from sentry.utils import json
 
@@ -45,26 +42,24 @@ class GitLabPluginTest(TestCase):
         assert self.plugin.is_configured(None, self.project) is True
 
     @responses.activate
-    @override_settings(GITHUB_APP_ID='abc', GITHUB_API_SECRET='123')
     def test_create_issue(self):
+        responses.add(responses.POST, 'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues',
+            body='{"iid": 1, "id": "10"}')
+
         self.plugin.set_option('gitlab_url', 'https://gitlab.com', self.project)
         self.plugin.set_option('gitlab_repo', 'getsentry/sentry', self.project)
+        self.plugin.set_option('gitlab_token', 'abcdefg', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
         request = self.request.get('/')
-        request.user = AnonymousUser()
+        request.user = self.user
         form_data = {
             'title': 'Hello',
             'description': 'Fix this.',
         }
-        with self.assertRaises(PluginError):
-            self.plugin.create_issue(request, group, form_data)
 
-        request.user = self.user
         self.login_as(self.user)
 
-        responses.add(responses.POST, 'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues',
-            body='{"iid": 1}')
         assert self.plugin.create_issue(request, group, form_data) == 1
         request = responses.calls[0].request
         payload = json.loads(request.body)
@@ -73,4 +68,35 @@ class GitLabPluginTest(TestCase):
             'description': 'Fix this.',
             'labels': None,
             'assignee_id': None,
+        }
+
+    @responses.activate
+    def test_link_issue(self):
+        responses.add(responses.GET, 'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues?iid=1',
+            body='[{"iid": 1, "id": "10", "title": "Hello world"}]',
+            match_querystring=True)
+        responses.add(responses.POST, 'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues/10/notes',
+            body='{"body": "Hello"}')
+
+        self.plugin.set_option('gitlab_url', 'https://gitlab.com', self.project)
+        self.plugin.set_option('gitlab_repo', 'getsentry/sentry', self.project)
+        self.plugin.set_option('gitlab_token', 'abcdefg', self.project)
+        group = self.create_group(message='Hello world', culprit='foo.bar')
+
+        request = self.request.get('/')
+        request.user = self.user
+        form_data = {
+            'comment': 'Hello',
+            'issue_id': '1',
+        }
+
+        self.login_as(self.user)
+
+        assert self.plugin.link_issue(request, group, form_data) == {
+            'title': 'Hello world',
+        }
+        request = responses.calls[-1].request
+        payload = json.loads(request.body)
+        assert payload == {
+            'body': 'Hello',
         }

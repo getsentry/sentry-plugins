@@ -43,6 +43,9 @@ class GitHubPluginTest(TestCase):
     @responses.activate
     @override_settings(GITHUB_APP_ID='abc', GITHUB_API_SECRET='123')
     def test_create_issue(self):
+        responses.add(responses.POST, 'https://api.github.com/repos/getsentry/sentry/issues',
+            body='{"number": 1, "title": "Hello world"}')
+
         self.plugin.set_option('repo', 'getsentry/sentry', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
@@ -59,8 +62,6 @@ class GitHubPluginTest(TestCase):
         self.login_as(self.user)
         UserSocialAuth.objects.create(user=self.user, provider=self.plugin.auth_provider, extra_data={'access_token': 'foo'})
 
-        responses.add(responses.POST, 'https://api.github.com/repos/getsentry/sentry/issues',
-            body='{"number": 1}')
         assert self.plugin.create_issue(request, group, form_data) == 1
         request = responses.calls[0].request
         payload = json.loads(request.body)
@@ -68,4 +69,41 @@ class GitHubPluginTest(TestCase):
             'title': 'Hello',
             'body': 'Fix this.',
             'assignee': None
+        }
+
+    @responses.activate
+    @override_settings(GITHUB_APP_ID='abc', GITHUB_API_SECRET='123')
+    def test_link_issue(self):
+        responses.add(responses.GET, 'https://api.github.com/repos/getsentry/sentry/issues/1',
+            body='{"number": 1, "title": "Hello world"}')
+        responses.add(responses.POST, 'https://api.github.com/repos/getsentry/sentry/issues/1/comments',
+            body='{"body": "Hello"}')
+
+        self.plugin.set_option('repo', 'getsentry/sentry', self.project)
+        group = self.create_group(message='Hello world', culprit='foo.bar')
+
+        request = self.request.get('/')
+        request.user = AnonymousUser()
+        form_data = {
+            'comment': 'Hello',
+            'issue_id': '1',
+        }
+        with self.assertRaises(PluginError):
+            self.plugin.link_issue(request, group, form_data)
+
+        request.user = self.user
+        self.login_as(self.user)
+        UserSocialAuth.objects.create(
+            user=self.user,
+            provider=self.plugin.auth_provider,
+            extra_data={'access_token': 'foo'},
+        )
+
+        assert self.plugin.link_issue(request, group, form_data) == {
+            'title': 'Hello world',
+        }
+        request = responses.calls[-1].request
+        payload = json.loads(request.body)
+        assert payload == {
+            'body': 'Hello',
         }

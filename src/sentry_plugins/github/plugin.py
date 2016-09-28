@@ -149,9 +149,10 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
 
     def link_issue(self, request, group, form_data, **kwargs):
         client = self.get_client(group.project, request.user)
+        repo = self.get_option('repo', group.project)
         try:
             issue = client.get_issue(
-                repo=self.get_option('repo', group.project),
+                repo=repo,
                 issue_id=form_data['issue_id'],
             )
         except Exception as e:
@@ -161,8 +162,8 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
         if comment:
             try:
                 client.create_comment(
-                    repo=self.get_option('repo', group.project),
-                    issue_id=form_data['issue_id'],
+                    repo=repo,
+                    issue_id=issue['number'],
                     data={
                         'body': comment,
                     },

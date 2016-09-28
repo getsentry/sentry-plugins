@@ -111,19 +111,32 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
         return response['iid']
 
     def link_issue(self, request, group, form_data, **kwargs):
-        comment = form_data.get('comment')
-        if not comment:
-            return
-
         client = self.get_client(group.project)
         repo = self.get_option('gitlab_repo', group.project)
-
         try:
-            client.create_note(repo, form_data['issue_id'], {
-                'body': comment,
-            })
+            issue = client.get_issue(
+                repo=repo,
+                issue_id=form_data['issue_id'],
+            )
         except Exception as e:
             self.raise_error(e)
+
+        comment = form_data.get('comment')
+        if comment:
+            try:
+                client.create_note(
+                    repo=repo,
+                    global_issue_id=issue['id'],
+                    data={
+                        'body': comment,
+                    },
+                )
+            except Exception as e:
+                self.raise_error(e)
+
+        return {
+            'title': issue['title']
+        }
 
     def raise_error(self, exc):
         if isinstance(exc, ApiUnauthorized):
@@ -139,12 +152,6 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GL-{}'.format(issue_id)
-
-    def get_issue_title_by_id(self, request, group, issue_id):
-        repo = self.get_option('gitlab_repo', group.project)
-        client = self.get_client(group.project)
-        issue = client.get_issue(repo, issue_id)
-        return issue['title']
 
     def get_issue_url(self, group, issue_id, **kwargs):
         url = self.get_option('gitlab_url', group.project).rstrip('/')
