@@ -4,7 +4,8 @@ import six
 
 from rest_framework.response import Response
 
-from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
+from sentry.exceptions import InvalidIdentity, PluginError
+from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
@@ -91,13 +92,6 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             raise PluginError(ERR_UNAUTHORIZED)
         return GitHubClient(token=auth.tokens['access_token'])
 
-    def handle_api_error(self, error):
-        status = 400 if isinstance(error, PluginError) else 502
-        return Response({
-            'error_type': 'validation',
-            'errors': {'__all__': self.message_from_error(error)},
-        }, status=status)
-
     def message_from_error(self, exc):
         if isinstance(exc, ApiUnauthorized):
             return ERR_UNAUTHORIZED
@@ -114,6 +108,8 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
     def raise_error(self, exc):
         if not isinstance(exc, ApiError):
             self.logger.exception(six.text_type(exc))
+        if isinstance(exc, ApiUnauthorized):
+            raise InvalidIdentity(self.message_from_error(exc))
         raise PluginError(self.message_from_error(exc))
 
     def get_allowed_assignees(self, request, group):
