@@ -52,7 +52,7 @@ class PushoverPluginTest(TestCase):
         payload = parse_qs(request.body)
         assert payload == {
             'message': ['{}\n\nTags: level=warning'.format(event.get_legacy_message())],
-            'title': ['Bar: foo.bar'],
+            'title': ['Bar: Hello world'],
             'url': ['http://example.com/baz/bar/issues/{}/'.format(group.id)],
             'url_title': ['Issue Details'],
             'priority': ['0'],
