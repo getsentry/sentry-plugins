@@ -1,18 +1,22 @@
 from __future__ import absolute_import
 
 from exam import fixture
-from sentry.testutils import TestCase
+from sentry.testutils import PluginTestCase
 
 from sentry_plugins.pivotal.plugin import PivotalPlugin
 
 
-class PivotalPluginTest(TestCase):
+class PivotalPluginTest(PluginTestCase):
     @fixture
     def plugin(self):
         return PivotalPlugin()
 
     def test_conf_key(self):
         assert self.plugin.conf_key == 'pivotal'
+
+    def test_entry_point(self):
+        self.assertAppInstalled('pivotal', 'sentry_plugins.pivotal')
+        self.assertPluginInstalled('pivotal', self.plugin)
 
     def test_get_issue_label(self):
         group = self.create_group(message='Hello world', culprit='foo.bar')

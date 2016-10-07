@@ -4,13 +4,13 @@ import responses
 
 from exam import fixture
 from django.test import RequestFactory
-from sentry.testutils import TestCase
+from sentry.testutils import PluginTestCase
 from sentry.utils import json
 
 from sentry_plugins.gitlab.plugin import GitLabPlugin
 
 
-class GitLabPluginTest(TestCase):
+class GitLabPluginTest(PluginTestCase):
     @fixture
     def plugin(self):
         return GitLabPlugin()
@@ -21,6 +21,10 @@ class GitLabPluginTest(TestCase):
 
     def test_conf_key(self):
         assert self.plugin.conf_key == 'gitlab'
+
+    def test_entry_point(self):
+        self.assertAppInstalled('gitlab', 'sentry_plugins.gitlab')
+        self.assertPluginInstalled('gitlab', self.plugin)
 
     def test_get_issue_label(self):
         group = self.create_group(message='Hello world', culprit='foo.bar')

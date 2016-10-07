@@ -5,7 +5,7 @@ import responses
 from exam import fixture
 from sentry.models import Rule
 from sentry.plugins import Notification
-from sentry.testutils import TestCase
+from sentry.testutils import PluginTestCase
 from six.moves.urllib.parse import parse_qs
 
 from sentry_plugins.pushover.plugin import PushoverPlugin
@@ -13,13 +13,17 @@ from sentry_plugins.pushover.plugin import PushoverPlugin
 SUCCESS = """{"status":1,"request":"e460545a8b333d0da2f3602aff3133d6"}"""
 
 
-class PushoverPluginTest(TestCase):
+class PushoverPluginTest(PluginTestCase):
     @fixture
     def plugin(self):
         return PushoverPlugin()
 
     def test_conf_key(self):
         assert self.plugin.conf_key == 'pushover'
+
+    def test_entry_point(self):
+        self.assertAppInstalled('pushover', 'sentry_plugins.pushover')
+        self.assertPluginInstalled('pushover', self.plugin)
 
     def test_is_configured(self):
         assert self.plugin.is_configured(self.project) is False

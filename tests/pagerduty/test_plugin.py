@@ -5,7 +5,7 @@ import responses
 from exam import fixture
 from sentry.models import Rule
 from sentry.plugins import Notification
-from sentry.testutils import TestCase
+from sentry.testutils import PluginTestCase
 from sentry.utils import json
 
 from sentry_plugins.pagerduty.plugin import PagerDutyPlugin
@@ -19,13 +19,17 @@ SUCCESS = """{
 }"""
 
 
-class PagerDutyPluginTest(TestCase):
+class PagerDutyPluginTest(PluginTestCase):
     @fixture
     def plugin(self):
         return PagerDutyPlugin()
 
     def test_conf_key(self):
         assert self.plugin.conf_key == 'pagerduty'
+
+    def test_entry_point(self):
+        self.assertAppInstalled('pagerduty', 'sentry_plugins.pagerduty')
+        self.assertPluginInstalled('pagerduty', self.plugin)
 
     def test_is_configured(self):
         assert self.plugin.is_configured(self.project) is False

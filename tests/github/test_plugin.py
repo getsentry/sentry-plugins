@@ -7,14 +7,14 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from django.test.utils import override_settings
 from sentry.plugins.bases.issue2 import PluginError
-from sentry.testutils import TestCase
+from sentry.testutils import PluginTestCase
 from sentry.utils import json
 from social_auth.models import UserSocialAuth
 
 from sentry_plugins.github.plugin import GitHubPlugin
 
 
-class GitHubPluginTest(TestCase):
+class GitHubPluginTest(PluginTestCase):
     @fixture
     def plugin(self):
         return GitHubPlugin()
@@ -25,6 +25,10 @@ class GitHubPluginTest(TestCase):
 
     def test_conf_key(self):
         assert self.plugin.conf_key == 'github'
+
+    def test_entry_point(self):
+        self.assertAppInstalled('github', 'sentry_plugins.github')
+        self.assertPluginInstalled('github', self.plugin)
 
     def test_get_issue_label(self):
         group = self.create_group(message='Hello world', culprit='foo.bar')
