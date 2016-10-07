@@ -97,7 +97,7 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             return ERR_UNAUTHORIZED
         elif isinstance(exc, ApiError):
             if exc.code == 404:
-                return (ERR_404)
+                return ERR_404
             return ('Error Communicating with GitHub (HTTP %s): %s' % (
                 exc.code,
                 exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
