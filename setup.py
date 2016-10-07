@@ -29,6 +29,7 @@ tests_require = [
 ]
 
 install_requires = [
+    'BeautifulSoup>=3.2.1',
     'PyJWT',
 ]
 
@@ -37,6 +38,7 @@ class BuildAssetsCommand(BuildAssetsCommand):
     def get_dist_paths(self):
         return [
             'src/sentry_plugins/hipchat_ac/static/hipchat_ac/dist',
+            'src/sentry_plugins/jira/static/jira/dist',
         ]
 
 
@@ -94,6 +96,7 @@ setup(
             'github = sentry_plugins.github',
             'gitlab = sentry_plugins.gitlab',
             'hipchat_ac = sentry_plugins.hipchat_ac',
+            'jira = sentry_plugins.jira',
             'jira_ac = sentry_plugins.jira_ac',
             'pagerduty = sentry_plugins.pagerduty',
             'pivotal = sentry_plugins.pivotal',
@@ -103,6 +106,7 @@ setup(
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin',
             'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',
+            'jira = sentry_plugins.jira.plugin:JiraPlugin',
             'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin',
             'pagerduty = sentry_plugins.pagerduty.plugin:PagerDutyPlugin',
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',

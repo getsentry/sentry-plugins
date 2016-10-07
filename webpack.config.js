@@ -4,7 +4,8 @@ var path = require('path'),
     webpack = require('webpack');
 
 var APPS = [
-  'hipchat-ac'
+  'hipchat-ac',
+  'jira'
 ];
 
 var IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -23,6 +24,7 @@ function getConfig(app) {
       'reflux': 'Reflux',
       'moment': 'moment',
       'sentry': 'Sentry',
+      'underscore': 'underscore'
     },
     name: app,
     entry: pyName,
