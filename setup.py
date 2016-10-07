@@ -78,8 +78,8 @@ cmdclass = {
 setup(
     name='sentry-plugins',
     version='0.1.2',
-    author='David Cramer',
-    author_email='dcramer@gmail.com',
+    author='Sentry',
+    author_email='hello@getsentry.com',
     url='http://github.com/getsentry/sentry-plugins',
     description='A collection of Sentry extensions',
     long_description=__doc__,
