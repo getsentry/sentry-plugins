@@ -146,6 +146,8 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
                 exc.code,
                 exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
             ))
+        elif isinstance(exc, PluginError):
+            raise
         else:
             self.logger.exception(six.text_type(exc))
             raise PluginError(ERR_INTERNAL)

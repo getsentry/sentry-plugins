@@ -106,11 +106,15 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             return ERR_INTERNAL
 
     def raise_error(self, exc):
-        if not isinstance(exc, ApiError):
-            self.logger.exception(six.text_type(exc))
         if isinstance(exc, ApiUnauthorized):
             raise InvalidIdentity(self.message_from_error(exc))
-        raise PluginError(self.message_from_error(exc))
+        elif isinstance(exc, ApiError):
+            raise PluginError(self.message_from_error(exc))
+        elif isinstance(exc, PluginError):
+            raise
+        else:
+            self.logger.exception(six.text_type(exc))
+            raise PluginError(self.message_from_error(exc))
 
     def get_allowed_assignees(self, request, group):
         client = self.get_client(group.project, request.user)
