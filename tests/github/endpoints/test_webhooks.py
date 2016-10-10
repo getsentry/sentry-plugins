@@ -69,7 +69,7 @@ class WebhookTest(APITestCase):
             path=url,
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
-            HTTP_X_GITHUB_EVENT='PushEvent',
+            HTTP_X_GITHUB_EVENT='push',
             HTTP_X_HUB_SIGNATURE='33521abeaaf9a57c2abf486e0ccd54d23cf36fec',
             HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
         )
@@ -97,7 +97,7 @@ class PushEventWebhookTest(APITestCase):
             path=url,
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
-            HTTP_X_GITHUB_EVENT='PushEvent',
+            HTTP_X_GITHUB_EVENT='push',
             HTTP_X_HUB_SIGNATURE='df94a49a15c8235a6e5890376b67f853e3e9d3a8',
             HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
         )

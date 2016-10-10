@@ -82,7 +82,7 @@ class PushEventWebhook(Webhook):
 
 class GithubWebhookEndpoint(View):
     _handlers = {
-        'PushEvent': PushEventWebhook,
+        'push': PushEventWebhook,
     }
 
     # https://developer.github.com/webhooks/
