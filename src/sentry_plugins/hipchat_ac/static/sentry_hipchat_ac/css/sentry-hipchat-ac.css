@@ -268,3 +268,37 @@ table td {
 .event-list p.meta {
   font-size: 90%;
 }
+
+.messages-container {
+  background: #93CB81;
+  color: white;
+  border: 0;
+  text-align: center;
+}
+
+.buffer {
+  padding-bottom: 15px;
+}
+
+h3.assigned {
+  position: relative;
+  display: inline;
+  margin-top: 20px;
+}
+
+.aui-button.unassign {
+  position: absolute;
+  display: inline;
+  margin-left: 5px;
+}
+
+.project-form-checkbox {
+  max-width: 500px;
+}
+
+.project-settings-link {
+  max-width: 500px;
+  margin-left: 500px;
+  position: absolute;
+  display: inline;
+}

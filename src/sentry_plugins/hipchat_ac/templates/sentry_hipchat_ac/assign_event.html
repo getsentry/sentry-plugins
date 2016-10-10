@@ -31,14 +31,16 @@
   <div class="aui-page-panel" style="margin-top: 0;">
     <div class="aui-page-panel-inner">
       <section class="aui-panel-inner-content" style="padding: 20px 0">
-        {% if assigned_to %}
-          <div class="dialog-header">
-            <h3>Currently assigned: {{ assigned_to.user.get_display_name }}</h3>
-          </div>
-        {% endif %}
+
         <form class="aui" action="" method="post">
           {% csrf_token %}
           <input type=hidden name=assigned_to id="assigned-to-field">
+          {% if assigned_to %}
+            <div class="dialog-header buffer">
+              <h3 class="assigned">Currently assigned: {{ assigned_to.user.get_display_name }}</h3>
+              <button type="submit" class="aui-button unassign" name="deassign">Unassign</button>
+            </div>
+          {% endif %}
           <div class="field-group">
             <label for="assignee-select">Assign to user</label>
             <aui-select
@@ -51,9 +53,6 @@
               {% endfor %}
             </aui-select>
             <button type="submit" class="aui-button aui-button-primary" name="assign">Assign</button>
-            {% if assigned_to %}
-            <button type="submit" class="aui-button" name="deassign">Deassign</button>
-            {% endif %}
           </div>
         </form>
       <section>

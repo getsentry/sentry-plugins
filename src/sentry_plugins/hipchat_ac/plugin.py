@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.template.loader import render_to_string
-from django.template.context import RequestContext
 from six.moves.urllib.parse import urlparse, quote
 
 from sentry import options
@@ -115,29 +113,6 @@ class HipchatPlugin(CorePluginMixin, NotifyPlugin):
 
     def is_configured(self, project):
         return bool(self.get_option('tenants', project))
-
-    # TODO(dcramer): remove this after transition to new React API
-    def configure(self, request, project=None):
-        test_results = None
-        if request.method == 'POST' and project is not None:
-            try:
-                test_results = self.test_configuration(project)
-            except Exception as exc:
-                if hasattr(exc, 'read') and callable(exc.read):
-                    test_results = '%s\n%s' % (exc, exc.read())
-                else:
-                    test_results = 'There was an internal error with the Plugin'
-            if not test_results:
-                test_results = 'Test successful! No errors reported.'
-        return render_to_string('sentry_hipchat_ac/configure_plugin.html', dict(
-            plugin=self,
-            plugin_test_results=test_results,
-            on_premise=is_on_premise(),
-            tenants=list(project.hipchat_tenant_set.select_related('auth_user')),
-            descriptor=self.get_descriptor(),
-            install_url=self.get_install_url(),
-            context_instance=RequestContext(request)
-        ))
 
     def get_url_module(self):
         return 'sentry_plugins.hipchat_ac.urls'

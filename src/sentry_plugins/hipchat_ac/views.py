@@ -14,6 +14,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
 
 from sentry import options
 from sentry.models import (
@@ -21,6 +22,8 @@ from sentry.models import (
 )
 from sentry.utils import auth
 from sentry.utils.http import absolute_uri
+from sentry.plugins import plugins
+from sentry.web.frontend.base import ProjectView
 
 from .utils import JsonResponse, IS_DEBUG
 from .models import Tenant, Context
@@ -34,6 +37,9 @@ from .cards import (
 )
 
 _regexp_cache = {}
+
+HIPCHAT_ORG_PREFERENCE = 'hipchat_org'
+HIPCHAT_PROJECT_PREFERENCE = 'hipchat_project'
 
 
 def get_link_pattern():
@@ -56,6 +62,18 @@ def get_addon_key():
         ident = get_addon_host_ident()
         key = '.'.join(ident.split('.')[::-1]) + '.hipchat-ac'
     return key
+
+
+class InstallRedirectView(ProjectView):
+    required_scope = 'project:write'
+
+    def handle(self, request, organization, team, project):
+        # store project and org in session
+        # redirect user to hipchat page
+        request.session[HIPCHAT_ORG_PREFERENCE] = organization.id
+        request.session[HIPCHAT_PROJECT_PREFERENCE] = project.id
+        plugin = plugins.get('hipchat-ac')
+        return HttpResponseRedirect(plugin.get_install_url())
 
 
 class DescriptorView(View):
@@ -235,21 +253,17 @@ class InstallableView(View):
             return HttpResponse('Mismatch on capabilities URL',
                                 status=400)
 
-        # Make sure we clean up an old existing tenant if we have one.
         try:
-            old_tenant = Tenant.objects.get(pk=data['oauthId'])
+            tenant = Tenant.objects.get(pk=data['oauthId'])
+            tenant.update_room_info()
         except Tenant.DoesNotExist:
-            pass
-        else:
-            old_tenant.delete()
-
-        tenant = Tenant.objects.create(
-            id=data['oauthId'],
-            room_id=room_id,
-            secret=data['oauthSecret'],
-            capdoc=capdoc,
-        )
-        tenant.update_room_info()
+            tenant = Tenant.objects.create(
+                id=data['oauthId'],
+                room_id=room_id,
+                secret=data['oauthSecret'],
+                capdoc=capdoc,
+            )
+            tenant.update_room_info()
 
         return HttpResponse('', status=201)
 
@@ -267,7 +281,7 @@ class GrantAccessForm(forms.Form):
                                      label='Organizations',
                                      required=False)
 
-    def __init__(self, tenant, request):
+    def __init__(self, tenant, request, initial=None):
         self.user = request.user
         self.tenant = tenant
         self.all_orgs = Organization.objects.get_for_user(request.user)
@@ -275,7 +289,7 @@ class GrantAccessForm(forms.Form):
         if request.method == 'POST':
             forms.Form.__init__(self, request.POST)
         else:
-            forms.Form.__init__(self)
+            forms.Form.__init__(self, initial)
         self.fields['orgs'].choices = org_choices
 
     def clean_orgs(self):
@@ -297,7 +311,7 @@ class ProjectSelectForm(forms.Form):
     projects = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
                                          label='Projects', required=False)
 
-    def __init__(self, tenant, request):
+    def __init__(self, tenant, request, initial=None):
         self.tenant = tenant
         project_choices = []
         self.projects_by_id = {}
@@ -314,11 +328,9 @@ class ProjectSelectForm(forms.Form):
         project_choices.sort(key=lambda x: x[1].lower())
 
         if request.method == 'POST':
-            forms.Form.__init__(self, request.POST)
+            forms.Form.__init__(self, request.POST, initial)
         else:
-            forms.Form.__init__(self, initial={
-                'projects': [six.text_type(x.id) for x in tenant.projects.all()],
-            })
+            forms.Form.__init__(self, initial)
 
         self.fields['projects'].choices = project_choices
 
@@ -391,6 +403,30 @@ def cors(f):
 def configure(request, context):
     grant_form = None
     project_select_form = None
+    tenant = context.tenant
+
+    project_fields = []
+    projects_by_id = {}
+
+    initial_org = None
+    initial_project = None
+
+    orgs = [six.text_type(x.id) for x in tenant.organizations.all()]
+    org = request.session.get(HIPCHAT_ORG_PREFERENCE, None)
+
+    project = request.session.get(HIPCHAT_PROJECT_PREFERENCE, None)
+    if org and org not in set(orgs):
+        orgs.append(org)
+    initial_org = {
+        'orgs': orgs,
+    }
+    projects = [six.text_type(x.id) for x in tenant.projects.all()]
+
+    if project and project not in set(projects):
+        projects.append(project)
+    initial_project = {
+        'projects': projects
+    }
 
     if not request.user.is_authenticated():
         if request.method == 'POST':
@@ -398,15 +434,20 @@ def configure(request, context):
             return HttpResponseRedirect(auth.get_login_url())
 
     elif context.tenant.auth_user is None and request.user.is_authenticated():
-        grant_form = GrantAccessForm(context.tenant, request)
+        grant_form = GrantAccessForm(context.tenant, request, initial=initial_org)
+        request.session.pop(HIPCHAT_ORG_PREFERENCE, None)
         if request.method == 'POST' and grant_form.is_valid():
             grant_form.save_changes()
             return HttpResponseRedirect(request.get_full_path())
 
     elif context.tenant.auth_user is not None:
-        project_select_form = ProjectSelectForm(context.tenant, request)
+        project_select_form = ProjectSelectForm(context.tenant, request, initial=initial_project or None)
+        request.session.pop(HIPCHAT_PROJECT_PREFERENCE, None)
+        projects_by_id = project_select_form.projects_by_id
+        project_fields = [(f, projects_by_id[f.choice_value]) for f in project_select_form['projects']]
         if request.method == 'POST' and project_select_form.is_valid():
             project_select_form.save_changes()
+            messages.add_message(request, messages.SUCCESS, 'Changes saved')
             return HttpResponseRedirect(request.get_full_path())
 
     return render(request, 'sentry_hipchat_ac/configure.html', {
@@ -417,7 +458,21 @@ def configure(request, context):
         'project_select_form': project_select_form,
         'available_orgs': list(context.tenant.organizations.all()),
         'hipchat_debug': IS_DEBUG,
+        'project_fields': project_fields,
     })
+
+
+@allow_frame
+@with_context
+def back(request, context):
+    tenant = context.tenant
+    tenant.auth_user = None
+    tenant.save()
+    cfg_url = '%s?signed_request=%s' % (
+        reverse('sentry-hipchat-ac-config'),
+        context.signed_request
+    )
+    return HttpResponseRedirect(cfg_url)
 
 
 @allow_frame
@@ -429,12 +484,13 @@ def sign_out(request, context):
         context.signed_request
     )
 
-    if tenant.auth_user is None or 'no' in request.POST:
+    if 'no' in request.POST:
         return HttpResponseRedirect(cfg_url)
     elif request.method == 'POST':
-        tenant.clear()
-        notify_tenant_removal(tenant)
-        return HttpResponseRedirect(cfg_url)
+        if tenant.auth_user:
+            tenant.clear()
+            notify_tenant_removal(tenant)
+        return HttpResponseRedirect(reverse('sentry-logout'))
 
     return render(request, 'sentry_hipchat_ac/sign_out.html', {
         'context': context,
