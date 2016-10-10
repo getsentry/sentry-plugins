@@ -89,11 +89,17 @@ class GithubWebhookEndpoint(View):
     def get_handler(self, event_type):
         return self._handlers.get(event_type)
 
-    def is_valid_signature(self, body, secret, signature):
+    def is_valid_signature(self, method, body, secret, signature):
+        if method == 'sha1':
+            mod = hashlib.sha1
+        else:
+            raise NotImplementedError('signature method %s is not supported' % (
+                method,
+            ))
         expected = hmac.new(
             key=secret.encode('utf-8'),
             msg=body,
-            digestmod=hashlib.sha1,
+            digestmod=mod,
         ).hexdigest()
         return constant_time_compare(expected, signature)
 
@@ -144,14 +150,14 @@ class GithubWebhookEndpoint(View):
             return HttpResponse(status=204)
 
         try:
-            signature = request.META['HTTP_X_HUB_SIGNATURE']
-        except KeyError:
+            method, signature = request.META['HTTP_X_HUB_SIGNATURE'].split('=', 1)
+        except (KeyError, IndexError):
             logger.error('github.webhook.missing-signature', extra={
                 'organization_id': organization.id,
             })
             return HttpResponse(status=400)
 
-        if not self.is_valid_signature(body, secret, signature):
+        if not self.is_valid_signature(method, body, secret, signature):
             logger.error('github.webhook.invalid-signature', extra={
                 'organization_id': organization.id,
             })
