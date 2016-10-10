@@ -115,7 +115,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         # be configured to use a custom property instead of a default.
         if schema.get('custom'):
             if schema['custom'] == JIRA_CUSTOM_FIELD_TYPES['textarea']:
-                fieldtype = 'select'
+                fieldtype = 'textarea'
 
         fkwargs['type'] = fieldtype
         return fkwargs
