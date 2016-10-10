@@ -4,9 +4,11 @@ import six
 
 from rest_framework.response import Response
 
+from sentry.app import locks
 from sentry.exceptions import InvalidIdentity, PluginError
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.utils.http import absolute_uri
+from uuid import uuid4
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
@@ -45,6 +47,9 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
                 plugin=self,
             )),
         ]
+
+    def get_url_module(self):
+        return 'sentry_plugins.github.urls'
 
     def is_configured(self, request, project, **kwargs):
         return bool(self.get_option('repo', project))
@@ -216,3 +221,14 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             'placeholder': 'e.g. getsentry/sentry',
             'help': 'Enter your repository name, including the owner.'
         }]
+
+    def enable(self, project, user=None):
+        super(GitHubPlugin, self).enable(project, user)
+        with locks.get('github:webhook_secret'):
+            if not self.get_option('webhook_secret', project):
+                self.update_option('webhook_secret', project, uuid4().hex)
+        # TODO(dcramer): enable webhook on repository
+
+    def disable(self, project, user=None):
+        super(GitHubPlugin, self).disable(project, user)
+        # TODO(dcramer): disable webhook on repository

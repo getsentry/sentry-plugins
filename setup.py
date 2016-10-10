@@ -30,6 +30,7 @@ tests_require = [
 
 install_requires = [
     'BeautifulSoup>=3.2.1',
+    'python-dateutil',
     'PyJWT',
 ]
 
