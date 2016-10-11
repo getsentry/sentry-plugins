@@ -208,6 +208,14 @@ create_meta_response = {
     ]
 }
 
+issue_response = {
+    'key': 'SEN-19',
+    'id': '10708',
+    'fields': {
+        'summary': 'TypeError: \'set\' object has no attribute \'__getitem__\''
+    }
+}
+
 
 class JiraPluginTest(TestCase):
     @fixture
@@ -252,3 +260,16 @@ class JiraPluginTest(TestCase):
             'project': 'SEN'
         }
         assert self.plugin.create_issue(request, group, form_data) == 'SEN-1'
+
+    @mock.patch('sentry_plugins.jira.client.JIRAClient.get_issue',
+                mock.Mock(return_value=JIRAResponse(json.dumps(issue_response), 200)))
+    def test_link_issue(self):
+        self.plugin.set_option('instance_url', 'https://getsentry.atlassian.net', self.project)
+        group = self.create_group(message='Hello world', culprit='foo.bar')
+
+        request = self.request.get('/')
+        request.user = AnonymousUser()
+        form_data = {
+            'issue_id': 'SEN-19'
+        }
+        assert self.plugin.link_issue(request, group, form_data)['title'] == issue_response['fields']['summary']

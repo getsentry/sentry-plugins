@@ -87,6 +87,8 @@ class JIRAClient(object):
     VERSIONS_URL = '/rest/api/2/project/%s/versions'
     USERS_URL = '/rest/api/2/user/assignable/search'
     ISSUE_URL = '/rest/api/2/issue/%s'
+    SEARCH_URL = '/rest/api/2/search/'
+    COMMENT_URL = '/rest/api/2/issue/%s/comment'
     HTTP_TIMEOUT = 5
 
     def __init__(self, instance_uri, username, password):
@@ -132,6 +134,15 @@ class JIRAClient(object):
 
     def get_issue(self, key):
         return self.make_request('get', self.ISSUE_URL % key)
+
+    def create_comment(self, issue_key, comment):
+        return self.make_request('post', self.COMMENT_URL % issue_key, {
+            'body': comment
+        })
+
+    def search_issues(self, project, query):
+        query = 'project="%s" AND text ~ "%s"' % (project, query)
+        return self.make_request('get', self.SEARCH_URL, {'jql': query})
 
     def make_request(self, method, url, payload=None):
         if url[:4] != "http":

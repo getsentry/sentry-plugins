@@ -40,7 +40,6 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
     title = 'JIRA'
     conf_title = title
     conf_key = slug
-    allowed_actions = ('create', 'unlink')
 
     asset_key = 'jira'
     assets = [
@@ -207,6 +206,41 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
         return fields
 
+    def get_link_existing_issue_fields(self, request, group, event, **kwargs):
+        return [{
+            'name': 'issue_id',
+            'label': 'Issue',
+            'default': '',
+            'type': 'select',
+            'has_autocomplete': True
+        }, {
+            'name': 'comment',
+            'label': 'Comment',
+            'default': absolute_uri(group.get_absolute_url()),
+            'type': 'textarea',
+            'help': ('Leave blank if you don\'t want to '
+                     'add a comment to the JIRA issue.'),
+            'required': False
+        }]
+
+    def link_issue(self, request, group, form_data, **kwargs):
+        client = self.get_jira_client(group.project)
+        try:
+            issue = client.get_issue(form_data['issue_id']).json
+        except Exception as e:
+            self.raise_error(e)
+
+        comment = form_data.get('comment')
+        if comment:
+            try:
+                client.create_comment(issue['key'], comment)
+            except Exception as e:
+                self.raise_error(e)
+
+        return {
+            'title': issue['fields']['summary']
+        }
+
     def get_issue_label(self, group, issue_id, **kwargs):
         return issue_id
 
@@ -216,6 +250,25 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
     def view_autocomplete(self, request, group, **kwargs):
         query = request.GET.get('autocomplete_query')
+        field = request.GET.get('autocomplete_field')
+        project = self.get_option('default_project', group.project)
+
+        if field == 'issue_id':
+            client = self.get_jira_client(group.project)
+            try:
+                response = client.search_issues(project, query)
+            except JIRAError as e:
+                return Response({
+                    'error_type': 'validation',
+                    'errors': [{'__all__': self.message_from_error(e)}]
+                }, status=400)
+            else:
+                issues = [{
+                    'text': '(%s) %s' % (i['key'], i['fields']['summary']),
+                    'id': i['key']
+                } for i in response.json.get('issues', [])]
+                return Response({field: issues})
+
         jira_url = request.GET.get('jira_url')
         if jira_url:
             jira_url = unquote_plus(jira_url)
@@ -223,8 +276,6 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             jira_query = parse_qs(parsed[3])
 
             jira_client = self.get_jira_client(group.project)
-
-            project = self.get_option('default_project', group.project)
 
             if '/rest/api/latest/user/' in jira_url:  # its the JSON version of the autocompleter
                 is_xml = False
@@ -256,7 +307,6 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         'text': '%s - %s (%s)' % (user['displayName'], user['emailAddress'], user['name'])
                     })
 
-            field = request.GET.get('autocomplete_field')
             return Response({field: users})
 
     def message_from_error(self, exc):
