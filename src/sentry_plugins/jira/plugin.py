@@ -429,6 +429,8 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         username = self.get_option('username', project)
         pw = self.get_option('password', project)
         jira_project = self.get_option('default_project', project)
+        default_priority = self.get_option('default_priority', project)
+        default_issue_type = self.get_option('default_issue_type', project)
 
         project_choices = []
         priority_choices = []
@@ -443,6 +445,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 projects = projects_response.json
                 if projects:
                     project_choices = [(p.get('key'), '%s (%s)' % (p.get('name'), p.get('key'))) for p in projects]
+                    jira_project = jira_project or projects[0]['key']
 
             if jira_project:
                 try:
@@ -453,6 +456,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                     priorities = priorities_response.json
                     if priorities:
                         priority_choices = [(p.get('id'), '%s' % (p.get('name'))) for p in priorities]
+                        default_priority = default_priority or priorities[0]['id']
 
                 try:
                     meta = client.get_create_meta_for_project(jira_project)
@@ -461,6 +465,8 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 else:
                     if meta:
                         issue_type_choices = self.make_choices(meta['issuetypes'])
+                        if issue_type_choices:
+                            default_issue_type = default_issue_type or issue_type_choices[0][0]
 
         return [{
             'name': 'instance_url',
@@ -503,14 +509,14 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             'type': 'select',
             'choices': priority_choices,
             'required': False,
-            'default': self.get_option('default_priority', project)
+            'default': default_priority
         }, {
             'name': 'default_issue_type',
             'label': 'Default Issue Type',
             'type': 'select',
             'choices': issue_type_choices,
             'required': False,
-            'default': self.get_option('default_issue_type', project)
+            'default': default_issue_type
         }, {
             'name': 'auto_create',
             'label': 'Automatically create JIRA Tickets',
