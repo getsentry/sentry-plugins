@@ -277,7 +277,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
             jira_client = self.get_jira_client(group.project)
 
-            if '/rest/api/latest/user/' in jira_url:  # its the JSON version of the autocompleter
+            is_user_api = '/rest/api/latest/user/' in jira_url
+
+            if is_user_api:  # its the JSON version of the autocompleter
                 is_xml = False
                 jira_query['username'] = query.encode('utf8')
                 jira_query.pop('issueKey', False)  # some reason JIRA complains if this key is in the URL.
@@ -301,6 +303,17 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         'text': userxml.find('html').text
                     })
             else:
+                for user in autocomplete_response.json:
+                    users.append({
+                        'id': user['name'],
+                        'text': '%s - %s (%s)' % (user['displayName'], user['emailAddress'], user['name'])
+                    })
+
+            # if JIRA user doesn't have proper permission for user api,
+            # try the assignee api instead
+            if not users and is_user_api:
+                autocomplete_response = jira_client.search_users_for_project(jira_query.get('project'),
+                                                                             jira_query.get('username'))
                 for user in autocomplete_response.json:
                     users.append({
                         'id': user['name'],

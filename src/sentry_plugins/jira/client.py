@@ -128,6 +128,12 @@ class JIRAClient(object):
     def get_users_for_project(self, project):
         return self.make_request('get', self.USERS_URL, {'project': project})
 
+    def search_users_for_project(self, project, username):
+        return self.make_request('get', self.USERS_URL, {
+            'project': project,
+            'username': username
+        })
+
     def create_issue(self, raw_form_data):
         data = {'fields': raw_form_data}
         return self.make_request('post', self.CREATE_URL, payload=data)
