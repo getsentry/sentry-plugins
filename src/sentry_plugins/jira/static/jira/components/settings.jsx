@@ -14,6 +14,7 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
 
     this.back = this.back.bind(this);
     this.startEditing = this.startEditing.bind(this);
+    this.isLastPage = this.isLastPage.bind(this);
 
     Object.assign(this.state, {
       page: 0
@@ -30,6 +31,10 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
   isConfigured(state) {
     state = state || this.state;
     return !!(this.state.formData && this.state.formData.default_project);
+  }
+
+  isLastPage() {
+    return this.state.page === 2;
   }
 
   fetchData() {
@@ -62,9 +67,11 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
     this.setState({editing: true});
   }
 
-  onSubmit(incrementPage) {
+  onSubmit() {
     if (!this.hasChanged()) {
-      if (this.state.page !== 2) {
+      if (this.isLastPage()) {
+        this.setState({editing: false, page: 0})
+      } else {
         this.setState({page: this.state.page + 1});
       }
       this.onSaveSuccess(this.onSaveComplete);
@@ -84,7 +91,10 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
           errors: {},
           fieldList: data.config
         };
-        if (incrementPage) {
+        if (this.isLastPage()) {
+          state.editing = false;
+          state.page = 0;
+        } else {
           state.page = this.state.page + 1;
         }
         this.setState(state);
@@ -112,8 +122,6 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
     if (this.state.state === FormState.LOADING) {
       return <LoadingIndicator />;
     }
-
-    let isLastPage = this.state.page === 2;
     let isSaving = this.state.state === FormState.SAVING;
 
     let fields;
@@ -123,8 +131,8 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
       fields = this.state.fieldList.filter(f => {
         return this.PAGE_FIELD_LIST[this.state.page].includes(f.name);
       });
-      onSubmit = this.onSubmit.bind(this, !isLastPage);
-      submitLabel = isLastPage ? 'Finish' : 'Save and Continue';
+      onSubmit = this.onSubmit;
+      submitLabel = this.isLastPage() ? 'Finish' : 'Save and Continue';
     } else {
       fields = this.state.fieldList.map(f => {
         return Object.assign({}, f, {readonly: true});
@@ -134,7 +142,7 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
     }
     return (
       <Form onSubmit={onSubmit}
-            submitDisabled={isSaving || (isLastPage && !this.hasChanged())}
+            submitDisabled={isSaving}
             submitLabel={submitLabel}
             extraButton={this.state.page === 0 ? null :
                          <a href="#"
