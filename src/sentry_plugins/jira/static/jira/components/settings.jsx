@@ -126,7 +126,7 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
     if (this.state.state === FormState.ERROR && !this.state.fieldList) {
       return (
         <div className="alert alert-error m-b-1">
-          An unknown error occurred.
+          An unknown error occurred. Need help with this? <a href="https://sentry.io/support/">Contact support</a>
         </div>
       );
     }
