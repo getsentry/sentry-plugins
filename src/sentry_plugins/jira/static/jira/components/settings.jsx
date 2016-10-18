@@ -122,6 +122,15 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
     if (this.state.state === FormState.LOADING) {
       return <LoadingIndicator />;
     }
+
+    if (this.state.state === FormState.ERROR && !this.state.fieldList) {
+      return (
+        <div className="alert alert-error m-b-1">
+          An unknown error occurred.
+        </div>
+      );
+    }
+
     let isSaving = this.state.state === FormState.SAVING;
 
     let fields;
