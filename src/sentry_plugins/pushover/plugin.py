@@ -20,18 +20,23 @@ class PushoverPlugin(CorePluginMixin, NotifyPlugin):
         )
 
     def get_config(self, **kwargs):
+        userkey = self.get_option('userkey', kwargs['project'])
+        apikey = self.get_option('apikey', kwargs['project'])
+        help_msg = 'Only enter a new key if you wish to update the stored value. '
         return [{
             'name': 'userkey',
             'label': 'User Key',
             'type': 'secret',
-            'required': True,
-            'help': 'Your user key. See https://pushover.net/',
+            'required': userkey is None,
+            'help': ('%sYour user key. See '
+                     'https://pushover.net/') % (help_msg if userkey else ''),
         }, {
             'name': 'apikey',
             'label': 'API Key',
             'type': 'secret',
-            'required': True,
-            'help': 'Application API token. See https://pushover.net/apps/',
+            'required': apikey is None,
+            'help': ('%sApplication API token. See '
+                     'https://pushover.net/apps/') % (help_msg if apikey else ''),
         }, {
             'name': 'priority',
             'label': 'Message Priority',
