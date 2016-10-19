@@ -3,9 +3,11 @@ from __future__ import absolute_import
 import responses
 
 from exam import fixture
+from django.core.urlresolvers import reverse
 from sentry.models import Rule
 from sentry.plugins import Notification
 from sentry.testutils import PluginTestCase
+from sentry.utils import json
 from six.moves.urllib.parse import parse_qs
 
 from sentry_plugins.pushover.plugin import PushoverPlugin
@@ -63,3 +65,32 @@ class PushoverPluginTest(PluginTestCase):
             'user': ['abcdef'],
             'token': ['ghijkl'],
         }
+
+    def test_no_secrets(self):
+        self.user = self.create_user('foo@example.com')
+        self.org = self.create_organization(
+            owner=self.user,
+            name='Rowdy Tiger'
+        )
+        self.team = self.create_team(
+            organization=self.org,
+            name='Mariachi Band'
+        )
+        self.project = self.create_project(
+            organization=self.org,
+            team=self.team,
+            name='Bengal',
+        )
+        self.login_as(self.user)
+        self.plugin.set_option('userkey', 'abcdef', self.project)
+        self.plugin.set_option('apikey', 'abcdef', self.project)
+        url = reverse('sentry-api-0-project-plugin-details',
+                      args=[self.org.slug, self.project.slug, 'pushover'])
+        res = self.client.get(url)
+        config = json.loads(res.content)['config']
+        userkey_config = [item for item in config if item['name'] == 'userkey'][0]
+        apikey_config = [item for item in config if item['name'] == 'apikey'][0]
+        assert userkey_config.get('type') == 'secret'
+        assert userkey_config.get('value') is None
+        assert apikey_config.get('type') == 'secret'
+        assert apikey_config.get('value') is None

@@ -4,6 +4,7 @@ import mock
 
 from exam import fixture
 from django.contrib.auth.models import AnonymousUser
+from django.core.urlresolvers import reverse
 from django.test import RequestFactory
 from sentry.testutils import TestCase
 from sentry.utils import json
@@ -273,3 +274,28 @@ class JiraPluginTest(TestCase):
             'issue_id': 'SEN-19'
         }
         assert self.plugin.link_issue(request, group, form_data)['title'] == issue_response['fields']['summary']
+
+    def test_no_secrets(self):
+        self.user = self.create_user('foo@example.com')
+        self.org = self.create_organization(
+            owner=self.user,
+            name='Rowdy Tiger'
+        )
+        self.team = self.create_team(
+            organization=self.org,
+            name='Mariachi Band'
+        )
+        self.project = self.create_project(
+            organization=self.org,
+            team=self.team,
+            name='Bengal',
+        )
+        self.login_as(self.user)
+        self.plugin.set_option('password', 'abcdef', self.project)
+        url = reverse('sentry-api-0-project-plugin-details',
+                      args=[self.org.slug, self.project.slug, 'jira'])
+        res = self.client.get(url)
+        config = json.loads(res.content)['config']
+        password_config = [item for item in config if item['name'] == 'password'][0]
+        assert password_config.get('type') == 'secret'
+        assert password_config.get('value') is None

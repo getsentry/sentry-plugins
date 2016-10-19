@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import responses
 
 from exam import fixture
+from django.core.urlresolvers import reverse
 from sentry.models import Rule
 from sentry.plugins import Notification
 from sentry.testutils import PluginTestCase
@@ -81,3 +82,28 @@ class PagerDutyPluginTest(PluginTestCase):
             'service_key': 'abcdef',
             'description': event.get_legacy_message(),
         }
+
+    def test_no_secrets(self):
+        self.user = self.create_user('foo@example.com')
+        self.org = self.create_organization(
+            owner=self.user,
+            name='Rowdy Tiger'
+        )
+        self.team = self.create_team(
+            organization=self.org,
+            name='Mariachi Band'
+        )
+        self.project = self.create_project(
+            organization=self.org,
+            team=self.team,
+            name='Bengal',
+        )
+        self.login_as(self.user)
+        self.plugin.set_option('service_key', 'abcdef', self.project)
+        url = reverse('sentry-api-0-project-plugin-details',
+                      args=[self.org.slug, self.project.slug, 'pagerduty'])
+        res = self.client.get(url)
+        config = json.loads(res.content)['config']
+        key_config = [item for item in config if item['name'] == 'service_key'][0]
+        assert key_config.get('type') == 'secret'
+        assert key_config.get('value') is None

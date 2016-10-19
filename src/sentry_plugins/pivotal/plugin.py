@@ -162,14 +162,18 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
         return json_resp['name']
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
+        token = self.get_option('token', project)
         return [{
             'name': 'token',
             'label': 'API Token',
-            'default': self.get_option('token', project),
-            'type': 'text',
+            'type': 'secret',
+            'required': token is None,
             'placeholder': 'e.g. a9877d72b6d13b23410a7109b35e88bc',
-            'help': 'Enter your API Token (found on <a href="https://www.pivotaltracker.com/profile">pivotaltracker.com/profile</a>).'},
-            {
+            'help': ('Enter your API Token (found on '
+                     '<a href="https://www.pivotaltracker.com/profile">pivotaltracker.com/profile'
+                     '</a>).%s' % (' Only enter a token if you wish to update stored value'
+                                   if token else ''))
+        }, {
             'name': 'project',
             'label': 'Project ID',
             'default': self.get_option('project', project),
