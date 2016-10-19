@@ -17,9 +17,13 @@ env:
   - SENTRY_SKIP_BACKEND_VALIDATION=1
 install:
 # we want to test against sentry master
+- rvm install 2.2.5
+- rvm use 2.2.5
+- bundle install
 - make install-tests
 - pip freeze
 script:
+- bundle exec danger
 - make lint
 - py.test
 after_success:
