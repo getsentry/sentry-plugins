@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
 sentry-plugins
-=============
+==============
 
-An extension for Sentry which integrates with GitHub. Specifically, it allows you to easily create
-issues from events within Sentry.
+All of the plugins for Sentry (https://github.com/getsentry/sentry)
 
-:copyright: (c) 2012 by the Sentry Team, see AUTHORS for more details.
-:license: BSD, see LICENSE for more details.
+:copyright: 2016 by the Sentry Team, see AUTHORS for more details.
+:license: Apache, see LICENSE for more details.
 """
 from __future__ import absolute_import
 
@@ -86,7 +85,7 @@ setup(
     url='http://github.com/getsentry/sentry-plugins',
     description='A collection of Sentry extensions',
     long_description=__doc__,
-    license='BSD',
+    license='Apache',
     package_dir={'': 'src'},
     packages=find_packages('src'),
     zip_safe=False,
@@ -117,7 +116,6 @@ setup(
         ],
     },
     classifiers=[
-        'Framework :: Django',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Operating System :: OS Independent',
