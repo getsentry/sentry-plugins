@@ -20,6 +20,8 @@ from sentry.utils.distutils import (
     BuildAssetsCommand
 )
 
+VERSION = '8.10.0.dev0'
+
 tests_require = [
     'exam',
     'flake8>=2.0,<2.1',
@@ -78,7 +80,7 @@ cmdclass = {
 
 setup(
     name='sentry-plugins',
-    version='0.1.2',
+    version=VERSION,
     author='Sentry',
     author_email='hello@getsentry.com',
     url='http://github.com/getsentry/sentry-plugins',
