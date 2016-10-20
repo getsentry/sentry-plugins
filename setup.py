@@ -33,6 +33,7 @@ install_requires = [
     'BeautifulSoup>=3.2.1',
     'python-dateutil',
     'PyJWT',
+    'requests-oauthlib>=0.3.0'
 ]
 
 
@@ -95,6 +96,7 @@ setup(
     include_package_data=True,
     entry_points={
         'sentry.apps': [
+            'bitbucket = sentry_plugins.bitbucket',
             'github = sentry_plugins.github',
             'gitlab = sentry_plugins.gitlab',
             'hipchat_ac = sentry_plugins.hipchat_ac',
@@ -105,6 +107,7 @@ setup(
             'pushover = sentry_plugins.pushover',
         ],
         'sentry.plugins': [
+            'bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin',
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin',
             'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',

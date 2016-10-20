@@ -5,7 +5,6 @@ import responses
 from exam import fixture
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
-from django.test.utils import override_settings
 from sentry.plugins.bases.issue2 import PluginError
 from sentry.testutils import PluginTestCase
 from sentry.utils import json
@@ -45,7 +44,6 @@ class GitHubPluginTest(PluginTestCase):
         assert self.plugin.is_configured(None, self.project) is True
 
     @responses.activate
-    @override_settings(GITHUB_APP_ID='abc', GITHUB_API_SECRET='123')
     def test_create_issue(self):
         responses.add(responses.POST, 'https://api.github.com/repos/getsentry/sentry/issues',
             body='{"number": 1, "title": "Hello world"}')
@@ -76,7 +74,6 @@ class GitHubPluginTest(PluginTestCase):
         }
 
     @responses.activate
-    @override_settings(GITHUB_APP_ID='abc', GITHUB_API_SECRET='123')
     def test_link_issue(self):
         responses.add(responses.GET, 'https://api.github.com/repos/getsentry/sentry/issues/1',
             body='{"number": 1, "title": "Hello world"}')
