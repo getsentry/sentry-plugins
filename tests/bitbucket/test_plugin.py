@@ -69,3 +69,34 @@ class BitbucketPluginTest(PluginTestCase):
                                                                    '123456789123456789abcdefghijklmn')})
 
         assert self.plugin.create_issue(request, group, form_data) == 1
+
+    @responses.activate
+    def test_link_issue(self):
+        responses.add(responses.GET, 'https://api.bitbucket.org/1.0/repositories/getsentry/sentry/issues/1',
+            body='{"local_id": 1, "title": "Hello world"}')
+        responses.add(responses.POST, 'https://api.bitbucket.org/1.0/repositories/getsentry/sentry/issues/1/comments',
+            body='{"body": "Hello"}')
+
+        self.plugin.set_option('repo', 'getsentry/sentry', self.project)
+        group = self.create_group(message='Hello world', culprit='foo.bar')
+
+        request = self.request.get('/')
+        request.user = AnonymousUser()
+        form_data = {
+            'comment': 'Hello',
+            'issue_id': '1',
+        }
+        with self.assertRaises(PluginError):
+            self.plugin.link_issue(request, group, form_data)
+
+        request.user = self.user
+        self.login_as(self.user)
+        UserSocialAuth.objects.create(
+            user=self.user,
+            provider=self.plugin.auth_provider,
+            extra_data={'access_token': ('oauth_token=123456789abcdefghi&oauth_token_secret='
+                                         '123456789123456789abcdefghijklmn')})
+
+        assert self.plugin.link_issue(request, group, form_data) == {
+            'title': 'Hello world',
+        }

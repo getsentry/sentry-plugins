@@ -2,8 +2,11 @@ from __future__ import absolute_import
 
 import six
 
+from rest_framework.response import Response
+
 from sentry.exceptions import InvalidIdentity, PluginError
-from sentry.plugins.bases.issue2 import IssuePlugin2
+from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
+from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
@@ -46,7 +49,14 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
     conf_title = title
     conf_key = 'bitbucket'
     auth_provider = 'bitbucket'
-    allowed_actions = ('create', 'unlink')
+
+    def get_group_urls(self):
+        return super(BitbucketPlugin, self).get_group_urls() + [
+            (r'^autocomplete', IssueGroupActionEndpoint.as_view(
+                view_method_name='view_autocomplete',
+                plugin=self,
+            )),
+        ]
 
     def is_configured(self, request, project, **kwargs):
         return bool(self.get_option('repo', project))
@@ -71,6 +81,23 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
             'default': PRIORITIES[0][0],
             'type': 'select',
             'choices': PRIORITIES
+        }]
+
+    def get_link_existing_issue_fields(self, request, group, event, **kwargs):
+        return [{
+            'name': 'issue_id',
+            'label': 'Issue',
+            'default': '',
+            'type': 'select',
+            'has_autocomplete': True
+        }, {
+            'name': 'comment',
+            'label': 'Comment',
+            'default': absolute_uri(group.get_absolute_url()),
+            'type': 'textarea',
+            'help': ('Leave blank if you don\'t want to '
+                     'add a comment to the Bitbucket issue.'),
+            'required': False
         }]
 
     def get_client(self, user):
@@ -116,6 +143,28 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
 
         return response['local_id']
 
+    def link_issue(self, request, group, form_data, **kwargs):
+        client = self.get_client(request.user)
+        repo = self.get_option('repo', group.project)
+        try:
+            issue = client.get_issue(
+                repo=repo,
+                issue_id=form_data['issue_id'],
+            )
+        except Exception as e:
+            self.raise_error(e)
+
+        comment = form_data.get('comment')
+        if comment:
+            try:
+                client.create_comment(repo, issue['local_id'], {'content': comment})
+            except Exception as e:
+                self.raise_error(e)
+
+        return {
+            'title': issue['title']
+        }
+
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'Bitbucket-%s' % issue_id
 
@@ -132,3 +181,27 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
             'placeholder': 'e.g. getsentry/sentry',
             'help': 'Enter your repository name, including the owner.'
         }]
+
+    def view_autocomplete(self, request, group, **kwargs):
+        field = request.GET.get('autocomplete_field')
+        query = request.GET.get('autocomplete_query')
+        if field != 'issue_id' or not query:
+            return Response({'issue_id': []})
+
+        repo = self.get_option('repo', group.project)
+        client = self.get_client(request.user)
+
+        try:
+            response = client.search_issues(repo, query.encode('utf-8'))
+        except Exception as e:
+            return Response({
+                'error_type': 'validation',
+                'errors': [{'__all__': self.message_from_error(e)}]
+            }, status=400)
+
+        issues = [{
+            'text': '(#%s) %s' % (i['local_id'], i['title']),
+            'id': i['local_id']
+        } for i in response.get('issues', [])]
+
+        return Response({field: issues})

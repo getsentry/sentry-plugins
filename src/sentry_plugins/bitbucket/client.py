@@ -34,6 +34,12 @@ class BitbucketClient(object):
             raise ApiError.from_response(e.response)
         return resp.json()
 
+    def get_issue(self, repo, issue_id):
+        return self.request(
+            'GET',
+            '/repositories/%s/issues/%s' % (repo, issue_id),
+        )
+
     def create_issue(self, repo, data):
         data = {
             'title': data['title'],
@@ -45,4 +51,18 @@ class BitbucketClient(object):
             'POST',
             '/repositories/%s/issues' % (repo,),
             data=data
+        )
+
+    def search_issues(self, repo, query):
+        return self.request(
+            'GET',
+            '/repositories/%s/issues' % (repo,),
+            params={'search': query},
+        )
+
+    def create_comment(self, repo, issue_id, data):
+        return self.request(
+            'POST',
+            '/repositories/%s/issues/%s/comments' % (repo, issue_id),
+            data=data,
         )
