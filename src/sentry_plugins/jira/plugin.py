@@ -514,7 +514,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             'type': 'textarea',
             'required': False,
             'placeholder': 'e.g. "components, security, customfield_10006"',
-            'default': self.get_option('ignored_fields', project) or '',
+            'default': self.get_option('ignored_fields', project),
             'help': 'Comma-separated list of properties that you don\'t want to show in the form'
         }, {
             'name': 'default_priority',

@@ -21,13 +21,6 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
     });
   }
 
-  hasChanged() {
-    if (this.state.newConfig) {
-      return true;
-    }
-    return !_.isEqual(this.state.initialData, this.state.formData);
-  }
-
   isConfigured(state) {
     state = state || this.state;
     return !!(this.state.formData && this.state.formData.default_project);
@@ -43,18 +36,17 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
     this.api.request(this.getPluginEndpoint(), {
       success: data => {
         let formData = {};
+        let initialData = {};
         data.config.forEach((field) => {
           formData[field.name] = field.value || field.defaultValue;
+          initialData[field.name] = field.value;
         });
         this.setState({
           fieldList: data.config,
           formData: formData,
-          initialData: Object.assign({}, formData),
+          initialData: initialData,
           // start off in edit mode if there isn't a project set
           editing: !(formData && formData.default_project),
-          // don't disable save if newConfig is true
-          // TODO(jess) probably easier to serialize is_configured in plugin
-          newConfig: !(formData && formData.default_project)
         // call this here to prevent FormState.READY from being
         // set before fieldList is
         }, this.onLoadSuccess);
@@ -68,7 +60,7 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
   }
 
   onSubmit() {
-    if (!this.hasChanged()) {
+    if (_.isEqual(this.state.initialData, this.state.formData)) {
       if (this.isLastPage()) {
         this.setState({editing: false, page: 0})
       } else {
@@ -82,12 +74,14 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
       method: 'PUT',
       success: this.onSaveSuccess.bind(this, data => {
         let formData = {};
+        let initialData = {};
         data.config.forEach((field) => {
           formData[field.name] = field.value || field.defaultValue;
+          initialData[field.name] = field.value;
         });
         let state = {
           formData: formData,
-          initialData: Object.assign({}, formData),
+          initialData: initialData,
           errors: {},
           fieldList: data.config
         };
