@@ -23,6 +23,7 @@ def pytest_configure(config):
         'sentry_plugins.pivotal',
         'sentry_plugins.pushover',
         'sentry_plugins.jira',
+        'sentry_plugins.slack',
     )
 
     # TODO(dcramer): we need a PluginAPITestCase that can do register/unregister
@@ -35,6 +36,7 @@ def pytest_configure(config):
     from sentry_plugins.pagerduty.plugin import PagerDutyPlugin
     from sentry_plugins.pivotal.plugin import PivotalPlugin
     from sentry_plugins.pushover.plugin import PushoverPlugin
+    from sentry_plugins.slack.plugin import SlackPlugin
     plugins.register(BitbucketPlugin)
     plugins.register(GitHubPlugin)
     plugins.register(GitLabPlugin)
@@ -43,6 +45,7 @@ def pytest_configure(config):
     plugins.register(PagerDutyPlugin)
     plugins.register(PivotalPlugin)
     plugins.register(PushoverPlugin)
+    plugins.register(SlackPlugin)
 
     settings.BITBUCKET_CONSUMER_KEY = 'abc'
     settings.BITBUCKET_CONSUMER_SECRET = '123'

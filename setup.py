@@ -105,6 +105,7 @@ setup(
             'pagerduty = sentry_plugins.pagerduty',
             'pivotal = sentry_plugins.pivotal',
             'pushover = sentry_plugins.pushover',
+            'slack = sentry_plugins.slack',
         ],
         'sentry.plugins': [
             'bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin',
@@ -116,6 +117,7 @@ setup(
             'pagerduty = sentry_plugins.pagerduty.plugin:PagerDutyPlugin',
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
             'pushover = sentry_plugins.pushover.plugin:PushoverPlugin',
+            'slack = sentry_plugins.slack.plugin:SlackPlugin',
         ],
     },
     classifiers=[
