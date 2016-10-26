@@ -326,9 +326,12 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         if isinstance(exc, JIRAUnauthorized):
             return ERR_UNAUTHORIZED
         elif isinstance(exc, JIRAError):
+            message = 'unknown error'
+            if exc.json and exc.json.get('errorMessages'):
+                message = ' '.join(exc.json['errorMessages'])
             return ('Error Communicating with Jira (HTTP %s): %s' % (
                 exc.status_code,
-                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
+                message,
             ))
         else:
             return ERR_INTERNAL
