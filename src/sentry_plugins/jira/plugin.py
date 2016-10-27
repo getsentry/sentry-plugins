@@ -156,6 +156,13 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             issue_type = self.get_option('default_issue_type', group.project)
 
         issue_type_meta = self.get_issue_type_meta(issue_type, meta)
+        issue_type_choices = self.make_choices(meta['issuetypes'])
+
+        # make sure default issue type is actually
+        # one that is allowed for project
+        if issue_type:
+            if not any((c for c in issue_type_choices if c[0] == issue_type)):
+                issue_type = issue_type_meta['id']
 
         fields = [{
             'name': 'project',
@@ -169,7 +176,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             'label': 'Issue Type',
             'default': issue_type or issue_type_meta['id'],
             'type': 'select',
-            'choices': self.make_choices(meta['issuetypes'])
+            'choices': issue_type_choices
         }]
 
         # title is renamed to summary before sending to JIRA

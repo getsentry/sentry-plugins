@@ -69,8 +69,14 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
       this.onSaveSuccess(this.onSaveComplete);
       return;
     }
+    let formData = Object.assign({}, this.state.formData);
+    // if the project has changed, it's likely these values aren't valid anymore
+    if (formData.default_project !== this.state.initialData.default_project) {
+      formData.default_issue_type = null;
+      formData.default_priority = null;
+    }
     this.api.request(this.getPluginEndpoint(), {
-      data: this.state.formData,
+      data: formData,
       method: 'PUT',
       success: this.onSaveSuccess.bind(this, data => {
         let formData = {};
