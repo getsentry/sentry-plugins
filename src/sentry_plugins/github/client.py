@@ -26,7 +26,7 @@ class GitHubClient(object):
                 headers=headers,
                 json=data,
                 params=params,
-                allow_redirects=False,
+                allow_redirects=True,
             )
             resp.raise_for_status()
         except HTTPError as e:
