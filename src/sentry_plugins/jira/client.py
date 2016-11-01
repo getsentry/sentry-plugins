@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import logging
+from hashlib import md5 as _md5
 
 from requests.exceptions import ConnectionError, RequestException
 from sentry.http import build_session
@@ -9,10 +10,13 @@ from sentry.utils.cache import cache
 from simplejson.decoder import JSONDecodeError
 from BeautifulSoup import BeautifulStoneSoup
 from django.utils.datastructures import SortedDict
+from django.utils.encoding import force_bytes
 
 log = logging.getLogger(__name__)
 
-CACHE_KEY = "SENTRY-JIRA-%s-%s"
+
+def md5(*bits):
+    return _md5(':'.join((force_bytes(bit, errors='replace') for bit in bits)))
 
 
 class JIRAError(Exception):
@@ -190,7 +194,7 @@ class JIRAClient(object):
         based on URL
         TODO: Implement GET attr in cache as well. (see self.create_meta for example)
         """
-        key = CACHE_KEY % (full_url, self.instance_url)
+        key = 'sentry-jira:' + md5(full_url, self.instance_url).hexdigest()
         cached_result = cache.get(key)
         if not cached_result:
             cached_result = self.make_request('get', full_url)
