@@ -5,7 +5,8 @@ var path = require('path'),
 
 var APPS = [
   'hipchat-ac',
-  'jira'
+  'jira',
+  'trello'
 ];
 
 var IS_PRODUCTION = process.env.NODE_ENV === 'production';

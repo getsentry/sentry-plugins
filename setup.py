@@ -42,6 +42,7 @@ class BuildAssetsCommand(BuildAssetsCommand):
         return [
             'src/sentry_plugins/hipchat_ac/static/hipchat_ac/dist',
             'src/sentry_plugins/jira/static/jira/dist',
+            'src/sentry_plugins/trello/static/trello/dist',
         ]
 
 
@@ -83,7 +84,7 @@ setup(
     version=VERSION,
     author='Sentry',
     author_email='hello@getsentry.com',
-    url='http://github.com/getsentry/sentry-plugins',
+    url='https://github.com/getsentry/sentry-plugins',
     description='A collection of Sentry extensions',
     long_description=__doc__,
     license='Apache',
@@ -106,6 +107,7 @@ setup(
             'pivotal = sentry_plugins.pivotal',
             'pushover = sentry_plugins.pushover',
             'slack = sentry_plugins.slack',
+            'trello = sentry_plugins.trello',
         ],
         'sentry.plugins': [
             'bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin',
@@ -118,6 +120,7 @@ setup(
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
             'pushover = sentry_plugins.pushover.plugin:PushoverPlugin',
             'slack = sentry_plugins.slack.plugin:SlackPlugin',
+            'trello = sentry_plugins.trello.plugin:TrelloPlugin',
         ],
     },
     classifiers=[
