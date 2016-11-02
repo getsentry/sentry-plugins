@@ -5,7 +5,7 @@ Extensions for Sentry. Includes GitHub, and HipChat.
 
 Install the package via ``pip``::
 
-    pip install https://github.com/getsentry/sentry-plugins/archive/master.zip
+    pip install sentry-plugins
 
 Run migrations after installation is complete
 
