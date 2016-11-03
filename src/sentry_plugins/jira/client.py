@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import logging
+import re
 from hashlib import md5 as _md5
 
 from requests.exceptions import ConnectionError, RequestException
@@ -151,8 +152,13 @@ class JIRAClient(object):
         })
 
     def search_issues(self, project, query):
-        query = 'project="%s" AND text ~ "%s"' % (project, query)
-        return self.make_request('get', self.SEARCH_URL, {'jql': query})
+        # check if it looks like an issue id
+        if re.search(r'^[A-Za-z]+-\d+$', query) and project.lower() in query.lower():
+            jql = 'id="%s"' % query.replace('"', '\\"')
+        else:
+            jql = 'text ~ "%s"' % query.replace('"', '\\"')
+        jql = 'project="%s" AND %s' % (project, jql)
+        return self.make_request('get', self.SEARCH_URL, {'jql': jql})
 
     def make_request(self, method, url, payload=None):
         if url[:4] != "http":
