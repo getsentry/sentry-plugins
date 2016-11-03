@@ -395,6 +395,14 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         v = [v]
                     elif schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES.get('textarea'):
                         v = v
+                    elif schema['type'] == 'number':
+                        try:
+                            if '.' in v:
+                                v = float(v)
+                            else:
+                                v = int(v)
+                        except ValueError:
+                            pass
                     elif (schema.get('type') != 'string'
                             or schema.get('items') != 'string'
                             or schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES.get('select')):
