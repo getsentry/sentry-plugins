@@ -162,6 +162,9 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
         return '{}/{}/issues/{}'.format(url, repo, issue_id)
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
+        has_gitlab_token = bool(self.get_option('gitlab_token', project))
+        help_msg = 'Only enter a new token if you wish to update the stored value. '
+
         return [{
             'name': 'gitlab_url',
             'label': 'GitLab URL',
@@ -175,8 +178,8 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
             'label': 'Access Token',
             'type': 'secret',
             'placeholder': 'e.g. g5DWFtLzaztgYFrqhVfE',
-            'required': True,
-            'help': 'Enter your GitLab API token.'
+            'required': not has_gitlab_token,
+            'help': '%sEnter your GitLab API token.' % (help_msg if has_gitlab_token else '')
         }, {
             'name': 'gitlab_repo',
             'label': 'Repository Name',
