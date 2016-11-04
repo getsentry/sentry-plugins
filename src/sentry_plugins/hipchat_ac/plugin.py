@@ -108,7 +108,7 @@ class HipchatPlugin(CorePluginMixin, NotifyPlugin):
             'onPremise': is_on_premise(),
         }
 
-    def get_config(self, project):
+    def get_config(self, project, **kwargs):
         return []
 
     def is_configured(self, project):
