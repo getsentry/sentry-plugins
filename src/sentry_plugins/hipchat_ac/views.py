@@ -41,6 +41,8 @@ _regexp_cache = {}
 HIPCHAT_ORG_PREFERENCE = 'hipchat_org'
 HIPCHAT_PROJECT_PREFERENCE = 'hipchat_project'
 
+REQUIRED_SCOPE = 'project:write'
+
 
 def get_link_pattern():
     return re.escape(options.get('system.url-prefix')) \
@@ -65,7 +67,7 @@ def get_addon_key():
 
 
 class InstallRedirectView(ProjectView):
-    required_scope = 'project:write'
+    required_scope = REQUIRED_SCOPE
 
     def handle(self, request, organization, team, project):
         # store project and org in session
@@ -284,7 +286,7 @@ class GrantAccessForm(forms.Form):
     def __init__(self, tenant, request, initial=None):
         self.user = request.user
         self.tenant = tenant
-        self.all_orgs = Organization.objects.get_for_user(request.user)
+        self.all_orgs = Organization.objects.get_for_user(request.user, scope=REQUIRED_SCOPE)
         org_choices = [(six.text_type(x.id), x.name) for x in self.all_orgs]
         if request.method == 'POST':
             forms.Form.__init__(self, request.POST)
@@ -318,6 +320,7 @@ class ProjectSelectForm(forms.Form):
 
         for org in tenant.organizations.all():
             teams = Team.objects.get_for_user(org, tenant.auth_user,
+                                              scope=REQUIRED_SCOPE,
                                               with_projects=True)
             for team, projects in teams:
                 for project in projects:
