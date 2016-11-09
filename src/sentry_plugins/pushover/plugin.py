@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from sentry.plugins.bases.notify import NotifyPlugin
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.utils import get_secret_field_config
 
 from .client import PushoverClient
 
@@ -22,22 +23,23 @@ class PushoverPlugin(CorePluginMixin, NotifyPlugin):
     def get_config(self, **kwargs):
         userkey = self.get_option('userkey', kwargs['project'])
         apikey = self.get_option('apikey', kwargs['project'])
-        help_msg = 'Only enter a new key if you wish to update the stored value. '
-        return [{
+        userkey_field = get_secret_field_config(userkey,
+                                                'Your user key. See https://pushover.net/',
+                                                include_prefix=True)
+        userkey_field.update({
             'name': 'userkey',
-            'label': 'User Key',
-            'type': 'secret',
-            'required': userkey is None,
-            'help': ('%sYour user key. See '
-                     'https://pushover.net/') % (help_msg if userkey else ''),
-        }, {
+            'label': 'User Key'
+        })
+
+        apikey_field = get_secret_field_config(apikey,
+                                               'Application API token. See https://pushover.net/apps/',
+                                               include_prefix=True)
+
+        apikey_field.update({
             'name': 'apikey',
-            'label': 'API Key',
-            'type': 'secret',
-            'required': apikey is None,
-            'help': ('%sApplication API token. See '
-                     'https://pushover.net/apps/') % (help_msg if apikey else ''),
-        }, {
+            'label': 'API Key'
+        })
+        return [userkey_field, apikey_field, {
             'name': 'priority',
             'label': 'Message Priority',
             'type': 'choice',

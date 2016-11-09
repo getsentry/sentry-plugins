@@ -4,6 +4,7 @@ from sentry.plugins.bases.notify import NotifyPlugin
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.utils import get_secret_field_config
 
 from .client import PagerDutyClient
 
@@ -19,13 +20,15 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
         return bool(self.get_option('service_key', project))
 
     def get_config(self, **kwargs):
-        return [{
+        service_key = self.get_option('service_key', kwargs['project'])
+        secret_field = get_secret_field_config(service_key,
+                                               'PagerDuty\'s Sentry service Integration Key',
+                                               include_prefix=True)
+        secret_field.update({
             'name': 'service_key',
-            'label': 'Service Key',
-            'type': 'secret',
-            'required': True,
-            'help': 'PagerDuty\'s Sentry service Integration Key',
-        }]
+            'label': 'Service Key'
+        })
+        return [secret_field]
 
     def get_client(self, project):
         return PagerDutyClient(

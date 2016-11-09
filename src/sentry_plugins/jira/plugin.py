@@ -15,6 +15,7 @@ from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.jira.client import JIRAClient, JIRAError, JIRAUnauthorized
+from sentry_plugins.utils import get_secret_field_config
 
 # A list of common builtin custom field types for JIRA for easy reference.
 JIRA_CUSTOM_FIELD_TYPES = {
@@ -503,6 +504,12 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         if issue_type_choices:
                             default_issue_type = default_issue_type or issue_type_choices[0][0]
 
+        secret_field = get_secret_field_config(pw, '')
+        secret_field.update({
+            'name': 'password',
+            'label': 'Password'
+        })
+
         return [{
             'name': 'instance_url',
             'label': 'JIRA Instance URL',
@@ -516,14 +523,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             'default': username,
             'type': 'text',
             'help': 'Ensure the JIRA user has admin permissions on the project'
-        }, {
-            'name': 'password',
-            'label': 'Password',
-            'type': 'secret',
-            'required': pw is None,
-            'help': 'Only enter a new password if you wish to update the stored value'
-                    if pw is not None else None
-        }, {
+        }, secret_field, {
             'name': 'default_project',
             'label': 'Linked Project',
             'type': 'select',

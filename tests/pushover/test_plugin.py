@@ -92,5 +92,9 @@ class PushoverPluginTest(PluginTestCase):
         apikey_config = [item for item in config if item['name'] == 'apikey'][0]
         assert userkey_config.get('type') == 'secret'
         assert userkey_config.get('value') is None
+        assert userkey_config.get('has_saved_value') is True
+        assert userkey_config.get('prefix') == 'abcd'
         assert apikey_config.get('type') == 'secret'
         assert apikey_config.get('value') is None
+        assert apikey_config.get('has_saved_value') is True
+        assert apikey_config.get('prefix') == 'abcd'

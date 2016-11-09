@@ -8,6 +8,7 @@ from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
+from sentry_plugins.utils import get_secret_field_config
 
 from .client import GitLabClient
 
@@ -162,8 +163,15 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
         return '{}/{}/issues/{}'.format(url, repo, issue_id)
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
-        has_gitlab_token = bool(self.get_option('gitlab_token', project))
-        help_msg = 'Only enter a new token if you wish to update the stored value. '
+        gitlab_token = self.get_option('gitlab_token', project)
+        secret_field = get_secret_field_config(gitlab_token,
+                                               'Enter your GitLab API token.',
+                                               include_prefix=True)
+        secret_field.update({
+            'name': 'gitlab_token',
+            'label': 'Access Token',
+            'placeholder': 'e.g. g5DWFtLzaztgYFrqhVfE'
+        })
 
         return [{
             'name': 'gitlab_url',
@@ -173,14 +181,7 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
             'placeholder': 'e.g. https://gitlab.example.com',
             'required': True,
             'help': 'Enter the URL for your GitLab server.'
-        }, {
-            'name': 'gitlab_token',
-            'label': 'Access Token',
-            'type': 'secret',
-            'placeholder': 'e.g. g5DWFtLzaztgYFrqhVfE',
-            'required': not has_gitlab_token,
-            'help': '%sEnter your GitLab API token.' % (help_msg if has_gitlab_token else '')
-        }, {
+        }, secret_field, {
             'name': 'gitlab_repo',
             'label': 'Repository Name',
             'type': 'text',

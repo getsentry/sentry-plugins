@@ -11,6 +11,7 @@ from sentry.utils import json
 from six.moves.urllib.parse import urlencode
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.utils import get_secret_field_config
 
 
 class PivotalPlugin(CorePluginMixin, IssuePlugin2):
@@ -163,17 +164,16 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
         token = self.get_option('token', project)
-        return [{
+        helptext = ('Enter your API Token (found on '
+                    '<a href="https://www.pivotaltracker.com/profile"'
+                    '>pivotaltracker.com/profile</a>).')
+        secret_field = get_secret_field_config(token, helptext, include_prefix=True)
+        secret_field.update({
             'name': 'token',
             'label': 'API Token',
-            'type': 'secret',
-            'required': token is None,
-            'placeholder': 'e.g. a9877d72b6d13b23410a7109b35e88bc',
-            'help': ('Enter your API Token (found on '
-                     '<a href="https://www.pivotaltracker.com/profile">pivotaltracker.com/profile'
-                     '</a>).%s' % (' Only enter a token if you wish to update stored value'
-                                   if token else ''))
-        }, {
+            'placeholder': 'e.g. a9877d72b6d13b23410a7109b35e88bc'
+        })
+        return [secret_field, {
             'name': 'project',
             'label': 'Project ID',
             'default': self.get_option('project', project),
