@@ -20,7 +20,6 @@ from sentry import options
 from sentry.models import (
     Organization, Team, User, OrganizationMember, GroupAssignee
 )
-from sentry.utils import auth
 from sentry.utils.http import absolute_uri
 from sentry.plugins import plugins
 from sentry.web.frontend.base import ProjectView
@@ -431,12 +430,7 @@ def configure(request, context):
         'projects': projects
     }
 
-    if not request.user.is_authenticated():
-        if request.method == 'POST':
-            auth.initiate_login(request, next_url=request.get_full_path())
-            return HttpResponseRedirect(auth.get_login_url())
-
-    elif context.tenant.auth_user is None and request.user.is_authenticated():
+    if context.tenant.auth_user is None and request.user.is_authenticated():
         grant_form = GrantAccessForm(context.tenant, request, initial=initial_org)
         request.session.pop(HIPCHAT_ORG_PREFERENCE, None)
         if request.method == 'POST' and grant_form.is_valid():
@@ -493,7 +487,8 @@ def sign_out(request, context):
         if tenant.auth_user:
             tenant.clear()
             notify_tenant_removal(tenant)
-        return HttpResponseRedirect(reverse('sentry-logout'))
+        url = "%s?next=%s" % (reverse('sentry-logout'), cfg_url)
+        return HttpResponseRedirect(url)
 
     return render(request, 'sentry_hipchat_ac/sign_out.html', {
         'context': context,

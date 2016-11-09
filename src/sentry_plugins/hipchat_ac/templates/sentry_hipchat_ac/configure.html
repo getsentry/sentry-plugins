@@ -1,5 +1,32 @@
 {% extends "sentry_hipchat_ac/configure_layout.html" %}
+
+{% load sentry_helpers %}
+
 {% block body %}
+
+<script>
+// open sentry login in another window and then receive a message of whether user is logged in. If user is logged in, refresh the page, so that user can continue through configuration flow
+
+  function openLogin() {
+    var top = screen.height / 2 - 350
+    var left = screen.width / 2 - 300
+    window.open(
+      ('{% system_origin %}' + "/auth/login?next=" + encodeURIComponent('/auth/close/')),
+      "sentryLogin",
+      "modal, resizable, scrollbars, height=700, width=600, top="+top+", left="+left
+    );
+
+    window.addEventListener('message', function (evt) {
+      if (event.origin !== '{% system_origin %}') {
+        throw new Error('message event received from invalid origin: ' + event.origin);
+        return;
+      }
+      else if (event.data === 'user_authenticated') {
+        document.location.reload();
+      }
+    }, false);
+  }
+</script>
   {% if tenant.auth_user %}
     <h3>Authorization</h3>
     <p>
@@ -54,11 +81,8 @@
       <button type="submit" class="btn" name="submit">Grant access</button>
     </form>
     {% else %}
-    <form action="" method="POST" target="_blank">
-      {% csrf_token %}
-      <input type="hidden" name="op" value="login" />
-      <button type="submit" class="btn btn-primary">Authenticate with Sentry</button>
-    </form>
+      <br>
+      <button type="submit" class="btn btn-primary" onclick="openLogin()">Authenticate with Sentry</button>
     {% endif %}
   {% endif %}
 {% endblock %}
