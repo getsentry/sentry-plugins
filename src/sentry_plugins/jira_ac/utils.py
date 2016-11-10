@@ -13,7 +13,7 @@ class JIRAError(Exception):
 
 def percent_encode(val):
     # see https://en.wikipedia.org/wiki/Percent-encoding
-    return quote(val).replace('%7E', '~').replace('/', '%2F')
+    return quote(val.encode('utf8', errors='replace')).replace('%7E', '~').replace('/', '%2F')
 
 
 def get_query_hash(uri, method, query_params=None):
