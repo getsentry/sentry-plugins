@@ -15,6 +15,7 @@ pytest_plugins = ['sentry.utils.pytest']
 
 def pytest_configure(config):
     settings.INSTALLED_APPS = tuple(settings.INSTALLED_APPS) + (
+        'sentry_plugins.asana',
         'sentry_plugins.bitbucket',
         'sentry_plugins.hipchat_ac',
         'sentry_plugins.github',
@@ -28,6 +29,7 @@ def pytest_configure(config):
 
     # TODO(dcramer): we need a PluginAPITestCase that can do register/unregister
     from sentry.plugins import plugins
+    from sentry_plugins.asana.plugin import AsanaPlugin
     from sentry_plugins.bitbucket.plugin import BitbucketPlugin
     from sentry_plugins.github.plugin import GitHubPlugin
     from sentry_plugins.gitlab.plugin import GitLabPlugin
@@ -37,6 +39,7 @@ def pytest_configure(config):
     from sentry_plugins.pivotal.plugin import PivotalPlugin
     from sentry_plugins.pushover.plugin import PushoverPlugin
     from sentry_plugins.slack.plugin import SlackPlugin
+    plugins.register(AsanaPlugin)
     plugins.register(BitbucketPlugin)
     plugins.register(GitHubPlugin)
     plugins.register(GitLabPlugin)
@@ -47,6 +50,8 @@ def pytest_configure(config):
     plugins.register(PushoverPlugin)
     plugins.register(SlackPlugin)
 
+    settings.ASANA_CLIENT_ID = 'abc'
+    settings.ASANA_CLIENT_SECRET = '123'
     settings.BITBUCKET_CONSUMER_KEY = 'abc'
     settings.BITBUCKET_CONSUMER_SECRET = '123'
     settings.GITHUB_APP_ID = 'abc'

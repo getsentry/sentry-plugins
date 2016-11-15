@@ -96,6 +96,7 @@ setup(
     include_package_data=True,
     entry_points={
         'sentry.apps': [
+            'asana = sentry_plugins.asana',
             'bitbucket = sentry_plugins.bitbucket',
             'github = sentry_plugins.github',
             'gitlab = sentry_plugins.gitlab',
@@ -108,6 +109,7 @@ setup(
             'slack = sentry_plugins.slack',
         ],
         'sentry.plugins': [
+            'asana = sentry_plugins.asana.plugin:AsanaPlugin',
             'bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin',
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin',
