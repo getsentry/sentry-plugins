@@ -21,7 +21,8 @@ from sentry_plugins.utils import get_secret_field_config
 JIRA_CUSTOM_FIELD_TYPES = {
     'select': 'com.atlassian.jira.plugin.system.customfieldtypes:select',
     'textarea': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea',
-    'multiuserpicker': 'com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker'
+    'multiuserpicker': 'com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker',
+    'tempo_account': 'com.tempoplugin.tempo-accounts:accounts.customfield'
 }
 
 ERR_UNAUTHORIZED = (
@@ -396,7 +397,8 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         v = [v]
                     elif schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES.get('textarea'):
                         v = v
-                    elif schema['type'] == 'number':
+                    elif schema['type'] == 'number' or \
+                            schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES['tempo_account']:
                         try:
                             if '.' in v:
                                 v = float(v)
