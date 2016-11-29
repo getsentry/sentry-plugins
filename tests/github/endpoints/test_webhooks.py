@@ -17,7 +17,7 @@ class WebhookTest(APITestCase):
         project = self.project  # force creation
 
         url = '/plugins/github/organizations/{}/webhook/'.format(
-            project.organization.slug,
+            project.organization.id,
         )
 
         response = self.client.get(url)
@@ -28,7 +28,7 @@ class WebhookTest(APITestCase):
         project = self.project  # force creation
 
         url = '/plugins/github/organizations/{}/webhook/'.format(
-            project.organization.slug,
+            project.organization.id,
         )
 
         secret = 'b3002c3e321d4b7880360d397db2ccfd'
@@ -54,7 +54,7 @@ class WebhookTest(APITestCase):
         project = self.project  # force creation
 
         url = '/plugins/github/organizations/{}/webhook/'.format(
-            project.organization.slug,
+            project.organization.id,
         )
 
         secret = '2d7565c3537847b789d6995dca8d9f84'
@@ -82,7 +82,7 @@ class PushEventWebhookTest(APITestCase):
         project = self.project  # force creation
 
         url = '/plugins/github/organizations/{}/webhook/'.format(
-            project.organization.slug,
+            project.organization.id,
         )
 
         secret = 'b3002c3e321d4b7880360d397db2ccfd'

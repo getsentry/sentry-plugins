@@ -1,11 +1,16 @@
 from __future__ import absolute_import
 
+import logging
 import six
 
 from rest_framework.response import Response
+from uuid import uuid4
 
+from sentry.app import locks
 from sentry.exceptions import InvalidIdentity, PluginError
+from sentry.models import OrganizationOption
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
+from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
@@ -30,13 +35,49 @@ ERR_404 = (
 )
 
 
-class GitHubPlugin(CorePluginMixin, IssuePlugin2):
+class GitHubMixin(object):
+    def message_from_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            return ERR_UNAUTHORIZED
+        elif isinstance(exc, ApiError):
+            if exc.code == 404:
+                return ERR_404
+            return ('Error Communicating with GitHub (HTTP %s): %s' % (
+                exc.code,
+                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
+            ))
+        else:
+            return ERR_INTERNAL
+
+    def raise_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            raise InvalidIdentity(self.message_from_error(exc))
+        elif isinstance(exc, ApiError):
+            raise PluginError(self.message_from_error(exc))
+        elif isinstance(exc, PluginError):
+            raise
+        else:
+            self.logger.exception(six.text_type(exc))
+            raise PluginError(self.message_from_error(exc))
+
+    def get_client(self, user):
+        auth = self.get_auth(user=user)
+        if auth is None:
+            raise PluginError(ERR_UNAUTHORIZED)
+        return GitHubClient(token=auth.tokens['access_token'])
+
+
+# TODO(dcramer): half of this plugin is for the issue tracking integration
+# (which is a singular entry) and the other half is generic GitHub. It'd be nice
+# if plugins were entirely generic, and simply registered the various hooks.
+class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
     description = 'Integrate GitHub issues by linking a repository to a project.'
     slug = 'github'
     title = 'GitHub'
     conf_title = title
     conf_key = 'github'
     auth_provider = 'github'
+    logger = logging.getLogger('sentry.plugins.github')
 
     def get_group_urls(self):
         return super(GitHubPlugin, self).get_group_urls() + [
@@ -89,38 +130,8 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             'required': False
         }]
 
-    def get_client(self, project, user):
-        auth = self.get_auth_for_user(user=user)
-        if auth is None:
-            raise PluginError(ERR_UNAUTHORIZED)
-        return GitHubClient(token=auth.tokens['access_token'])
-
-    def message_from_error(self, exc):
-        if isinstance(exc, ApiUnauthorized):
-            return ERR_UNAUTHORIZED
-        elif isinstance(exc, ApiError):
-            if exc.code == 404:
-                return ERR_404
-            return ('Error Communicating with GitHub (HTTP %s): %s' % (
-                exc.code,
-                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
-            ))
-        else:
-            return ERR_INTERNAL
-
-    def raise_error(self, exc):
-        if isinstance(exc, ApiUnauthorized):
-            raise InvalidIdentity(self.message_from_error(exc))
-        elif isinstance(exc, ApiError):
-            raise PluginError(self.message_from_error(exc))
-        elif isinstance(exc, PluginError):
-            raise
-        else:
-            self.logger.exception(six.text_type(exc))
-            raise PluginError(self.message_from_error(exc))
-
     def get_allowed_assignees(self, request, group):
-        client = self.get_client(group.project, request.user)
+        client = self.get_client(request.user)
         try:
             response = client.list_assignees(
                 repo=self.get_option('repo', group.project),
@@ -134,7 +145,7 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
 
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
-        client = self.get_client(group.project, request.user)
+        client = self.get_client(request.user)
 
         try:
             response = client.create_issue(
@@ -151,7 +162,7 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
         return response['number']
 
     def link_issue(self, request, group, form_data, **kwargs):
-        client = self.get_client(group.project, request.user)
+        client = self.get_client(request.user)
         repo = self.get_option('repo', group.project)
         try:
             issue = client.get_issue(
@@ -194,7 +205,7 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             return Response({'issue_id': []})
 
         repo = self.get_option('repo', group.project)
-        client = self.get_client(group.project, request.user)
+        client = self.get_client(request.user)
 
         try:
             response = client.search_issues(
@@ -217,13 +228,97 @@ class GitHubPlugin(CorePluginMixin, IssuePlugin2):
             'default': self.get_option('repo', project),
             'type': 'text',
             'placeholder': 'e.g. getsentry/sentry',
-            'help': 'Enter your repository name, including the owner.'
+            'help': 'Enter your repository name, including the owner.',
+            'required': True,
         }]
 
-    def enable(self, project, user=None):
-        super(GitHubPlugin, self).enable(project, user)
-        # TODO(dcramer): enable webhook on repository
+    def setup(self, bindings):
+        bindings.add('repository.provider', GitHubRepositoryProvider, id='github')
 
-    def disable(self, project, user=None):
-        super(GitHubPlugin, self).disable(project, user)
-        # TODO(dcramer): disable webhook on repository
+
+class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
+    name = 'GitHub'
+    auth_provider = 'github'
+    logger = logging.getLogger('sentry.plugins.github')
+
+    def get_config(self):
+        return [{
+            'name': 'name',
+            'label': 'Repository Name',
+            'type': 'text',
+            'placeholder': 'e.g. getsentry/sentry',
+            'help': 'Enter your repository name, including the owner.',
+            'required': True,
+        }]
+
+    def validate_config(self, organization, config, actor=None):
+        """
+        ```
+        if config['foo'] and not config['bar']:
+            raise PluginError('You cannot configure foo with bar')
+        return config
+        ```
+        """
+        if config.get('name'):
+            client = self.get_client(actor)
+            try:
+                client.get_repo(config['name'])
+            except Exception as e:
+                self.raise_error(e)
+        return config
+
+    def get_webhook_secret(self, organization):
+        lock = locks.get('github:webhook-secret:{}'.format(organization.id),
+                         duration=60)
+        with lock.acquire():
+            # TODO(dcramer): get_or_create would be a useful native solution
+            secret = OrganizationOption.objects.get_value(
+                organization=organization,
+                key='github:webhook_secret',
+            )
+            if secret is None:
+                secret = uuid4().hex + uuid4().hex
+                OrganizationOption.objects.set_value(
+                    organization=organization,
+                    key='github:webhook_secret',
+                    value=secret,
+                )
+        return secret
+
+    def create_repository(self, organization, data, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot create a repository anonymously')
+
+        client = self.get_client(actor)
+        resp = client.create_hook(data['name'], {
+            'name': 'web',
+            'active': True,
+            'events': ['push'],
+            'config': {
+                'url': absolute_uri('/plugins/github/organizations/{}/webhook/'.format(organization.id)),
+                'content_type': 'json',
+                'secret': self.get_webhook_secret(organization),
+            },
+        })
+
+        return {
+            'name': data['name'],
+            'external_id': data['name'],
+            'url': 'https://github.com/{}'.format(data['name']),
+            'config': {
+                'name': data['name'],
+                'webhook_id': resp['id'],
+            }
+        }
+
+    def delete_repository(self, repo, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot delete a repository anonymously')
+
+        client = self.get_client(actor)
+        try:
+            client.delete_hook(repo.config['name'], repo.config['webhook_id'])
+        except ApiError as exc:
+            if exc.code == 404:
+                return
+            raise

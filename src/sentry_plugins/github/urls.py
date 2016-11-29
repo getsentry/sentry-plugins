@@ -6,5 +6,5 @@ from .endpoints.webhook import GithubWebhookEndpoint
 
 urlpatterns = patterns(
     '',
-    url(r'^organizations/(?P<organization_slug>[^\/]+)/webhook/$', GithubWebhookEndpoint.as_view()),
+    url(r'^organizations/(?P<organization_id>[^\/]+)/webhook/$', GithubWebhookEndpoint.as_view()),
 )

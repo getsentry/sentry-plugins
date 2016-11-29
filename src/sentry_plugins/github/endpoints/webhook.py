@@ -15,7 +15,8 @@ from django.views.generic import View
 from django.utils import timezone
 from simplejson import JSONDecodeError
 from sentry.models import (
-    Commit, CommitAuthor, Organization, OrganizationOption, Repository
+    Commit, CommitAuthor, CommitFileChange, Organization, OrganizationOption,
+    Repository
 )
 from sentry.utils import json
 
@@ -34,7 +35,8 @@ class PushEventWebhook(Webhook):
 
         repo = Repository.objects.get_or_create(
             organization_id=organization.id,
-            name=u'github:{}'.format(event['repository']['full_name']),
+            provider='github',
+            external_id=event['repository']['full_name'],
         )[0]
 
         for commit in event['commits']:
@@ -66,7 +68,7 @@ class PushEventWebhook(Webhook):
 
             try:
                 with transaction.atomic():
-                    commit = Commit.objects.create(
+                    c = Commit.objects.create(
                         repository_id=repo.id,
                         organization_id=organization.id,
                         key=commit['id'],
@@ -76,6 +78,27 @@ class PushEventWebhook(Webhook):
                             commit['timestamp'],
                         ).astimezone(timezone.utc),
                     )
+                    for fname in commit['added']:
+                        CommitFileChange.objects.create(
+                            organization_id=organization.id,
+                            commit=c,
+                            filename=fname,
+                            type='A',
+                        )
+                    for fname in commit['removed']:
+                        CommitFileChange.objects.create(
+                            organization_id=organization.id,
+                            commit=c,
+                            filename=fname,
+                            type='D',
+                        )
+                    for fname in commit['modified']:
+                        CommitFileChange.objects.create(
+                            organization_id=organization.id,
+                            commit=c,
+                            filename=fname,
+                            type='M',
+                        )
             except IntegrityError:
                 pass
 
@@ -110,14 +133,14 @@ class GithubWebhookEndpoint(View):
 
         return super(GithubWebhookEndpoint, self).dispatch(request, *args, **kwargs)
 
-    def post(self, request, organization_slug):
+    def post(self, request, organization_id):
         try:
             organization = Organization.objects.get_from_cache(
-                slug=organization_slug,
+                id=organization_id,
             )
         except Organization.DoesNotExist:
             logger.error('github.webhook.invalid-organization', extra={
-                'organization_slug': organization_slug,
+                'organization_id': organization_id,
             })
             return HttpResponse(status=400)
 

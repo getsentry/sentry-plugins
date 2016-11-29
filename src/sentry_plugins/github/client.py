@@ -33,6 +33,12 @@ class GitHubClient(object):
             raise ApiError.from_response(e.response)
         return resp.json()
 
+    def get_repo(self, repo):
+        return self.request(
+            'GET',
+            '/repos/{}'.format(repo),
+        )
+
     def get_issue(self, repo, issue_id):
         return self.request(
             'GET',
@@ -67,4 +73,22 @@ class GitHubClient(object):
             'GET',
             '/search/issues',
             params={'q': query},
+        )
+
+    def create_hook(self, repo, data):
+        return self.request(
+            'POST',
+            '/repos/{}/hooks'.format(
+                repo,
+            ),
+            data=data,
+        )
+
+    def delete_hook(self, repo, id):
+        return self.request(
+            'DELETE',
+            '/repos/{}/hooks/{}'.format(
+                repo,
+                id,
+            ),
         )

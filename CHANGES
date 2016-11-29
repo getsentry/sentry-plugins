@@ -1,7 +1,9 @@
 Version 8.11 (Unreleased)
 -------------------------
+
 - Improved UI for password and API key fields used in integrations
 - Add Asana to issue tracking plugin options
+- Add experimental support for GitHub managed repositories
 
 Version 8.10
 ------------
