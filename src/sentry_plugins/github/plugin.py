@@ -290,26 +290,30 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
             raise NotImplementedError('Cannot create a repository anonymously')
 
         client = self.get_client(actor)
-        resp = client.create_hook(data['name'], {
-            'name': 'web',
-            'active': True,
-            'events': ['push'],
-            'config': {
-                'url': absolute_uri('/plugins/github/organizations/{}/webhook/'.format(organization.id)),
-                'content_type': 'json',
-                'secret': self.get_webhook_secret(organization),
-            },
-        })
 
-        return {
-            'name': data['name'],
-            'external_id': data['name'],
-            'url': 'https://github.com/{}'.format(data['name']),
-            'config': {
+        try:
+            resp = client.create_hook(data['name'], {
+                'name': 'web',
+                'active': True,
+                'events': ['push'],
+                'config': {
+                    'url': absolute_uri('/plugins/github/organizations/{}/webhook/'.format(organization.id)),
+                    'content_type': 'json',
+                    'secret': self.get_webhook_secret(organization),
+                },
+            })
+        except Exception as e:
+            self.raise_error(e)
+        else:
+            return {
                 'name': data['name'],
-                'webhook_id': resp['id'],
+                'external_id': data['name'],
+                'url': 'https://github.com/{}'.format(data['name']),
+                'config': {
+                    'name': data['name'],
+                    'webhook_id': resp['id'],
+                }
             }
-        }
 
     def delete_repository(self, repo, actor=None):
         if actor is None:
