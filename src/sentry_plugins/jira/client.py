@@ -163,7 +163,7 @@ class JIRAClient(object):
     def make_request(self, method, url, payload=None):
         if url[:4] != "http":
             url = self.instance_url + url
-        auth = self.username, self.password
+        auth = self.username.encode('utf8'), self.password.encode('utf8')
         session = build_session()
         try:
             if method == 'get':
