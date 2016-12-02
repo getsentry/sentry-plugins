@@ -1,5 +1,8 @@
-Version 8.11 (Unreleased)
+Version 8.12 (Unreleased)
 -------------------------
+
+Version 8.11
+------------
 
 - Improved UI for password and API key fields used in integrations
 - Add Asana to issue tracking plugin options
