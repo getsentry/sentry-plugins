@@ -107,6 +107,7 @@ setup(
             'pivotal = sentry_plugins.pivotal',
             'pushover = sentry_plugins.pushover',
             'slack = sentry_plugins.slack',
+            'victorops = sentry_plugins.victorops',
         ],
         'sentry.plugins': [
             'asana = sentry_plugins.asana.plugin:AsanaPlugin',
@@ -120,6 +121,7 @@ setup(
             'pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin',
             'pushover = sentry_plugins.pushover.plugin:PushoverPlugin',
             'slack = sentry_plugins.slack.plugin:SlackPlugin',
+            'victorops = sentry_plugins.victorops.plugin:VictorOpsPlugin',
         ],
     },
     classifiers=[

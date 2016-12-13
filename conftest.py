@@ -25,6 +25,7 @@ def pytest_configure(config):
         'sentry_plugins.pushover',
         'sentry_plugins.jira',
         'sentry_plugins.slack',
+        'sentry_plugins.victorops',
     )
 
     # TODO(dcramer): we need a PluginAPITestCase that can do register/unregister
@@ -39,6 +40,7 @@ def pytest_configure(config):
     from sentry_plugins.pivotal.plugin import PivotalPlugin
     from sentry_plugins.pushover.plugin import PushoverPlugin
     from sentry_plugins.slack.plugin import SlackPlugin
+    from sentry_plugins.victorops.plugin import VictorOpsPlugin
     plugins.register(AsanaPlugin)
     plugins.register(BitbucketPlugin)
     plugins.register(GitHubPlugin)
@@ -49,6 +51,7 @@ def pytest_configure(config):
     plugins.register(PivotalPlugin)
     plugins.register(PushoverPlugin)
     plugins.register(SlackPlugin)
+    plugins.register(VictorOpsPlugin)
 
     settings.ASANA_CLIENT_ID = 'abc'
     settings.ASANA_CLIENT_SECRET = '123'
