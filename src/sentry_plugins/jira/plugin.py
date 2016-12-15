@@ -384,7 +384,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 v = form_data.get(field)
                 if v:
                     schema = f['schema']
-                    if schema.get('type') == 'string' and not schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES['select']:
+                    if schema.get('type') == 'string' and not schema.get('custom'):
                         continue  # noop
                     if schema['type'] == 'user' or schema.get('items') == 'user':
                         v = {'name': v}
