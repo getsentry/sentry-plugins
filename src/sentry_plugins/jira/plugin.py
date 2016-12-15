@@ -378,14 +378,17 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             f = fs[field]
             if field == 'description':
                 cleaned_data[field] = form_data[field]
+                continue
             elif field == 'summary':
                 cleaned_data['summary'] = form_data['title']
+                continue
             if field in form_data.keys():
                 v = form_data.get(field)
                 if v:
                     schema = f['schema']
                     if schema.get('type') == 'string' and not schema.get('custom'):
-                        continue  # noop
+                        cleaned_data[field] = v
+                        continue
                     if schema['type'] == 'user' or schema.get('items') == 'user':
                         v = {'name': v}
                     elif schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES.get('multiuserpicker'):
@@ -407,7 +410,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         except ValueError:
                             pass
                     elif (schema.get('type') != 'string'
-                            or schema.get('items') != 'string'
+                            or (schema.get('items') and schema.get('items') != 'string')
                             or schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES.get('select')):
                         v = {'id': v}
                     cleaned_data[field] = v
