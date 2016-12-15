@@ -19,7 +19,8 @@ def pytest_configure(config):
         'sentry_plugins.heroku', 'sentry_plugins.hipchat_ac', 'sentry_plugins.github',
         'sentry_plugins.gitlab', 'sentry_plugins.pagerduty', 'sentry_plugins.pivotal',
         'sentry_plugins.pushover', 'sentry_plugins.jira', 'sentry_plugins.segment',
-        'sentry_plugins.sessionstack', 'sentry_plugins.slack', 'sentry_plugins.victorops',
+        'sentry_plugins.sessionstack', 'sentry_plugins.slack', 'sentry_plugins.splunk',
+        'sentry_plugins.victorops',
     )
 
     # TODO(dcramer): we need a PluginAPITestCase that can do register/unregister
@@ -38,6 +39,7 @@ def pytest_configure(config):
     from sentry_plugins.segment.plugin import SegmentPlugin
     from sentry_plugins.sessionstack.plugin import SessionStackPlugin
     from sentry_plugins.slack.plugin import SlackPlugin
+    from sentry_plugins.splunk.plugin import SplunkPlugin
     from sentry_plugins.victorops.plugin import VictorOpsPlugin
     plugins.register(AmazonSQSPlugin)
     plugins.register(AsanaPlugin)
@@ -53,6 +55,7 @@ def pytest_configure(config):
     plugins.register(SegmentPlugin)
     plugins.register(SessionStackPlugin)
     plugins.register(SlackPlugin)
+    plugins.register(SplunkPlugin)
     plugins.register(VictorOpsPlugin)
 
     settings.ASANA_CLIENT_ID = 'abc'

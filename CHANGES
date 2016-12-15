@@ -42,6 +42,7 @@ Version 8.12
 
 - Added VictorOps support for alerts.
 - Added Segment data forwarding.
+- Added Splunk data forwarding.
 
 Version 8.11
 ------------
