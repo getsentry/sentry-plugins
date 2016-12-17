@@ -7,6 +7,7 @@ from sentry.plugins.base.configuration import react_plugin_config
 from sentry.utils.hashlib import md5_text
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.utils import get_secret_field_config
 
 
 class SegmentPlugin(CorePluginMixin, Plugin):
@@ -27,12 +28,14 @@ class SegmentPlugin(CorePluginMixin, Plugin):
         return 'data-forwarding'
 
     def get_config(self, project, **kwargs):
-        return [{
-            'name': 'write_key',
-            'label': 'Write Key',
-            'type': 'secret',
-            'required': True,
-        }]
+        return [
+            get_secret_field_config(
+                name='write_key',
+                label='Write Key',
+                secret=self.get_option('write_key', project),
+                help_text='Your Segment write key',
+            ),
+        ]
 
     def get_event_props(self, event):
         props = {
