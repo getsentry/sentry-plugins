@@ -62,6 +62,64 @@ class SegmentPlugin(CorePluginMixin, Plugin):
             })
         return props
 
+    # https://segment.com/docs/spec/track/
+    def get_event_payload(self, event):
+        context = {
+            'library': {
+                'name': 'sentry',
+                'version': self.version,
+            },
+        }
+
+        props = {
+            'eventId': event.event_id,
+            'transaction': event.get_tag('transaction') or '',
+            'release': event.get_tag('sentry:release') or '',
+            'environment': event.get_tag('environment') or '',
+        }
+
+        if 'sentry.interfaces.User' in event.interfaces:
+            user = event.interfaces['sentry.interfaces.User']
+            if user.ip_address:
+                context['ip'] = user.ip_address
+            user_id = user.id
+        else:
+            user_id = None
+
+        if 'sentry.interfaces.Http' in event.interfaces:
+            http = event.interfaces['sentry.interfaces.Http']
+            headers = http.headers
+            if not isinstance(headers, dict):
+                headers = dict(headers or ())
+
+            context.update({
+                'userAgent': headers.get('User-Agent', ''),
+                'page': {
+                    'url': http.url,
+                    'method': http.method,
+                    'search': http.query or '',
+                    'referrer': headers.get('Referer', ''),
+                },
+            })
+
+        if 'sentry.interfaces.Exception' in event.interfaces:
+            exc = event.interfaces['sentry.interfaces.Exception'].values[0]
+            props.update({
+                'exceptionType': exc.type,
+            })
+
+        return {
+            'context': context,
+            'userId': user_id,
+            'event': 'Error Captured',
+            'properties': props,
+            'integration': {
+                'name': 'sentry',
+                'version': self.version,
+            },
+            'timestamp': event.datetime.isoformat() + 'Z',
+        }
+
     def post_process(self, event, **kwargs):
         # TODO(dcramer): we currently only support authenticated events, as the
         # value of anonymous errors/crashes/etc is much less meaningful in the
@@ -91,15 +149,6 @@ class SegmentPlugin(CorePluginMixin, Plugin):
         if ratelimiter.is_limited(rl_key, limit=50, window=1):
             return
 
-        payload = {
-            'userId': user_id,
-            'event': 'Error Captured',
-            'properties': self.get_event_props(event),
-            'timestamp': event.datetime.isoformat() + 'Z',
-            'integration': {
-                'name': 'sentry',
-                'version': self.version,
-            },
-        }
+        payload = self.get_event_payload(event)
         session = http.build_session()
         session.post(self.endpoint, json=payload, auth=(write_key, ''))

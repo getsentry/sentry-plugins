@@ -56,6 +56,12 @@ class SegmentPluginTest(PluginTestCase):
         assert {
             'userId': '1',
             'event': 'Error Captured',
+            'context': {
+                'library': {
+                    'name': 'sentry',
+                    'version': self.plugin.version,
+                },
+            },
             'properties': {
                 'environment': '',
                 'eventId': event.event_id,
@@ -63,9 +69,9 @@ class SegmentPluginTest(PluginTestCase):
                 'release': '',
                 'transaction': '',
             },
-            'timestamp': event.datetime.isoformat() + 'Z',
             'integration': {
                 'name': 'sentry',
                 'version': self.plugin.version,
             },
+            'timestamp': event.datetime.isoformat() + 'Z',
         } == payload
