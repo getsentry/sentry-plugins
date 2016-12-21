@@ -97,7 +97,7 @@ class SegmentPlugin(CorePluginMixin, Plugin):
                 'page': {
                     'url': http.url,
                     'method': http.method,
-                    'search': http.query or '',
+                    'search': http.query_string or '',
                     'referrer': headers.get('Referer', ''),
                 },
             })
