@@ -1,5 +1,5 @@
-Version 8.12 (Unreleased)
--------------------------
+Version 8.12
+------------
 
 - Added VictorOps support for alerts.
 - Added Segment data forwarding.
