@@ -315,7 +315,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 for user in autocomplete_response.json:
                     users.append({
                         'id': user['name'],
-                        'text': '%s - %s (%s)' % (user['displayName'], user['emailAddress'], user['name'])
+                        'text': '%s %s(%s)' % (user['displayName'],
+                                               '- %s ' % user.get('emailAddress') if user.get('emailAddress') else '',
+                                               user['name'])
                     })
 
             # if JIRA user doesn't have proper permission for user api,
