@@ -1,10 +1,16 @@
 SENTRY_PATH := `python -c 'import sentry; print sentry.__file__.rsplit("/", 3)[0]'`
 
-develop: setup-git
+develop: setup-git install-yarn
 	pip install "pip>=7"
 	pip install -e git+https://github.com/getsentry/sentry.git#egg=sentry[dev]
 	pip install -e .
-	npm install
+	yarn install
+
+install-yarn:
+	@echo "--> Installing Node dependencies"
+	@hash yarn 2> /dev/null || npm install -g yarn
+	# Use NODE_ENV=development so that yarn installs both dependencies + devDependencies
+	NODE_ENV=development yarn install --ignore-optional
 
 install-tests: develop
 	pip install .[tests]

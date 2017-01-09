@@ -10,7 +10,7 @@
     "webpack": "^1.9.11"
   },
   "devDependencies": {
-    "phantomjs-prebuilt": "2.1.7"
+    "phantomjs-prebuilt": "2.1.14"
   },
   "private": true
 }

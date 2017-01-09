@@ -7,6 +7,7 @@ services:
 python:
 - '2.7'
 cache:
+  yarn: true
   directories:
   - node_modules
   - $HOME/.cache/pip/wheels
