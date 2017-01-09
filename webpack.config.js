@@ -62,7 +62,9 @@ function getConfig(app) {
   // server as well as nginx when paired with the gzip_static module.
   if (IS_PRODUCTION) {
     config.plugins.push(new (require('compression-webpack-plugin'))({
-      algorithm: 'gzip',
+      algorithm: function(buffer, options, callback) {
+        require('zlib').gzip(buffer, callback);
+      },
       regExp: /\.(js|map|css|svg|html|txt|ico|eot|ttf)$/,
     }));
   }
