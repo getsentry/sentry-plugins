@@ -12,14 +12,23 @@ cache:
   - node_modules
   - $HOME/.cache/pip/wheels
   - $HOME/virtualenv/python2.7/src
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
 env:
   global:
   - PIP_DISABLE_PIP_VERSION_CHECK=on
   - SENTRY_SKIP_BACKEND_VALIDATION=1
+  - CXX=g++-4.8
+  - TRAVIS_NODE_VERSION=4
 install:
 # we want to test against sentry master
 - rvm install 2.2.5
 - rvm use 2.2.5
+- nvm install $TRAVIS_NODE_VERSION
 - bundle install
 - make install-tests
 - pip freeze
