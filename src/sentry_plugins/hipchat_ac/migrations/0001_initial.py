@@ -3,6 +3,7 @@ from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from sentry.db.models import FlexibleForeignKey
 
 
 class Migration(SchemaMigration):
@@ -41,7 +42,7 @@ class Migration(SchemaMigration):
         db.create_table(m2m_table_name, (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
             ('tenant', models.ForeignKey(orm[u'sentry_hipchat_ac.tenant'], null=False)),
-            ('organization', models.ForeignKey(orm['sentry.organization'], null=False))
+            ('organization', FlexibleForeignKey(orm['sentry.organization'], null=False))
         ))
         db.create_unique(m2m_table_name, ['tenant_id', 'organization_id'])
 
@@ -50,7 +51,7 @@ class Migration(SchemaMigration):
         db.create_table(m2m_table_name, (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
             ('tenant', models.ForeignKey(orm[u'sentry_hipchat_ac.tenant'], null=False)),
-            ('project', models.ForeignKey(orm['sentry.project'], null=False))
+            ('project', FlexibleForeignKey(orm['sentry.project'], null=False))
         ))
         db.create_unique(m2m_table_name, ['tenant_id', 'project_id'])
 
