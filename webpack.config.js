@@ -38,14 +38,15 @@ function getConfig(app) {
         }
       ]
     },
-    plugins: [
-      new webpack.optimize.DedupePlugin()
-    ],
+    plugins: [],
     resolve: {
-      modulesDirectories: [staticPrefix, 'node_modules'],
-      extensions: ['', '.jsx', '.js']
+      modules: [
+        __dirname,
+        staticPrefix,
+        'node_modules'
+      ],
+      extensions: ['*', '.jsx', '.js']
     },
-    root: __dirname,
     output: {
       path: path.join(__dirname, distPath),
       filename: app + '.js',

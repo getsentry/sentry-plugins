@@ -10,9 +10,10 @@
     "babel-preset-latest": "^6.16.0",
     "babel-preset-react": "^6.16.0",
     "compression-webpack-plugin": "^0.3.0",
+    "extract-text-webpack-plugin": "webpack/extract-text-webpack-plugin#cbd4690",
     "node-libs-browser": "^0.5.2",
     "uglify-js": "2.4.x",
-    "webpack": "^1.9.11"
+    "webpack": "^2.2.0-rc.3"
   },
   "devDependencies": {
     "phantomjs-prebuilt": "2.1.14"
