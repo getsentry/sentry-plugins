@@ -93,7 +93,6 @@ class SessionStackClient(object):
         if response.status_code != requests.codes.OK:
             return None
 
-        print(response.content)
         return json.loads(response.content).get('access_token')
 
     def _make_access_tokens_request(self, session_id, method, **kwargs):
