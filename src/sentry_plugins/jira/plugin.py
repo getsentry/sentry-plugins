@@ -152,7 +152,10 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         # check if the issuetype was passed as a GET parameter
         issue_type = None
         if request is not None:
-            issue_type = request.GET.get('issue_type')
+            if request.method == 'POST':
+                issue_type = request.DATA.get('issuetype')
+            else:
+                issue_type = request.GET.get('issuetype')
 
         if issue_type is None:
             issue_type = self.get_option('default_issue_type', group.project)

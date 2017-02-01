@@ -16,7 +16,7 @@ class IssueActions extends plugins.DefaultIssuePlugin.DefaultIssueActions {
       state.state = FormState.LOADING;
       this.setState(state, this.onLoad.bind(this, () => {
         this.api.request((this.getPluginCreateEndpoint() +
-                          '?issue_type=' + encodeURIComponent(value)), {
+                          '?issuetype=' + encodeURIComponent(value)), {
           success: (data) => {
             // Try not to change things the user might have edited
             // unless they're no longer valid
