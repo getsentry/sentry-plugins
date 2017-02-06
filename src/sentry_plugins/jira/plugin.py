@@ -143,7 +143,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         try:
             meta = client.get_create_meta_for_project(jira_project_key)
         except JIRAUnauthorized:
-            raise PluginError('Something went wrong. Please check your configuration.')
+            raise PluginError('JIRA returned: Unauthorized. '
+                              'Please check your username, password, '
+                              'instance and project in your configuration settings.')
 
         if not meta:
             raise PluginError('Error in JIRA configuration, no projects '
