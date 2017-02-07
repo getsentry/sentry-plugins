@@ -11,7 +11,7 @@ from .utils import get_basic_auth, remove_trailing_slashes
 ACCESS_TOKEN_NAME = 'Sentry'
 
 API_URL = 'https://api.sessionstack.com'
-PLAYER_URL = 'http://app.sessionstack.com/player'
+PLAYER_URL = 'https://app.sessionstack.com/player'
 
 WEBSITES_ENDPOINT = '/v1/websites/{}'
 ACCESS_TOKENS_ENDPOINT = '/v1/websites/{}/sessions/{}/access_tokens'

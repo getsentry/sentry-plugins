@@ -10,7 +10,7 @@ from sentry_plugins.sessionstack.plugin import SessionStackPlugin
 
 
 EXPECTED_SESSION_URL = (
-    'http://app.sessionstack.com/player/#/sessions/588778a6c5762c1d566653ff'
+    'https://app.sessionstack.com/player/#/sessions/588778a6c5762c1d566653ff'
     '?access_token=example-access-token'
 )
 
