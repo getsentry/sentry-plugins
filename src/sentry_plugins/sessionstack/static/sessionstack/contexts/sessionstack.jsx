@@ -56,7 +56,11 @@ const SessionStackContextType = React.createClass({
     return (
       <div className="panel-group">
         {this.state.showIframe ?
-          <iframe src={session_url} width={this.state.width} height={this.state.height} /> :
+          <iframe src={session_url}
+                  sandbox="allow-scripts allow-same-origin"
+                  width={this.state.width}
+                  height={this.state.height}
+          /> :
           <button className="btn btn-default" type="button" onClick={this.playSession}>Play session</button>
         }
       </div>
