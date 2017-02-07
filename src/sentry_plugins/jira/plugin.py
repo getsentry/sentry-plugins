@@ -328,8 +328,15 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             # if JIRA user doesn't have proper permission for user api,
             # try the assignee api instead
             if not users and is_user_api:
-                autocomplete_response = jira_client.search_users_for_project(jira_query.get('project'),
-                                                                             jira_query.get('username'))
+                try:
+                    autocomplete_response = jira_client.search_users_for_project(jira_query.get('project'),
+                                                                                 jira_query.get('username'))
+                except (JIRAUnauthorized, JIRAError) as e:
+                    return Response({
+                        'error_type': 'validation',
+                        'errors': [{'__all__': self.message_from_error(e)}]
+                    }, status=400)
+
                 for user in autocomplete_response.json:
                     users.append({
                         'id': user['name'],
