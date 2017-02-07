@@ -66,11 +66,14 @@ class Settings extends plugins.BasePlugin.DefaultSettings {
           </div>
         }
         {this.renderFields(requiredFields)}
-        <div className="control-group">
-          <button className="btn btn-default" type="button" onClick={this.toggleOnPremisesConfiguration}>
-            Configure on-premises
-          </button>
-        </div>
+        {onPremisesFields.length > 0 ?
+            <div className="control-group">
+              <button className="btn btn-default" type="button" onClick={this.toggleOnPremisesConfiguration}>
+                Configure on-premises
+              </button>
+            </div>
+            : null
+        }
         {this.state.showOnPremisesConfiguration ? this.renderFields(onPremisesFields) : null}
       </Form>
     );

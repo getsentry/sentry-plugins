@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from django.conf import settings
+
 from sentry.models import Project
 from sentry.plugins.base import Plugin2
 from sentry.plugins.base.configuration import react_plugin_config
@@ -85,7 +87,7 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         api_url = self.get_option('api_url', project)
         player_url = self.get_option('player_url', project)
 
-        return [{
+        configurations = [{
             'name': 'account_email',
             'label': 'Account Email',
             'default': account_email,
@@ -106,23 +108,28 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
             'type': 'number',
             'help': 'ID of the corresponding website in SessionStack.',
             'required': True
-        }, {
-            'name': 'api_url',
-            'label': 'SessionStack API URL',
-            'default': api_url,
-            'type': 'text',
-            'help': 'URL to SessionStack\'s REST API. The default '
-                    'value is "https://api.sessionstack.com/"',
-            'required': False
-        }, {
-            'name': 'player_url',
-            'label': 'SessionStack Player URL',
-            'default': player_url,
-            'type': 'text',
-            'help': 'URL to SessionStack\'s session player. The default '
-                    'value is "http://app.sessionstack.com/player/"',
-            'required': False
         }]
+
+        if settings.SENTRY_ONPREMISE:
+            configurations.extend([{
+                'name': 'api_url',
+                'label': 'SessionStack API URL',
+                'default': api_url,
+                'type': 'text',
+                'help': 'URL to SessionStack\'s REST API. The default '
+                        'value is "https://api.sessionstack.com/"',
+                'required': False
+            }, {
+                'name': 'player_url',
+                'label': 'SessionStack Player URL',
+                'default': player_url,
+                'type': 'text',
+                'help': 'URL to SessionStack\'s session player. The default '
+                        'value is "http://app.sessionstack.com/player/"',
+                'required': False
+            }])
+
+        return configurations
 
     def get_event_preprocessors(self, data, **kwargs):
         def preprocess_event(event):
