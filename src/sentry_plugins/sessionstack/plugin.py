@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from django.conf import settings
 
 from sentry.models import Project
+from sentry.interfaces.contexts import contexttype, ContextType
 from sentry.plugins.base import Plugin2
 from sentry.plugins.base.configuration import react_plugin_config
 from sentry.exceptions import PluginError
@@ -45,6 +46,11 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
 
     def has_project_conf(self):
         return True
+
+    def get_custom_contexts(self):
+        return {
+            'sessionstack': SessionStackContextType
+        }
 
     def reset_options(self, project=None, user=None):
         self.disable(project)
@@ -162,3 +168,8 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
             return event
 
         return [preprocess_event]
+
+
+@contexttype('sessionstack')
+class SessionStackContextType(ContextType):
+    pass
