@@ -90,6 +90,20 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
             'type': 'bool',
             'required': False,
             'help': 'Include triggering rules with notifications.',
+        }, {
+            'name': 'exclude_project',
+            'label': 'Exclude Project Name',
+            'type': 'bool',
+            'default': False,
+            'required': False,
+            'help': 'Exclude project name with notifications.',
+        }, {
+            'name': 'exclude_culprit',
+            'label': 'Exclude Culprit',
+            'type': 'bool',
+            'default': False,
+            'required': False,
+            'help': 'Exclude culprit with notifications.',
         }]
 
     def color_for_event(self, event):
@@ -152,18 +166,18 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
 
         # They can be the same if there is no culprit
         # So we set culprit to an empty string instead of duplicating the text
-        if culprit and title != culprit:
+        if not self.get_option('exclude_culprit', project) and culprit and title != culprit:
             fields.append({
                 'title': 'Culprit',
                 'value': culprit,
                 'short': False,
             })
-
-        fields.append({
-            'title': 'Project',
-            'value': project_name,
-            'short': True,
-        })
+        if not self.get_option('exclude_project', project):
+            fields.append({
+                'title': 'Project',
+                'value': project_name,
+                'short': True,
+            })
 
         if self.get_option('include_rules', project):
             rules = []
