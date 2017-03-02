@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from django.conf import settings
 
 from sentry.models import Project
-from sentry.interfaces.contexts import contexttype, ContextType
+from sentry.interfaces.contexts import ContextType
 from sentry.plugins.base import Plugin2
 from sentry.plugins.base.configuration import react_plugin_config
 from sentry.exceptions import PluginError
@@ -170,6 +170,5 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         return [preprocess_event]
 
 
-@contexttype('sessionstack')
 class SessionStackContextType(ContextType):
-    pass
+    type = 'sessionstack'
