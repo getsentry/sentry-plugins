@@ -48,9 +48,7 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         return True
 
     def get_custom_contexts(self):
-        return {
-            'sessionstack': SessionStackContextType
-        }
+        return [SessionStackContextType]
 
     def reset_options(self, project=None, user=None):
         self.disable(project)
