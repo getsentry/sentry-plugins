@@ -136,18 +136,22 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         return configurations
 
     def get_event_preprocessors(self, data, **kwargs):
+        if data.get('platform') != 'javascript':
+            return []
+
+        project = Project.objects.get_from_cache(id=data.get('project'))
+        if not self.is_enabled(project):
+            return []
+
+        context = SessionStackContextType.primary_value_for_data(data)
+        if not context:
+            return []
+
+        session_id = context.get('session_id')
+        if not session_id:
+            return []
+
         def preprocess_event(event):
-            extra = event.get('extra') or {}
-            sessionstack_context = extra.get('sessionstack') or {}
-
-            if not sessionstack_context:
-                return event
-
-            session_id = sessionstack_context.get('session_id')
-            if not session_id:
-                return event
-
-            project = Project.objects.get(id=event.get('project'))
             sessionstack_client = SessionStackClient(
                 account_email=self.get_option('account_email', project),
                 api_token=self.get_option('api_token', project),
@@ -157,10 +161,10 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
             )
 
             session_url = sessionstack_client.get_session_url(session_id)
-            sessionstack_context['session_url'] = session_url
+            context['session_url'] = session_url
 
             contexts = event.get('contexts') or {}
-            contexts['sessionstack'] = sessionstack_context
+            contexts['sessionstack'] = context
             event['contexts'] = contexts
 
             return event
