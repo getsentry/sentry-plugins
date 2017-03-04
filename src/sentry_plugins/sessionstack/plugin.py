@@ -160,7 +160,11 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
                 player_url=self.get_option('player_url', project)
             )
 
-            session_url = sessionstack_client.get_session_url(session_id)
+            session_url = sessionstack_client.get_session_url(
+                session_id=session_id,
+                event_timestamp=context.get('timestamp')
+            )
+
             context['session_url'] = session_url
 
             contexts = event.get('contexts') or {}

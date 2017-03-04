@@ -5,7 +5,11 @@ import requests
 
 from sentry.http import safe_urlopen
 
-from .utils import get_basic_auth, remove_trailing_slashes
+from .utils import (
+    get_basic_auth,
+    remove_trailing_slashes,
+    add_query_params
+)
 
 
 ACCESS_TOKEN_NAME = 'Sentry'
@@ -14,8 +18,11 @@ API_URL = 'https://api.sessionstack.com'
 PLAYER_URL = 'https://app.sessionstack.com/player'
 
 WEBSITES_ENDPOINT = '/v1/websites/{}'
+SESSION_ENDPOINT = '/v1/websites/{}/sessions/{}'
 ACCESS_TOKENS_ENDPOINT = '/v1/websites/{}/sessions/{}/access_tokens'
-SESSION_URL_PATH = '/#/sessions/{}'
+SESSION_URL_PATH = '/#/sessions/'
+
+MILLISECONDS_BEFORE_EVENT = 5000
 
 
 class SessionStackClient(object):
@@ -51,14 +58,25 @@ class SessionStackClient(object):
 
         response.raise_for_status()
 
-    def get_session_url(self, session_id):
-        player_url = self.player_url + SESSION_URL_PATH
+    def get_session_url(self, session_id, event_timestamp):
+
+        player_url = self.player_url + SESSION_URL_PATH + session_id
+        query_params = {}
+
         access_token = self._get_access_token(session_id)
+        if access_token is not None:
+            query_params['access_token'] = access_token
 
-        if access_token:
-            player_url += '?access_token={}'
+        if event_timestamp is not None:
+            start_timestamp = self._get_session_start_timestamp(session_id)
+            if start_timestamp is not None:
+                pause_at = event_timestamp - start_timestamp
+                play_from = pause_at - MILLISECONDS_BEFORE_EVENT
 
-        return player_url.format(session_id, access_token)
+                query_params['pause_at'] = pause_at
+                query_params['play_from'] = play_from
+
+        return add_query_params(player_url, query_params)
 
     def _get_access_token(self, session_id):
         access_token = self._get_existing_access_token(session_id)
@@ -101,6 +119,13 @@ class SessionStackClient(object):
 
     def _get_access_tokens_endpoint(self, session_id):
         return ACCESS_TOKENS_ENDPOINT.format(self.website_id, session_id)
+
+    def _get_session_start_timestamp(self, session_id):
+        endpoint = SESSION_ENDPOINT.format(self.website_id, session_id)
+        response = self._make_request(endpoint, 'GET')
+
+        if response.status_code == requests.codes.OK:
+            return json.loads(response.content).get('client_start')
 
     def _make_request(self, endpoint, method, **kwargs):
         url = self.api_url + endpoint
