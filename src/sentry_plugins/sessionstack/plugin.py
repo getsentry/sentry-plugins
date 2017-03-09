@@ -139,16 +139,16 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         if data.get('platform') != 'javascript':
             return []
 
-        project = Project.objects.get_from_cache(id=data.get('project'))
-        if not self.is_enabled(project):
-            return []
-
         context = SessionStackContextType.primary_value_for_data(data)
         if not context:
             return []
 
         session_id = context.get('session_id')
         if not session_id:
+            return []
+
+        project = Project.objects.get_from_cache(id=data.get('project'))
+        if not self.is_enabled(project):
             return []
 
         def preprocess_event(event):
