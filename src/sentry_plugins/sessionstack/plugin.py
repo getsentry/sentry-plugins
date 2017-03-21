@@ -41,6 +41,13 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         'dist/sessionstack.js',
     ]
 
+    sessionstack_resource_links = [
+        ('Documentation', 'http://docs.sessionstack.com/integrations/sentry/')
+    ]
+
+    def get_resource_links(self):
+        return self.resource_links + self.sessionstack_resource_links
+
     def configure(self, project, request):
         return react_plugin_config(self, project, request)
 
