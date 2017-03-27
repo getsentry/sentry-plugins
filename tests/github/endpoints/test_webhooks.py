@@ -5,7 +5,7 @@ import six
 
 from datetime import datetime
 from django.utils import timezone
-from sentry.models import Commit, OrganizationOption
+from sentry.models import Commit, OrganizationOption, Repository
 from sentry.testutils import APITestCase
 from uuid import uuid4
 
@@ -91,6 +91,13 @@ class PushEventWebhookTest(APITestCase):
             organization=project.organization,
             key='github:webhook_secret',
             value=secret,
+        )
+
+        Repository.objects.create(
+            organization_id=project.organization.id,
+            external_id='35129377',
+            provider='github',
+            name='baxterthehacker/public-repo',
         )
 
         response = self.client.post(

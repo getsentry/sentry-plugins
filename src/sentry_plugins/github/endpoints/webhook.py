@@ -7,7 +7,7 @@ import logging
 import six
 
 from django.db import IntegrityError, transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.utils.crypto import constant_time_compare
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -33,11 +33,14 @@ class PushEventWebhook(Webhook):
     def __call__(self, organization, event):
         authors = {}
 
-        repo = Repository.objects.get_or_create(
-            organization_id=organization.id,
-            provider='github',
-            external_id=event['repository']['full_name'],
-        )[0]
+        try:
+            repo = Repository.objects.get(
+                organization_id=organization.id,
+                provider='github',
+                external_id=six.text_type(event['repository']['id']),
+            )
+        except Repository.DoesNotExist:
+            raise Http404()
 
         for commit in event['commits']:
             if not commit['distinct']:
