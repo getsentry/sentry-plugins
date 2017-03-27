@@ -62,21 +62,24 @@ class SessionStackPluginTest(PluginTestCase):
             })
         )
 
+        self.plugin.enable(self.project)
         self.plugin.set_option('account_email', 'user@example.com', self.project)
         self.plugin.set_option('api_token', 'example-api-token', self.project)
         self.plugin.set_option('website_id', 0, self.project)
 
-        event_preprocessors = self.plugin.get_event_preprocessors(None)
-        add_sessionstack_context = event_preprocessors[0]
-
         event = {
             'project': self.project.id,
-            'extra': {
+            'contexts': {
                 'sessionstack': {
-                    'session_id': '588778a6c5762c1d566653ff'
+                    'session_id': '588778a6c5762c1d566653ff',
+                    'type': 'sessionstack'
                 }
-            }
+            },
+            'platform': 'javascript'
         }
+
+        event_preprocessors = self.plugin.get_event_preprocessors(event)
+        add_sessionstack_context = event_preprocessors[0]
 
         processed_event = add_sessionstack_context(event)
 

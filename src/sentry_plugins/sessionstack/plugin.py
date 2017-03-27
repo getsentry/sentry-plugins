@@ -41,6 +41,13 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         'dist/sessionstack.js',
     ]
 
+    sessionstack_resource_links = [
+        ('Documentation', 'http://docs.sessionstack.com/integrations/sentry/')
+    ]
+
+    def get_resource_links(self):
+        return self.resource_links + self.sessionstack_resource_links
+
     def configure(self, project, request):
         return react_plugin_config(self, project, request)
 
@@ -136,18 +143,22 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         return configurations
 
     def get_event_preprocessors(self, data, **kwargs):
+        if data.get('platform') != 'javascript':
+            return []
+
+        context = SessionStackContextType.primary_value_for_data(data)
+        if not context:
+            return []
+
+        session_id = context.get('session_id')
+        if not session_id:
+            return []
+
+        project = Project.objects.get_from_cache(id=data.get('project'))
+        if not self.is_enabled(project):
+            return []
+
         def preprocess_event(event):
-            extra = event.get('extra') or {}
-            sessionstack_context = extra.get('sessionstack') or {}
-
-            if not sessionstack_context:
-                return event
-
-            session_id = sessionstack_context.get('session_id')
-            if not session_id:
-                return event
-
-            project = Project.objects.get(id=event.get('project'))
             sessionstack_client = SessionStackClient(
                 account_email=self.get_option('account_email', project),
                 api_token=self.get_option('api_token', project),
@@ -156,11 +167,15 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
                 player_url=self.get_option('player_url', project)
             )
 
-            session_url = sessionstack_client.get_session_url(session_id)
-            sessionstack_context['session_url'] = session_url
+            session_url = sessionstack_client.get_session_url(
+                session_id=session_id,
+                event_timestamp=context.get('timestamp')
+            )
+
+            context['session_url'] = session_url
 
             contexts = event.get('contexts') or {}
-            contexts['sessionstack'] = sessionstack_context
+            contexts['sessionstack'] = context
             event['contexts'] = contexts
 
             return event
