@@ -22,7 +22,6 @@ ACCESS_TOKENS_URL = (
 )
 
 
-@pytest.mark.xfail
 class SessionStackPluginTest(PluginTestCase):
     @fixture
     def plugin(self):
