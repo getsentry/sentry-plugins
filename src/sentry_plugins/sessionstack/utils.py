@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+
 from base64 import b64encode
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 
 def get_basic_auth(username, password):

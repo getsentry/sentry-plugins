@@ -86,7 +86,7 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
             raise PluginError(INVALID_API_URL_ERROR)
         except InvalidWebsiteIdError:
             raise PluginError(INVALID_WEBSITE_ID_ERROR)
-        except:
+        except Exception:
             raise PluginError(UNEXPECTED_ERROR)
 
         return config
