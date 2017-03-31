@@ -328,3 +328,11 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
             if exc.code == 404:
                 return
             raise
+
+    def compare_commits(self, repo, start_sha, end_sha, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot fetch commits anonymously')
+
+        client = self.get_client(actor)
+        res = client.compare_commits(repo, start_sha, end_sha)
+        return [{'id': c['sha'], 'repository': repo} for c in res['commits']]

@@ -92,3 +92,15 @@ class GitHubClient(object):
                 id,
             ),
         )
+
+    def compare_commits(self, repo, start_sha, end_sha):
+        # see https://developer.github.com/v3/repos/commits/#compare-two-commits
+        # where start sha is oldest and end is most recent
+        return self.request(
+            'GET',
+            '/repos/{}/compare/{}...{}'.format(
+                repo,
+                start_sha,
+                end_sha,
+            )
+        )
