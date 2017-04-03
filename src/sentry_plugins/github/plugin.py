@@ -334,5 +334,8 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
             raise NotImplementedError('Cannot fetch commits anonymously')
 
         client = self.get_client(actor)
-        res = client.compare_commits(repo, start_sha, end_sha)
+        try:
+            res = client.compare_commits(repo, start_sha, end_sha)
+        except Exception as e:
+            self.raise_error(e)
         return [{'id': c['sha'], 'repository': repo} for c in res['commits']]
