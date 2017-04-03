@@ -334,8 +334,10 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
             raise NotImplementedError('Cannot fetch commits anonymously')
 
         client = self.get_client(actor)
+        # use config name because that is kept in sync via webhooks
+        name = repo.config['name']
         try:
-            res = client.compare_commits(repo, start_sha, end_sha)
+            res = client.compare_commits(name, start_sha, end_sha)
         except Exception as e:
             self.raise_error(e)
-        return [{'id': c['sha'], 'repository': repo} for c in res['commits']]
+        return [{'id': c['sha'], 'repository': repo.name} for c in res['commits']]
