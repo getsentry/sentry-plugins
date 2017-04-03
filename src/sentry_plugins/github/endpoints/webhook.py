@@ -57,6 +57,12 @@ class PushEventWebhook(Webhook):
         except Repository.DoesNotExist:
             raise Http404()
 
+        # We need to track GitHub's "full_name" which is the repository slug.
+        # This is needed to access the API since `external_id` isn't sufficient.
+        if repo.config.get('name') != event['repository']['full_name']:
+            repo.config['name'] = event['repository']['full_name']
+            repo.save()
+
         for commit in event['commits']:
             if not commit['distinct']:
                 continue
