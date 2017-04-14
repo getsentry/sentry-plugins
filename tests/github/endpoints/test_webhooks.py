@@ -5,11 +5,13 @@ import six
 
 from datetime import datetime
 from django.utils import timezone
-from sentry.models import Commit, OrganizationOption, Repository
+from sentry.models import Activity, Commit, OrganizationOption, Repository
 from sentry.testutils import APITestCase
 from uuid import uuid4
 
-from sentry_plugins.github.testutils import PUSH_EVENT_EXAMPLE
+from sentry_plugins.github.testutils import (
+    PUSH_EVENT_EXAMPLE, ISSUE_COMMENT_EVENT_EXAMPLE
+)
 
 
 class WebhookTest(APITestCase):
@@ -132,3 +134,45 @@ class PushEventWebhookTest(APITestCase):
         assert commit.author.name == u'bàxterthehacker'
         assert commit.author.email == 'baxterthehacker@users.noreply.github.com'
         assert commit.date_added == datetime(2015, 5, 5, 23, 40, 15, tzinfo=timezone.utc)
+
+
+class IssueCommentWebhookTest(APITestCase):
+    def test_simple(self):
+        project = self.project  # force creation
+
+        url = '/plugins/github/organizations/{}/webhook/'.format(
+            project.organization.id,
+        )
+
+        secret = 'b3002c3e321d4b7880360d397db2ccfd'
+
+        OrganizationOption.objects.set_value(
+            organization=project.organization,
+            key='github:webhook_secret',
+            value=secret,
+        )
+
+        Repository.objects.create(
+            organization_id=project.organization.id,
+            external_id='35129377',
+            provider='github',
+            name='baxterthehacker/public-repo',
+        )
+
+        group = self.create_group(project=project)
+
+        response = self.client.post(
+            path=url,
+            data=ISSUE_COMMENT_EVENT_EXAMPLE,
+            content_type='application/json',
+            HTTP_X_GITHUB_EVENT='push',
+            HTTP_X_HUB_SIGNATURE='sha1=df94a49a15c8235a6e5890376b67f853e3e9d3a8',
+            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+        )
+
+        assert response.status_code == 204
+        activity = Activity.objects.filter(
+            group=group.id,
+        ).order_by('-id')[0]
+
+        assert activity.type == Activity.REFERENCE

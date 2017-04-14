@@ -15,8 +15,8 @@ from django.views.generic import View
 from django.utils import timezone
 from simplejson import JSONDecodeError
 from sentry.models import (
-    Commit, CommitAuthor, CommitFileChange, Organization, OrganizationOption,
-    Repository
+    Activity, Commit, CommitAuthor, CommitFileChange, Group,
+    Organization, OrganizationOption, Repository
 )
 from sentry.utils import json
 
@@ -104,6 +104,43 @@ class PushEventWebhook(Webhook):
                         )
             except IntegrityError:
                 pass
+
+
+class IssueCommentWebhook(Webhook):
+    # https://developer.github.com/v3/activity/events/types/#pushevent
+    def __call__(self, organization, event):
+        try:
+            Repository.objects.get(
+                organization_id=organization.id,
+                provider='github',
+                external_id=six.text_type(event['repository']['id']),
+            )
+        except Repository.DoesNotExist:
+            raise Http404()
+
+        references = Group.find_referenced_groups(
+            organization.id, event['comment']['body'])
+        for group in references:
+            Activity.objects.get_or_create(
+                project=group.project,
+                group=group,
+                type=Activity.REFERENCE,
+                ident=event['comment']['id'],
+                defaults={
+                    'date_added': dateutil.parser.parse(
+                        event['comments']['created_at'],
+                    ).astimezone(timezone.utc),
+                    'data': {
+                        'title': '{}/{}#{}: {}'.format(
+                            event['repository']['full_name'],
+                            event['issue']['number'],
+                            event['issue']['title'],
+                        ),
+                        'place': 'GitHub',
+                        'url': event['comment']['url'],
+                    },
+                },
+            )
 
 
 class GithubWebhookEndpoint(View):
