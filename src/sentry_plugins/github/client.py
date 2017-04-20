@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from requests.exceptions import HTTPError
+from django.conf import settings
 from sentry.http import build_session
 
 from sentry_plugins.exceptions import ApiError
@@ -14,11 +15,7 @@ class GitHubClient(object):
             self.url = url.rstrip('/')
         self.token = token
 
-    def request(self, method, path, data=None, params=None):
-        headers = {
-            'Authorization': 'token %s' % self.token,
-        }
-
+    def _request(self, method, path, headers=None, data=None, params=None):
         session = build_session()
         try:
             resp = getattr(session, method.lower())(
@@ -32,6 +29,24 @@ class GitHubClient(object):
         except HTTPError as e:
             raise ApiError.from_response(e.response)
         return resp.json()
+
+    def request(self, method, path, data=None, params=None):
+        headers = {
+            'Authorization': 'token %s' % self.token,
+        }
+
+        return self._request(method, path, headers=headers, data=data, params=params)
+
+    def request_no_auth(self, method, path, data=None, params=None):
+        if params is None:
+            params = {}
+
+        params.update({
+            'client_id': settings.GITHUB_APP_ID,
+            'client_secret': settings.GITHUB_API_SECRET,
+        })
+
+        return self._request(method, path, data=data, params=params)
 
     def get_repo(self, repo):
         return self.request(
