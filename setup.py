@@ -31,6 +31,8 @@ tests_require = [
 
 install_requires = [
     'BeautifulSoup>=3.2.1',
+    # sentry also requires this, so we're just enforcing that it needs to exist
+    'boto3>=1.4.4,<1.5.0',
     'python-dateutil',
     'PyJWT',
     'requests-oauthlib>=0.3.0'
@@ -96,6 +98,7 @@ setup(
     include_package_data=True,
     entry_points={
         'sentry.apps': [
+            'amazon_sqs = sentry_plugins.amazon_sqs',
             'asana = sentry_plugins.asana',
             'bitbucket = sentry_plugins.bitbucket',
             'github = sentry_plugins.github',
@@ -112,6 +115,7 @@ setup(
             'victorops = sentry_plugins.victorops',
         ],
         'sentry.plugins': [
+            'amazon_sqs = sentry_plugins.amazon_sqs.plugin:AmazonSQSPlugin',
             'asana = sentry_plugins.asana.plugin:AsanaPlugin',
             'bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin',
             'github = sentry_plugins.github.plugin:GitHubPlugin',

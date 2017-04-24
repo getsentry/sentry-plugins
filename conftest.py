@@ -15,6 +15,7 @@ pytest_plugins = ['sentry.utils.pytest']
 
 def pytest_configure(config):
     settings.INSTALLED_APPS = tuple(settings.INSTALLED_APPS) + (
+        'sentry_plugins.amazon_sqs',
         'sentry_plugins.asana',
         'sentry_plugins.bitbucket',
         'sentry_plugins.hipchat_ac',
@@ -32,6 +33,7 @@ def pytest_configure(config):
 
     # TODO(dcramer): we need a PluginAPITestCase that can do register/unregister
     from sentry.plugins import plugins
+    from sentry_plugins.amazon_sqs.plugin import AmazonSQSPlugin
     from sentry_plugins.asana.plugin import AsanaPlugin
     from sentry_plugins.bitbucket.plugin import BitbucketPlugin
     from sentry_plugins.github.plugin import GitHubPlugin
@@ -45,6 +47,7 @@ def pytest_configure(config):
     from sentry_plugins.sessionstack.plugin import SessionStackPlugin
     from sentry_plugins.slack.plugin import SlackPlugin
     from sentry_plugins.victorops.plugin import VictorOpsPlugin
+    plugins.register(AmazonSQSPlugin)
     plugins.register(AsanaPlugin)
     plugins.register(BitbucketPlugin)
     plugins.register(GitHubPlugin)
