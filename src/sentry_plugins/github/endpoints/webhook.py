@@ -30,6 +30,10 @@ def is_anonymous_email(email):
     return email[-25:] == '@users.noreply.github.com'
 
 
+def get_external_id(username):
+    return 'github:%s' % username
+
+
 class Webhook(object):
     def __call__(self, organization, event):
         raise NotImplementedError
@@ -63,13 +67,14 @@ class PushEventWebhook(Webhook):
                 )
             # try to figure out who anonymous emails are
             elif is_anonymous_email(author_email):
-                gh_username = author_email[:-25]
+                gh_username = commit['author']['username']
+                external_id = get_external_id(gh_username)
                 if gh_username in gh_username_cache:
                     author_email = gh_username_cache[gh_username] or author_email
                 else:
                     try:
                         commit_author = CommitAuthor.objects.get(
-                            external_id=gh_username,
+                            external_id=external_id,
                             organization_id=organization.id,
                         )
                     except CommitAuthor.DoesNotExist:
@@ -99,7 +104,10 @@ class PushEventWebhook(Webhook):
                                 author_email = user.email
                                 gh_username_cache[gh_username] = author_email
                                 if commit_author is not None:
-                                    commit_author.update(email=author_email)
+                                    commit_author.update(
+                                        email=author_email,
+                                        external_id=external_id,
+                                    )
 
                     if commit_author is not None:
                         authors[author_email] = commit_author
@@ -116,8 +124,13 @@ class PushEventWebhook(Webhook):
                         'name': commit['author']['name'][:128],
                     }
                 )[0]
-                if author.name != commit['author']['name']:
-                    author.update(name=commit['author']['name'])
+                external_id = get_external_id(commit['author']['username'])
+                if author.name != commit['author']['name'] or \
+                        author.external_id != external_id:
+                    author.update(
+                        name=commit['author']['name'],
+                        external_id=external_id,
+                    )
             else:
                 author = authors[author_email]
 
