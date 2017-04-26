@@ -104,10 +104,14 @@ class PushEventWebhook(Webhook):
                                 author_email = user.email
                                 gh_username_cache[gh_username] = author_email
                                 if commit_author is not None:
-                                    commit_author.update(
-                                        email=author_email,
-                                        external_id=external_id,
-                                    )
+                                    try:
+                                        with transaction.atomic():
+                                            commit_author.update(
+                                                email=author_email,
+                                                external_id=external_id,
+                                            )
+                                    except IntegrityError:
+                                        pass
 
                     if commit_author is not None:
                         authors[author_email] = commit_author
@@ -124,13 +128,22 @@ class PushEventWebhook(Webhook):
                         'name': commit['author']['name'][:128],
                     }
                 )[0]
+
+                update_kwargs = {}
+
+                if author.name != commit['author']['name']:
+                    update_kwargs['name'] = commit['author']['name']
+
                 external_id = get_external_id(commit['author']['username'])
-                if author.name != commit['author']['name'] or \
-                        author.external_id != external_id:
-                    author.update(
-                        name=commit['author']['name'],
-                        external_id=external_id,
-                    )
+                if author.external_id != external_id and not is_anonymous_email(author.email):
+                    update_kwargs['external_id'] = external_id
+
+                if update_kwargs:
+                    try:
+                        with transaction.atomic():
+                            author.update(**update_kwargs)
+                    except IntegrityError:
+                        pass
             else:
                 author = authors[author_email]
 

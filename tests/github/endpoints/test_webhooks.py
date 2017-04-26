@@ -123,7 +123,7 @@ class PushEventWebhookTest(APITestCase):
         assert commit.message == u'Update README.md (àgain)'
         assert commit.author.name == u'bàxterthehacker'
         assert commit.author.email == 'baxterthehacker@users.noreply.github.com'
-        assert commit.author.external_id == 'github:baxterthehacker'
+        assert commit.author.external_id is None
         assert commit.date_added == datetime(2015, 5, 5, 23, 45, 15, tzinfo=timezone.utc)
 
         commit = commit_list[1]
@@ -132,7 +132,7 @@ class PushEventWebhookTest(APITestCase):
         assert commit.message == 'Update README.md'
         assert commit.author.name == u'bàxterthehacker'
         assert commit.author.email == 'baxterthehacker@users.noreply.github.com'
-        assert commit.author.external_id == 'github:baxterthehacker'
+        assert commit.author.external_id is None
         assert commit.date_added == datetime(2015, 5, 5, 23, 40, 15, tzinfo=timezone.utc)
 
     def test_anonymous_lookup(self):
