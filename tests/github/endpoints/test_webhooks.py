@@ -44,7 +44,7 @@ class WebhookTest(APITestCase):
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
             HTTP_X_GITHUB_EVENT='UnregisteredEvent',
-            HTTP_X_HUB_SIGNATURE='sha1=df94a49a15c8235a6e5890376b67f853e3e9d3a8',
+            HTTP_X_HUB_SIGNATURE='sha1=98196e70369945ffa6b248cf70f7dc5e46dff241',
             HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
         )
 
@@ -105,7 +105,7 @@ class PushEventWebhookTest(APITestCase):
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
             HTTP_X_GITHUB_EVENT='push',
-            HTTP_X_HUB_SIGNATURE='sha1=df94a49a15c8235a6e5890376b67f853e3e9d3a8',
+            HTTP_X_HUB_SIGNATURE='sha1=98196e70369945ffa6b248cf70f7dc5e46dff241',
             HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
         )
 
@@ -169,7 +169,7 @@ class PushEventWebhookTest(APITestCase):
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
             HTTP_X_GITHUB_EVENT='push',
-            HTTP_X_HUB_SIGNATURE='sha1=df94a49a15c8235a6e5890376b67f853e3e9d3a8',
+            HTTP_X_HUB_SIGNATURE='sha1=98196e70369945ffa6b248cf70f7dc5e46dff241',
             HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
         )
 
@@ -179,6 +179,7 @@ class PushEventWebhookTest(APITestCase):
             organization_id=project.organization_id,
         ).select_related('author').order_by('-date_added'))
 
+        # should be skipping the #skipsentry commit
         assert len(commit_list) == 2
 
         commit = commit_list[0]

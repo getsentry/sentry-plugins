@@ -66,6 +66,33 @@ PUSH_EVENT_EXAMPLE = b"""{
       "modified": [
         "README.md"
       ]
+    },
+    {
+      "id": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+      "tree_id": "f9d2a07e9488b91af2641b26b9407fe22a451433",
+      "distinct": true,
+      "message": "fix widget #skipsentry",
+      "timestamp": "2015-05-05T19:40:15-04:00",
+      "url": "https://github.com/baxterthehacker/public-repo/commit/0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+      "author": {
+        "name": "bàxterthehacker",
+        "email": "baxterthehacker@users.noreply.github.com",
+        "username": "baxterthehacker"
+      },
+      "committer": {
+        "name": "baxterthehacker",
+        "email": "baxterthehacker@users.noreply.github.com",
+        "username": "baxterthehacker"
+      },
+      "added": [
+
+      ],
+      "removed": [
+
+      ],
+      "modified": [
+        "README.md"
+      ]
     }
   ],
   "head_commit": {

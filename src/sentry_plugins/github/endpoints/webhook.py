@@ -18,6 +18,7 @@ from sentry.models import (
     Commit, CommitAuthor, CommitFileChange, Organization, OrganizationOption,
     Repository, User
 )
+from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
 
 from sentry_plugins.exceptions import ApiError
@@ -58,6 +59,9 @@ class PushEventWebhook(Webhook):
 
         for commit in event['commits']:
             if not commit['distinct']:
+                continue
+
+            if RepositoryProvider.should_ignore_commit(commit['message']):
                 continue
 
             author_email = commit['author']['email']
