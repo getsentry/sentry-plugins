@@ -52,7 +52,7 @@ def get_link_regexp():
     pattern = get_link_pattern()
     if pattern not in _regexp_cache:
         _regexp_cache[pattern] = re.compile(pattern +
-            r'(?P<org>[^/]+)/(?P<proj>[^/]+)/group/'
+            r'(?P<org>[^/]+)/(?P<proj>[^/]+)/(?:group|issues)/'
             r'(?P<group>[^/]+)(/events/(?P<event>[^/]+)|/?)')
     return _regexp_cache[pattern]
 
