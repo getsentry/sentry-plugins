@@ -140,9 +140,11 @@ class PushEventWebhook(Webhook):
                 if author.name != commit['author']['name']:
                     update_kwargs['name'] = commit['author']['name']
 
-                external_id = get_external_id(commit['author']['username'])
-                if author.external_id != external_id and not is_anonymous_email(author.email):
-                    update_kwargs['external_id'] = external_id
+                gh_username = commit['author'].get('username')
+                if gh_username:
+                    external_id = get_external_id(gh_username)
+                    if author.external_id != external_id and not is_anonymous_email(author.email):
+                        update_kwargs['external_id'] = external_id
 
                 if update_kwargs:
                     try:
