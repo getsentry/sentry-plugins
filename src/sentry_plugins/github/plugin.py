@@ -336,8 +336,17 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
         client = self.get_client(actor)
         # use config name because that is kept in sync via webhooks
         name = repo.config['name']
-        try:
-            res = client.compare_commits(name, start_sha, end_sha)
-        except Exception as e:
-            self.raise_error(e)
-        return [{'id': c['sha'], 'repository': repo.name} for c in res['commits']]
+        if start_sha is None:
+            try:
+                res = client.get_last_commits(name, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return [{'id': c['sha'], 'repository': repo.name} for c in res[:10]]
+        else:
+            try:
+                res = client.compare_commits(name, start_sha, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return [{'id': c['sha'], 'repository': repo.name} for c in res['commits']]
