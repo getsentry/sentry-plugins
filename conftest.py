@@ -17,6 +17,7 @@ def pytest_configure(config):
     settings.INSTALLED_APPS = tuple(settings.INSTALLED_APPS) + (
         'sentry_plugins.asana',
         'sentry_plugins.bitbucket',
+        'sentry_plugins.heroku',
         'sentry_plugins.hipchat_ac',
         'sentry_plugins.github',
         'sentry_plugins.gitlab',
@@ -36,6 +37,7 @@ def pytest_configure(config):
     from sentry_plugins.bitbucket.plugin import BitbucketPlugin
     from sentry_plugins.github.plugin import GitHubPlugin
     from sentry_plugins.gitlab.plugin import GitLabPlugin
+    from sentry_plugins.heroku.plugin import HerokuPlugin
     from sentry_plugins.hipchat_ac.plugin import HipchatPlugin
     from sentry_plugins.jira.plugin import JiraPlugin
     from sentry_plugins.pagerduty.plugin import PagerDutyPlugin
@@ -49,6 +51,7 @@ def pytest_configure(config):
     plugins.register(BitbucketPlugin)
     plugins.register(GitHubPlugin)
     plugins.register(GitLabPlugin)
+    plugins.register(HerokuPlugin)
     plugins.register(HipchatPlugin)
     plugins.register(JiraPlugin)
     plugins.register(PagerDutyPlugin)
