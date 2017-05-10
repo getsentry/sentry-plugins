@@ -1,18 +1,31 @@
 from __future__ import absolute_import
 
 from sentry import http
+from sentry.app import ratelimiter
+from sentry.plugins.base import Plugin
+from sentry.plugins.base.configuration import react_plugin_config
+from sentry.utils.hashlib import md5_text
 
-from sentry_plugins.data_forwarding import DataForwardingPlugin
+from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.utils import get_secret_field_config
 
 
-class SegmentPlugin(DataForwardingPlugin):
+class SegmentPlugin(CorePluginMixin, Plugin):
     title = 'Segment'
     slug = 'segment'
-    description = 'Forward Sentry events to Segment.'
+    description = 'Send Sentry events into Segment.'
     conf_key = 'segment'
 
     endpoint = 'https://api.segment.io/v1/track'
+
+    def configure(self, project, request):
+        return react_plugin_config(self, project, request)
+
+    def has_project_conf(self):
+        return True
+
+    def get_plugin_type(self):
+        return 'data-forwarding'
 
     def get_config(self, project, **kwargs):
         return [
@@ -23,6 +36,31 @@ class SegmentPlugin(DataForwardingPlugin):
                 help_text='Your Segment write key',
             ),
         ]
+
+    def get_event_props(self, event):
+        props = {
+            'eventId': event.event_id,
+            'transaction': event.get_tag('transaction') or '',
+            'release': event.get_tag('sentry:release') or '',
+            'environment': event.get_tag('environment') or '',
+        }
+        if 'sentry.interfaces.Http' in event.interfaces:
+            http = event.interfaces['sentry.interfaces.Http']
+            headers = http.headers
+            if not isinstance(headers, dict):
+                headers = dict(headers or ())
+
+            props.update({
+                'requestUrl': http.url,
+                'requestMethod': http.method,
+                'requestReferer': headers.get('Referer', ''),
+            })
+        if 'sentry.interfaces.Exception' in event.interfaces:
+            exc = event.interfaces['sentry.interfaces.Exception'].values[0]
+            props.update({
+                'exceptionType': exc.type,
+            })
+        return props
 
     # https://segment.com/docs/spec/track/
     def get_event_payload(self, event):
@@ -106,9 +144,11 @@ class SegmentPlugin(DataForwardingPlugin):
         if not write_key:
             return
 
-        return super(SegmentPlugin, self).post_process(event, **kwargs)
+        rl_key = 'segment:{}'.format(md5_text(write_key).hexdigest())
+        # limit segment to 50 requests/second
+        if ratelimiter.is_limited(rl_key, limit=50, window=1):
+            return
 
-    def forward_event(self, event, payload):
-        write_key = self.get_option('write_key', event.project)
+        payload = self.get_event_payload(event)
         session = http.build_session()
         session.post(self.endpoint, json=payload, auth=(write_key, ''))
