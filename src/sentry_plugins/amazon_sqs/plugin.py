@@ -67,5 +67,4 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
             # to S3
             QueueUrl=queue_url,
             MessageBody=json.dumps(payload),
-            MessageDeduplicationId=event.event_id,
         )
