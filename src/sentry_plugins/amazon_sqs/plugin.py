@@ -2,9 +2,10 @@ from __future__ import absolute_import
 
 import boto3
 
+from sentry.plugins.bases.data_forwarding import DataForwardingPlugin
 from sentry.utils import json
 
-from sentry_plugins.data_forwarding import DataForwardingPlugin
+from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.utils import get_secret_field_config
 
 
@@ -12,7 +13,7 @@ def get_regions():
     return boto3.session.Session().get_available_regions('sqs')
 
 
-class AmazonSQSPlugin(DataForwardingPlugin):
+class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
     title = 'Amazon SQS'
     slug = 'amazon-sqs'
     description = 'Forward Sentry events to Amazon SQS.'
