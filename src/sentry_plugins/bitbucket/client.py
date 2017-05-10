@@ -10,7 +10,7 @@ from requests_oauthlib import OAuth1
 
 
 class BitbucketClient(object):
-    API_URL = u'https://api.bitbucket.org/1.0'
+    API_URL = u'https://api.bitbucket.org/2.0'
 
     def __init__(self, auth):
         self.auth = auth
@@ -65,4 +65,47 @@ class BitbucketClient(object):
             'POST',
             '/repositories/%s/issues/%s/comments' % (repo, issue_id),
             data=data,
+        )
+    # copied from github
+    def create_hook(self, repo, data):
+        return self.request(
+            'POST',
+            '/repositories/{}/hooks'.format(
+                repo,
+            ),
+            data=data,
+        )
+
+    def delete_hook(self, repo, id):
+        return self.request(
+            'DELETE',
+            '/repositories/{}/hooks/{}'.format(
+                repo,
+                id,
+            ),
+        )
+
+    def get_last_commits(self, repo, end_sha):
+        # return api request that fetches last ~30 commits
+        # see https://developer.github.com/v3/repos/commits/#list-commits-on-a-repository
+        # using end_sha as parameter
+        return self.request(
+            'GET',
+            '/repositories/{}/commits/{}'.format(
+                repo,
+                end_sha,
+            )
+        )
+
+    def compare_commits(self, repo, start_sha, end_sha):
+        # see https://developer.github.com/v3/repos/commits/#compare-two-commits
+        # where start sha is oldest and end is most recent
+        # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/diff/%7Bspec%7D
+        return self.request(
+            'GET',
+            '/repositories/{}/diff/{}...{}'.format(
+                repo,
+                start_sha,
+                end_sha,
+            )
         )
