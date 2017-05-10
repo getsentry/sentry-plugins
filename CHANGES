@@ -1,5 +1,10 @@
-Version 8.16 (Unreleased)
+Version 8.17 (Unreleased)
 -------------------------
+- Added Heroku for release tracking.
+- Added automatic commit-fetching for Heroku deploys
+
+Version 8.16
+------------
 
 Version 8.15
 ------------

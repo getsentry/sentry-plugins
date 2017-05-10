@@ -329,6 +329,15 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
                 return
             raise
 
+    def _format_commits(self, repo, commit_list):
+        return [{
+            'id': c['sha'],
+            'repository': repo.name,
+            'author_email': c['commit']['author'].get('email'),
+            'author_name': c['commit']['author'].get('name'),
+            'message': c['commit']['message'],
+        } for c in commit_list]
+
     def compare_commits(self, repo, start_sha, end_sha, actor=None):
         if actor is None:
             raise NotImplementedError('Cannot fetch commits anonymously')
@@ -336,8 +345,17 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
         client = self.get_client(actor)
         # use config name because that is kept in sync via webhooks
         name = repo.config['name']
-        try:
-            res = client.compare_commits(name, start_sha, end_sha)
-        except Exception as e:
-            self.raise_error(e)
-        return [{'id': c['sha'], 'repository': repo.name} for c in res['commits']]
+        if start_sha is None:
+            try:
+                res = client.get_last_commits(name, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return self._format_commits(repo, res[:10])
+        else:
+            try:
+                res = client.compare_commits(name, start_sha, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return self._format_commits(repo, res['commits'])

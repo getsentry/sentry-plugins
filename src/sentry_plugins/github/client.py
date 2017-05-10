@@ -28,6 +28,10 @@ class GitHubClient(object):
             resp.raise_for_status()
         except HTTPError as e:
             raise ApiError.from_response(e.response)
+
+        if resp.status_code == 204:
+            return {}
+
         return resp.json()
 
     def request(self, method, path, data=None, params=None):
@@ -106,6 +110,18 @@ class GitHubClient(object):
                 repo,
                 id,
             ),
+        )
+
+    def get_last_commits(self, repo, end_sha):
+        # return api request that fetches last ~30 commits
+        # see https://developer.github.com/v3/repos/commits/#list-commits-on-a-repository
+        # using end_sha as parameter
+        return self.request(
+            'GET',
+            '/repos/{}/commits'.format(
+                repo,
+            ),
+            params={'sha': end_sha},
         )
 
     def compare_commits(self, repo, start_sha, end_sha):

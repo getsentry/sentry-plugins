@@ -19,7 +19,7 @@ from sentry.utils.distutils import (
     BuildAssetsCommand
 )
 
-VERSION = '8.16.0.dev0'
+VERSION = '8.17.0.dev0'
 
 tests_require = [
     'exam',
@@ -103,6 +103,7 @@ setup(
             'bitbucket = sentry_plugins.bitbucket',
             'github = sentry_plugins.github',
             'gitlab = sentry_plugins.gitlab',
+            'heroku = sentry_plugins.heroku',
             'hipchat_ac = sentry_plugins.hipchat_ac',
             'jira = sentry_plugins.jira',
             'jira_ac = sentry_plugins.jira_ac',
@@ -120,6 +121,7 @@ setup(
             'bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin',
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin',
+            'heroku = sentry_plugins.heroku.plugin:HerokuPlugin',
             'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',
             'jira = sentry_plugins.jira.plugin:JiraPlugin',
             'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin',
