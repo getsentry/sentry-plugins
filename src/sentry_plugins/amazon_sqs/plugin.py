@@ -54,6 +54,13 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
         if not all((queue_url, access_key, secret_key, region)):
             return
 
+        # TODO(dcramer): Amazon doesnt support payloads larger than 256kb
+        # We could support this by simply trimming it and allowing upload
+        # to S3
+        message = json.dumps(payload)
+        if len(message) > 256 * 1024:
+            return
+
         client = boto3.client(
             service_name='sqs',
             aws_access_key_id=access_key,
@@ -62,9 +69,6 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
         )
 
         client.send_message(
-            # TODO(dcramer): Amazon doesnt support payloads larger than 256kb
-            # We could support this by simply trimming it and allowing upload
-            # to S3
             QueueUrl=queue_url,
-            MessageBody=json.dumps(payload),
+            MessageBody=message,
         )
