@@ -1,31 +1,19 @@
 from __future__ import absolute_import
 
 from sentry import http
-from sentry.app import ratelimiter
-from sentry.plugins.base import Plugin
-from sentry.plugins.base.configuration import react_plugin_config
-from sentry.utils.hashlib import md5_text
+from sentry.plugins.bases.data_forwarding import DataForwardingPlugin
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.utils import get_secret_field_config
 
 
-class SegmentPlugin(CorePluginMixin, Plugin):
+class SegmentPlugin(CorePluginMixin, DataForwardingPlugin):
     title = 'Segment'
     slug = 'segment'
     description = 'Send Sentry events into Segment.'
     conf_key = 'segment'
 
     endpoint = 'https://api.segment.io/v1/track'
-
-    def configure(self, project, request):
-        return react_plugin_config(self, project, request)
-
-    def has_project_conf(self):
-        return True
-
-    def get_plugin_type(self):
-        return 'data-forwarding'
 
     def get_config(self, project, **kwargs):
         return [
@@ -36,6 +24,10 @@ class SegmentPlugin(CorePluginMixin, Plugin):
                 help_text='Your Segment write key',
             ),
         ]
+
+    def get_rate_limit(self):
+        # number of requests, number of seconds (window)
+        return (50, 1)
 
     def get_event_props(self, event):
         props = {
@@ -120,19 +112,19 @@ class SegmentPlugin(CorePluginMixin, Plugin):
             'timestamp': event.datetime.isoformat() + 'Z',
         }
 
-    def post_process(self, event, **kwargs):
+    def forward_event(self, event, payload, **kwargs):
         # TODO(dcramer): we currently only support authenticated events, as the
         # value of anonymous errors/crashes/etc is much less meaningful in the
         # context of Segment
+
+        # we currently only support errors
+        if event.get_event_type() != 'error':
+            return
 
         # we avoid instantiating interfaces here as they're only going to be
         # used if there's a User present
         user_interface = event.data.get('sentry.interfaces.User')
         if not user_interface:
-            return
-
-        # we currently only support errors
-        if event.get_event_type() != 'error':
             return
 
         user_id = user_interface.get('id')
@@ -144,11 +136,5 @@ class SegmentPlugin(CorePluginMixin, Plugin):
         if not write_key:
             return
 
-        rl_key = 'segment:{}'.format(md5_text(write_key).hexdigest())
-        # limit segment to 50 requests/second
-        if ratelimiter.is_limited(rl_key, limit=50, window=1):
-            return
-
-        payload = self.get_event_payload(event)
         session = http.build_session()
         session.post(self.endpoint, json=payload, auth=(write_key, ''))
