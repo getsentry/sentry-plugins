@@ -66,6 +66,7 @@ class BitbucketClient(object):
             '/repositories/%s/issues/%s/comments' % (repo, issue_id),
             data=data,
         )
+
     # copied from github
     def create_hook(self, repo, data):
         return self.request(

@@ -4,14 +4,18 @@ import logging
 import six
 
 from rest_framework.response import Response
+from uuid import uuid4
 
+from sentry.app import locks
 from sentry.exceptions import InvalidIdentity, PluginError
+from sentry.models import OrganizationOption
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
+from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
 
-from sentry.plugins import providers
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
+
 from .client import BitbucketClient
 
 ISSUE_TYPES = (
@@ -207,6 +211,7 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
         } for i in response.get('issues', [])]
 
         return Response({field: issues})
+
 
 class BitbucketRepositoryProvider(BitbucketPlugin, providers.RepositoryProvider):
     name = 'Bitbucket'
