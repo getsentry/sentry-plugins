@@ -1,7 +1,9 @@
 Version 8.17 (Unreleased)
 -------------------------
+
 - Added Heroku for release tracking.
-- Added automatic commit-fetching for Heroku deploys
+- Added automatic commit-fetching for Heroku deploys.
+- Added Amazon SQS data forwarding.
 
 Version 8.16
 ------------
