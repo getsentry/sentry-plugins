@@ -34,4 +34,4 @@ class AmazonSQSTest(AcceptanceTestCase):
     def test_simple(self):
         self.browser.get(self.path)
         self.browser.wait_until_not('.loading-indicator')
-        self.browser.snapshot('segment settings')
+        self.browser.snapshot('amazon sqs settings')
