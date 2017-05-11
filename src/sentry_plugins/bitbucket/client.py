@@ -10,7 +10,7 @@ from requests_oauthlib import OAuth1
 
 
 class BitbucketClient(object):
-    API_URL = u'https://api.bitbucket.org/2.0'
+    API_URL = u'https://api.bitbucket.org/1.0'
 
     def __init__(self, auth):
         self.auth = auth
