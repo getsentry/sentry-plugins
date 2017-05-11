@@ -15,7 +15,7 @@ class BitbucketClient(object):
     def __init__(self, auth):
         self.auth = auth
 
-    def request(self, method, path, version, data=None, params=None):
+    def request(self, method, version, path, data=None, params=None):
         oauth = OAuth1(unicode(settings.BITBUCKET_CONSUMER_KEY),
                        unicode(settings.BITBUCKET_CONSUMER_SECRET),
                        self.auth.tokens['oauth_token'], self.auth.tokens['oauth_token_secret'],
