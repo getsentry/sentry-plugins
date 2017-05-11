@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from datetime import timedelta
 
-from sentry.models import (Commit,
+from sentry.models import (Commit, Deploy, Environment,
     ProjectOption, Release, ReleaseCommit,
     ReleaseHeadCommit, Repository, User)
 from sentry.testutils import TestCase
@@ -109,6 +109,16 @@ class SetRefsTest(TestCase):
         )
         assert len(new_release_heads) == 1
         assert release.version == 'bbee5b51f84611e4b14834363b8514c2'
+
+        deploy = Deploy.objects.filter(
+            organization_id=project.organization_id,
+            release=release,
+            environment_id=Environment.objects.get(
+                organization_id=project.organization_id,
+                name='production',
+            ).id
+        )
+        assert len(deploy) == 1
 
         mock_fetch_commits.apply_async.assert_called_with(
             kwargs={

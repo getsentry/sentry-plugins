@@ -1,5 +1,8 @@
 from __future__ import absolute_import
-from sentry.models import User, ProjectOption, Repository
+
+from sentry.api import client
+
+from sentry.models import ApiKey, User, ProjectOption, Repository
 from sentry.plugins import ReleaseHook, ReleaseTrackingPlugin
 from sentry_plugins.base import CorePluginMixin
 from sentry.plugins.base.configuration import react_plugin_config
@@ -15,7 +18,6 @@ class HerokuReleaseHook(ReleaseHook):
             )
         except (User.DoesNotExist, User.MultipleObjectsReturned):
             user = None
-
         self.finish_release(
             version=request.POST['head_long'],
             url=request.POST['url'],
@@ -25,15 +27,20 @@ class HerokuReleaseHook(ReleaseHook):
     def set_refs(self, release, **values):
         # check if user exists, and then try to get refs based on version
         if values.get('owner', None):
-            project_option = ProjectOption.objects.get_value(
+            repo_project_option = ProjectOption.objects.get_value(
                 project=self.project,
                 key='heroku:repository',
             )
-            if project_option:
+            deploy_project_option = ProjectOption.objects.get_value(
+                project=self.project,
+                key='heroku:environment',
+                default='production',
+            )
+            if repo_project_option:
                 try:
                     repository = Repository.objects.get(
                         organization_id=self.project.organization_id,
-                        name=project_option
+                        name=repo_project_option
                     )
                 except Repository.DoesNotExist:
                     pass
@@ -45,6 +52,20 @@ class HerokuReleaseHook(ReleaseHook):
                         user=values['owner'],
                         fetch=True,
                     )
+            # create deploy associated with release via ReleaseDeploysEndpoint
+            endpoint = '/organizations/{}/releases/{}/deploys/'.format(
+                self.project.organization.slug,
+                release.version,
+            )
+            auth = ApiKey(
+                organization=self.project.organization,
+                scope_list=['project:write'],
+            )
+            client.post(
+                endpoint,
+                data={'environment': deploy_project_option},
+                auth=auth,
+            )
 
 
 class HerokuPlugin(CorePluginMixin, ReleaseTrackingPlugin):
@@ -90,7 +111,15 @@ class HerokuPlugin(CorePluginMixin, ReleaseTrackingPlugin):
             'required': True,
             'choices': choices,
             'help': 'Select which repository you would like to be associated with this project',
-        }]
+        }, {
+            'name': 'environment',
+            'label': 'Deploy Environment',
+            'type': 'text',
+            'required': False,
+            'default': 'production',
+            'help': 'Specify an environment name for your Heroku deploys',
+        },
+        ]
 
     def get_release_doc_html(self, hook_url):
         return """
