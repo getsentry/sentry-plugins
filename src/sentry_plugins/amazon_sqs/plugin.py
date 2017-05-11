@@ -59,7 +59,7 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
         # to S3
         message = json.dumps(payload)
         if len(message) > 256 * 1024:
-            return
+            return False
 
         client = boto3.client(
             service_name='sqs',
@@ -72,3 +72,5 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
             QueueUrl=queue_url,
             MessageBody=message,
         )
+
+        return True

@@ -60,5 +60,4 @@ class AmazonSQSPluginTest(PluginTestCase):
         mock_client.return_value.send_message.assert_called_once_with(
             QueueUrl='https://sqs-us-east-1.amazonaws.com/12345678/myqueue',
             MessageBody=json.dumps(self.plugin.get_event_payload(event)),
-            MessageDeduplicationId=event.event_id,
         )
