@@ -47,8 +47,40 @@ ERR_404 = ('Bitbucket returned a 404. Please make sure that '
            'the repo exists, you have access to it, and it has '
            'issue tracking enabled.')
 
+class BitbucketMixin(object):
+    def message_from_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            return ERR_UNAUTHORIZED
+        elif isinstance(exc, ApiError):
+            if exc.code == 404:
+                return ERR_404
+            # import ipdb; ipdb.set_trace()
+            return ('Error Communicating with Bitbucket (HTTP %s): %s' % (
+                exc.code,
+                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
+            ))
+        else:
+            return ERR_INTERNAL
 
-class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
+    def raise_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            raise InvalidIdentity(self.message_from_error(exc))
+        elif isinstance(exc, ApiError):
+            raise PluginError(self.message_from_error(exc))
+        elif isinstance(exc, PluginError):
+            raise
+        else:
+            self.logger.exception(six.text_type(exc))
+            raise PluginError(self.message_from_error(exc))
+
+    def get_client(self, user):
+        auth = self.get_auth(user=user)
+        if auth is None:
+            raise PluginError('You still need to associate an identity with Bitbucket.')
+        return BitbucketClient(auth)
+
+
+class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
     description = 'Integrate Bitbucket issues by linking a repository to a project.'
     slug = 'bitbucket'
     title = 'Bitbucket'
@@ -212,8 +244,22 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
 
         return Response({field: issues})
 
+    def get_configure_plugin_fields(self, request, project, **kwargs):
+        return [{
+            'name': 'repo',
+            'label': 'Repository Name',
+            'default': self.get_option('repo', project),
+            'type': 'text',
+            'placeholder': 'e.g. getsentry/sentry',
+            'help': 'Enter your repository name, including the owner.',
+            'required': True,
+        }]
 
-class BitbucketRepositoryProvider(BitbucketPlugin, providers.RepositoryProvider):
+    def setup(self, bindings):
+        bindings.add('repository.provider', BitbucketRepositoryProvider, id='bitbucket')
+
+
+class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
     name = 'Bitbucket'
     auth_provider = 'bitbucket'
     logger = logging.getLogger('sentry.plugins.bitbucket')
@@ -243,7 +289,7 @@ class BitbucketRepositoryProvider(BitbucketPlugin, providers.RepositoryProvider)
             except Exception as e:
                 self.raise_error(e)
             else:
-                config['external_id'] = six.text_type(repo['id'])
+                config['external_id'] = six.text_type(repo['uuid'])
         return config
 
     def get_webhook_secret(self, organization):
@@ -269,17 +315,13 @@ class BitbucketRepositoryProvider(BitbucketPlugin, providers.RepositoryProvider)
             raise NotImplementedError('Cannot create a repository anonymously')
 
         client = self.get_client(actor)
-
+        # import ipdb; ipdb.set_trace()
         try:
             resp = client.create_hook(data['name'], {
-                'name': 'web',
+                'description': 'sentry-bitbucket-repo-hook',
+                'url': absolute_uri('/plugins/bitbucket/organizations/{}/webhook/'.format(organization.id)),
                 'active': True,
-                'events': ['push'],
-                'config': {
-                    'url': absolute_uri('/plugins/bitbucket/organizations/{}/webhook/'.format(organization.id)),
-                    'content_type': 'json',
-                    'secret': self.get_webhook_secret(organization),
-                },
+                'events': ['repo:push'],
             })
         except Exception as e:
             self.raise_error(e)
