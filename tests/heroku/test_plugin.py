@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 
 
-from mock import patch
+from mock import Mock, patch
 
 from django.utils import timezone
 
 from datetime import timedelta
 
+from sentry.exceptions import HookValidationError
 from sentry.models import (Commit, Deploy, Environment,
     ProjectOption, Release, ReleaseCommit,
     ReleaseHeadCommit, Repository, User)
@@ -130,3 +131,19 @@ class SetRefsTest(TestCase):
                 'prev_release_id': old_release.id,
             }
         )
+
+
+class HookHandleTest(TestCase):
+    def test_bad_version(self):
+        project = self.create_project()
+        user = self.create_user()
+        hook = HerokuReleaseHook(project)
+
+        req = Mock()
+        req.POST = {
+            'head_long': '',
+            'url': 'http://example.com',
+            'user': user.email,
+        }
+        with self.assertRaises(HookValidationError):
+            hook.handle(req)
