@@ -354,11 +354,11 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
 
     def _format_commits(self, repo, commit_list):
         return [{
-            'id': c['sha'],
+            'id': c['hash'],
             'repository': repo.name,
-            'author_email': c['commit']['author'].get('email'),
-            'author_name': c['commit']['author'].get('name'),
-            'message': c['commit']['message'],
+            'author_email':re.search('(?<=<).*(?=>$)', c['author']['raw']),
+            'author_name': c['author']['user']['display_name'],
+            'message': c['message'],
         } for c in commit_list]
 
     def compare_commits(self, repo, start_sha, end_sha, actor=None):

@@ -22,7 +22,7 @@ class BitbucketClient(object):
         }
 
         session = build_session()
-        print(headers)
+        # print(headers)
         print('{}2.0{}'.format(self.API_URL, path))
         try:
             resp = getattr(session, method.lower())(
