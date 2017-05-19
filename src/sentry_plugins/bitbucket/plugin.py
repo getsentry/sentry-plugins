@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import logging
 import six
+import re
 
 from rest_framework.response import Response
 from uuid import uuid4
@@ -95,6 +96,9 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
                 plugin=self,
             )),
         ]
+
+    def get_url_module(self):
+        return 'sentry_plugins.bitbucket.urls'
 
     def is_configured(self, request, project, **kwargs):
         return bool(self.get_option('repo', project))
@@ -332,7 +336,7 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
                 'url': 'https://bitbucket.org/{}'.format(data['name']),
                 'config': {
                     'name': data['name'],
-                    'webhook_id': resp['id'],
+                    'webhook_id': resp['uuid'],
                 }
             }
 
@@ -377,4 +381,4 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
             except Exception as e:
                 self.raise_error(e)
             else:
-                return self._format_commits(repo, res['commits'])
+                return self._format_commits(repo, res)

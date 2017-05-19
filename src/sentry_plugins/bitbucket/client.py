@@ -12,9 +12,9 @@ from requests_oauthlib import OAuth1
 class BitbucketClient(object):
     API_URL = u'https://api.bitbucket.org/'
 
-    def __init__(self, auth):
+    def __init__(self, auth=None):
         self.auth = auth
-        self.token = self.auth.tokens['oauth_token']
+        # self.token = self.auth.tokens['oauth_token']
 
     def _request2(self, method, path, data=None, params=None):
         headers = {
@@ -44,8 +44,8 @@ class BitbucketClient(object):
         return self._request(method, path, headers=headers, data=data, params=params)
 
     def request(self, method, version, path, data=None, params=None):
-        if version=='2.0':
-            return self._request2(method,path,data,params)
+        # if version=='2.0':
+            # return self._request2(method, path, data, params)
 
         oauth = OAuth1(unicode(settings.BITBUCKET_CONSUMER_KEY),
                        unicode(settings.BITBUCKET_CONSUMER_SECRET),
@@ -57,7 +57,7 @@ class BitbucketClient(object):
             resp = getattr(session, method.lower())(
                 url='%s%s%s' % (self.API_URL, version, path),
                 auth=oauth,
-                data=data,
+                json=data,
                 params=params,
             )
             resp.raise_for_status()
@@ -148,12 +148,19 @@ class BitbucketClient(object):
         # see https://developer.github.com/v3/repos/commits/#compare-two-commits
         # where start sha is oldest and end is most recent
         # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/diff/%7Bspec%7D
-        return self.request(
+        data = self.request(
             'GET',
             '2.0',
-            '/repositories/{}/diff/{}...{}'.format(
+            '/repositories/{}/commits/{}'.format(
                 repo,
-                start_sha,
-                end_sha,
+                end_sha
             )
         )
+        commits = []
+        for commit in data['values']:
+            # print( commit)
+            if commit['hash'] == start_sha:
+                break
+            commits.append(commit)
+        print(commits)
+        return commits

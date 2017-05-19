@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import logging
 import six
+import re
 
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse, Http404
@@ -48,155 +49,160 @@ class PushEventWebhook(Webhook):
         authors = {}
 
         client = BitbucketClient()
+        #TODO(maxbittker):implement:
         gh_username_cache = {}
 
         try:
             repo = Repository.objects.get(
                 organization_id=organization.id,
-                provider='github',
-                external_id=six.text_type(event['repository']['id']),
+                provider='bitbucket',
+                external_id=six.text_type(event['repository']['uuid']),
             )
         except Repository.DoesNotExist:
             raise Http404()
 
-        for commit in event['commits']:
-            if not commit['distinct']:
-                continue
+        for change in event['push']['changes']:
+            for commit in change['commits']:
+                # import ipdb; ipdb.set_trace();
+                # if not commit['distinct']:
+                    # continue
 
-            if RepositoryProvider.should_ignore_commit(commit['message']):
-                continue
+                if RepositoryProvider.should_ignore_commit(commit['message']):
+                    continue
 
-            author_email = commit['author']['email']
-            if '@' not in author_email:
-                author_email = u'{}@localhost'.format(
-                    author_email[:65],
-                )
-            # try to figure out who anonymous emails are
-            elif is_anonymous_email(author_email):
-                gh_username = commit['author'].get('username')
-                # bot users don't have usernames
-                if gh_username:
-                    external_id = get_external_id(gh_username)
-                    if gh_username in gh_username_cache:
-                        author_email = gh_username_cache[gh_username] or author_email
-                    else:
-                        try:
-                            commit_author = CommitAuthor.objects.get(
-                                external_id=external_id,
-                                organization_id=organization.id,
-                            )
-                        except CommitAuthor.DoesNotExist:
-                            commit_author = None
+                m = re.search('(?<=<).*(?=>$)', commit['author']['raw'])
+                author_email = m.group(0)
+                if '@' not in author_email:
+                    author_email = u'{}@localhost'.format(
+                        author_email[:65],
+                    )
 
-                        if commit_author is not None and not is_anonymous_email(commit_author.email):
-                            author_email = commit_author.email
-                            gh_username_cache[gh_username] = author_email
+                # try to figure out who anonymous emails are
+                elif is_anonymous_email(author_email):
+                    gh_username = commit['author'].get('username')
+                    # bot users don't have usernames
+                    if gh_username:
+                        external_id = get_external_id(gh_username)
+                        if gh_username in gh_username_cache:
+                            author_email = gh_username_cache[gh_username] or author_email
                         else:
                             try:
-                                gh_user = client.request_no_auth('GET', '/users/%s' % gh_username)
-                            except ApiError as exc:
-                                logger.exception(six.text_type(exc))
+                                commit_author = CommitAuthor.objects.get(
+                                    external_id=external_id,
+                                    organization_id=organization.id,
+                                )
+                            except CommitAuthor.DoesNotExist:
+                                commit_author = None
+
+                            if commit_author is not None and not is_anonymous_email(commit_author.email):
+                                author_email = commit_author.email
+                                gh_username_cache[gh_username] = author_email
                             else:
-                                # even if we can't find a user, set to none so we
-                                # don't re-query
-                                gh_username_cache[gh_username] = None
                                 try:
-                                    user = User.objects.filter(
-                                        social_auth__provider='github',
-                                        social_auth__uid=gh_user['id'],
-                                        org_memberships=organization,
-                                    )[0]
-                                except IndexError:
-                                    pass
+                                    gh_user = client.request_no_auth('GET', '/users/%s' % gh_username)
+                                except ApiError as exc:
+                                    logger.exception(six.text_type(exc))
                                 else:
-                                    author_email = user.email
-                                    gh_username_cache[gh_username] = author_email
-                                    if commit_author is not None:
-                                        try:
-                                            with transaction.atomic():
-                                                commit_author.update(
-                                                    email=author_email,
-                                                    external_id=external_id,
-                                                )
-                                        except IntegrityError:
-                                            pass
+                                    # even if we can't find a user, set to none so we
+                                    # don't re-query
+                                    gh_username_cache[gh_username] = None
+                                    try:
+                                        user = User.objects.filter(
+                                            social_auth__provider='github',
+                                            social_auth__uid=gh_user['id'],
+                                            org_memberships=organization,
+                                        )[0]
+                                    except IndexError:
+                                        pass
+                                    else:
+                                        author_email = user.email
+                                        gh_username_cache[gh_username] = author_email
+                                        if commit_author is not None:
+                                            try:
+                                                with transaction.atomic():
+                                                    commit_author.update(
+                                                        email=author_email,
+                                                        external_id=external_id,
+                                                    )
+                                            except IntegrityError:
+                                                pass
 
-                        if commit_author is not None:
-                            authors[author_email] = commit_author
+                            if commit_author is not None:
+                                authors[author_email] = commit_author
 
-            # TODO(dcramer): we need to deal with bad values here, but since
-            # its optional, lets just throw it out for now
-            if len(author_email) > 75:
-                author = None
-            elif author_email not in authors:
-                authors[author_email] = author = CommitAuthor.objects.get_or_create(
-                    organization_id=organization.id,
-                    email=author_email,
-                    defaults={
-                        'name': commit['author']['name'][:128],
-                    }
-                )[0]
-
-                update_kwargs = {}
-
-                if author.name != commit['author']['name']:
-                    update_kwargs['name'] = commit['author']['name']
-
-                gh_username = commit['author'].get('username')
-                if gh_username:
-                    external_id = get_external_id(gh_username)
-                    if author.external_id != external_id and not is_anonymous_email(author.email):
-                        update_kwargs['external_id'] = external_id
-
-                if update_kwargs:
-                    try:
-                        with transaction.atomic():
-                            author.update(**update_kwargs)
-                    except IntegrityError:
-                        pass
-            else:
-                author = authors[author_email]
-
-            try:
-                with transaction.atomic():
-                    c = Commit.objects.create(
-                        repository_id=repo.id,
+                # TODO(dcramer): we need to deal with bad values here, but since
+                # its optional, lets just throw it out for now
+                if len(author_email) > 75:
+                    author = None
+                elif author_email not in authors:
+                    authors[author_email] = author = CommitAuthor.objects.get_or_create(
                         organization_id=organization.id,
-                        key=commit['id'],
-                        message=commit['message'],
-                        author=author,
-                        date_added=dateutil.parser.parse(
-                            commit['timestamp'],
-                        ).astimezone(timezone.utc),
-                    )
-                    for fname in commit['added']:
-                        CommitFileChange.objects.create(
+                        email=author_email,
+                        defaults={
+                            'name': commit['author']['user']['display_name'][:128],
+                        }
+                    )[0]
+
+                    # update_kwargs = {}
+                    #
+                    # if author.name != commit['author']['name']:
+                    #     update_kwargs['name'] = commit['author']['name']
+                    #
+                    # gh_username = commit['author'].get('username')
+                    # if gh_username:
+                    #     external_id = get_external_id(gh_username)
+                    #     if author.external_id != external_id and not is_anonymous_email(author.email):
+                    #         update_kwargs['external_id'] = external_id
+                    #
+                    # if update_kwargs:
+                    #     try:
+                    #         with transaction.atomic():
+                    #             author.update(**update_kwargs)
+                    #     except IntegrityError:
+                    #         pass
+                else:
+                    author = authors[author_email]
+                try:
+                    with transaction.atomic():
+                        # import ipdb; ipdb.set_trace()
+                        c = Commit.objects.create(
+                            repository_id=repo.id,
                             organization_id=organization.id,
-                            commit=c,
-                            filename=fname,
-                            type='A',
+                            key=commit['hash'],
+                            message=commit['message'],
+                            author=author,
+                            date_added=dateutil.parser.parse(
+                                commit['date'],
+                            ).astimezone(timezone.utc),
                         )
-                    for fname in commit['removed']:
-                        CommitFileChange.objects.create(
-                            organization_id=organization.id,
-                            commit=c,
-                            filename=fname,
-                            type='D',
-                        )
-                    for fname in commit['modified']:
-                        CommitFileChange.objects.create(
-                            organization_id=organization.id,
-                            commit=c,
-                            filename=fname,
-                            type='M',
-                        )
-            except IntegrityError:
-                pass
+                #         for fname in commit['added']:
+                #             CommitFileChange.objects.create(
+                #                 organization_id=organization.id,
+                #                 commit=c,
+                #                 filename=fname,
+                #                 type='A',
+                #             )
+                #         for fname in commit['removed']:
+                #             CommitFileChange.objects.create(
+                #                 organization_id=organization.id,
+                #                 commit=c,
+                #                 filename=fname,
+                #                 type='D',
+                #             )
+                #         for fname in commit['modified']:
+                #             CommitFileChange.objects.create(
+                #                 organization_id=organization.id,
+                #                 commit=c,
+                #                 filename=fname,
+                #                 type='M',
+                #             )
+                except IntegrityError:
+                    pass
 
 
 class BitbucketWebhookEndpoint(View):
     _handlers = {
-        'push': PushEventWebhook,
+        'repo:push': PushEventWebhook,
     }
 
     # https://developer.github.com/webhooks/
@@ -253,7 +259,7 @@ class BitbucketWebhookEndpoint(View):
             return HttpResponse(status=400)
 
         try:
-            handler = self.get_handler(request.META['HTTP_X_GITHUB_EVENT'])
+            handler = self.get_handler(request.META['HTTP_X_EVENT_KEY'])
         except KeyError:
             logger.error('bitbucket.webhook.missing-event', extra={
                 'organization_id': organization.id,
@@ -263,19 +269,20 @@ class BitbucketWebhookEndpoint(View):
         if not handler:
             return HttpResponse(status=204)
 
-        try:
-            method, signature = request.META['HTTP_X_HUB_SIGNATURE'].split('=', 1)
-        except (KeyError, IndexError):
-            logger.error('bitbucket.webhook.missing-signature', extra={
-                'organization_id': organization.id,
-            })
-            return HttpResponse(status=400)
+        # TODO(maxbittker) !!!validation is turned off here:
+        # try:
+        #     method, signature = request.META['HTTP_X_HUB_SIGNATURE'].split('=', 1)
+        # except (KeyError, IndexError):
+        #     logger.error('bitbucket.webhook.missing-signature', extra={
+        #         'organization_id': organization.id,
+        #     })
+        #     return HttpResponse(status=400)
 
-        if not self.is_valid_signature(method, body, secret, signature):
-            logger.error('bitbucket.webhook.invalid-signature', extra={
-                'organization_id': organization.id,
-            })
-            return HttpResponse(status=401)
+        # if not self.is_valid_signature(method, body, secret, signature):
+        #     logger.error('bitbucket.webhook.invalid-signature', extra={
+        #         'organization_id': organization.id,
+        #     })
+        #     return HttpResponse(status=401)
 
         try:
             event = json.loads(body.decode('utf-8'))
