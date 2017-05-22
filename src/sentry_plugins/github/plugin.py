@@ -228,7 +228,10 @@ class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
             'default': self.get_option('repo', project),
             'type': 'text',
             'placeholder': 'e.g. getsentry/sentry',
-            'help': 'Enter your repository name, including the owner.',
+            'help': ('Enter your repository name, including the owner. '
+                    '<p><b>Looking to integrate commit data with releases?</b> You\'ll need to configure this through our'
+                     '<a href="/organizations/{}/repos/" '
+                     '> repos page</a>.</p>').format(project.organization.slug),
             'required': True,
         }]
 
