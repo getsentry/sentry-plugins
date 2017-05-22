@@ -18,6 +18,7 @@ from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 
 from .client import BitbucketClient
+from .endpoints.webhook import parse_raw_user
 
 ISSUE_TYPES = (
     ('bug', 'Bug'),
@@ -319,7 +320,6 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
             raise NotImplementedError('Cannot create a repository anonymously')
 
         client = self.get_client(actor)
-        # import ipdb; ipdb.set_trace()
         try:
             resp = client.create_hook(data['name'], {
                 'description': 'sentry-bitbucket-repo-hook',
@@ -356,7 +356,7 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
         return [{
             'id': c['hash'],
             'repository': repo.name,
-            'author_email':re.search('(?<=<).*(?=>$)', c['author']['raw']),
+            'author_email': parse_raw_user(c['author']['raw']),
             'author_name': c['author']['user']['display_name'],
             'message': c['message'],
         } for c in commit_list]

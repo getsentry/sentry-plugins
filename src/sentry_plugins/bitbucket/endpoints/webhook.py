@@ -42,16 +42,16 @@ class Webhook(object):
     def __call__(self, organization, event):
         raise NotImplementedError
 
+def parse_raw_user(raw):
+    # captures content between angle brackets
+    return re.search('(?<=<).*(?=>$)', raw).group(0)
 
 class PushEventWebhook(Webhook):
-    # https://developer.github.com/v3/activity/events/types/#pushevent
+    # https://confluence.atlassian.com/bitbucket/event-payloads-740262817.html#EventPayloads-Push
     def __call__(self, organization, event):
         authors = {}
 
         client = BitbucketClient()
-        #TODO(maxbittker):implement:
-        gh_username_cache = {}
-
         try:
             repo = Repository.objects.get(
                 organization_id=organization.id,
@@ -63,72 +63,12 @@ class PushEventWebhook(Webhook):
 
         for change in event['push']['changes']:
             for commit in change['commits']:
-                # import ipdb; ipdb.set_trace();
-                # if not commit['distinct']:
-                    # continue
-
                 if RepositoryProvider.should_ignore_commit(commit['message']):
                     continue
 
-                m = re.search('(?<=<).*(?=>$)', commit['author']['raw'])
-                author_email = m.group(0)
+                author_email = parse_raw_user(commit['author']['raw'])
                 if '@' not in author_email:
-                    author_email = u'{}@localhost'.format(
-                        author_email[:65],
-                    )
-
-                # try to figure out who anonymous emails are
-                elif is_anonymous_email(author_email):
-                    gh_username = commit['author'].get('username')
-                    # bot users don't have usernames
-                    if gh_username:
-                        external_id = get_external_id(gh_username)
-                        if gh_username in gh_username_cache:
-                            author_email = gh_username_cache[gh_username] or author_email
-                        else:
-                            try:
-                                commit_author = CommitAuthor.objects.get(
-                                    external_id=external_id,
-                                    organization_id=organization.id,
-                                )
-                            except CommitAuthor.DoesNotExist:
-                                commit_author = None
-
-                            if commit_author is not None and not is_anonymous_email(commit_author.email):
-                                author_email = commit_author.email
-                                gh_username_cache[gh_username] = author_email
-                            else:
-                                try:
-                                    gh_user = client.request_no_auth('GET', '/users/%s' % gh_username)
-                                except ApiError as exc:
-                                    logger.exception(six.text_type(exc))
-                                else:
-                                    # even if we can't find a user, set to none so we
-                                    # don't re-query
-                                    gh_username_cache[gh_username] = None
-                                    try:
-                                        user = User.objects.filter(
-                                            social_auth__provider='github',
-                                            social_auth__uid=gh_user['id'],
-                                            org_memberships=organization,
-                                        )[0]
-                                    except IndexError:
-                                        pass
-                                    else:
-                                        author_email = user.email
-                                        gh_username_cache[gh_username] = author_email
-                                        if commit_author is not None:
-                                            try:
-                                                with transaction.atomic():
-                                                    commit_author.update(
-                                                        email=author_email,
-                                                        external_id=external_id,
-                                                    )
-                                            except IntegrityError:
-                                                pass
-
-                            if commit_author is not None:
-                                authors[author_email] = commit_author
+                    author_email = u'{}@localhost'.format(author_email[:65])
 
                 # TODO(dcramer): we need to deal with bad values here, but since
                 # its optional, lets just throw it out for now
@@ -142,29 +82,10 @@ class PushEventWebhook(Webhook):
                             'name': commit['author']['user']['display_name'][:128],
                         }
                     )[0]
-
-                    # update_kwargs = {}
-                    #
-                    # if author.name != commit['author']['name']:
-                    #     update_kwargs['name'] = commit['author']['name']
-                    #
-                    # gh_username = commit['author'].get('username')
-                    # if gh_username:
-                    #     external_id = get_external_id(gh_username)
-                    #     if author.external_id != external_id and not is_anonymous_email(author.email):
-                    #         update_kwargs['external_id'] = external_id
-                    #
-                    # if update_kwargs:
-                    #     try:
-                    #         with transaction.atomic():
-                    #             author.update(**update_kwargs)
-                    #     except IntegrityError:
-                    #         pass
                 else:
-                    author = authors[author_email]
+                    author = authors['author_email']
                 try:
                     with transaction.atomic():
-                        # import ipdb; ipdb.set_trace()
                         c = Commit.objects.create(
                             repository_id=repo.id,
                             organization_id=organization.id,

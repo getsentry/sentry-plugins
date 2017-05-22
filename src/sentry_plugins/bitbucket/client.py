@@ -131,9 +131,23 @@ class BitbucketClient(object):
             ),
         )
 
+    def get_commit_filechanges(self, repo, sha):
+        # return api request that fetches last ~30 commits
+        # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
+        # using end_sha as parameter
+        patch_file =  self.request(
+            'GET',
+            '2.0',
+            '/repositories/{}/patch/{}'.format(
+                repo,
+                end_sha,
+            )
+        )
+
+
     def get_last_commits(self, repo, end_sha):
         # return api request that fetches last ~30 commits
-        # see https://developer.github.com/v3/repos/commits/#list-commits-on-a-repository
+        # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
         # using end_sha as parameter
         return self.request(
             'GET',
@@ -145,9 +159,8 @@ class BitbucketClient(object):
         )
 
     def compare_commits(self, repo, start_sha, end_sha):
-        # see https://developer.github.com/v3/repos/commits/#compare-two-commits
         # where start sha is oldest and end is most recent
-        # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/diff/%7Bspec%7D
+        # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
         data = self.request(
             'GET',
             '2.0',
@@ -158,9 +171,8 @@ class BitbucketClient(object):
         )
         commits = []
         for commit in data['values']:
-            # print( commit)
+            #TODO(maxbittker) fetch extra pages when this is paginated
             if commit['hash'] == start_sha:
                 break
             commits.append(commit)
-        print(commits)
         return commits
