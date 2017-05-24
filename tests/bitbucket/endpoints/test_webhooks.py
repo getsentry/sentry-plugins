@@ -9,14 +9,14 @@ from sentry.models import Commit, CommitAuthor, OrganizationOption, Repository
 from sentry.testutils import APITestCase
 from uuid import uuid4
 
-from sentry_plugins.github.testutils import PUSH_EVENT_EXAMPLE
+from sentry_plugins.bitbucket.testutils import PUSH_EVENT_EXAMPLE
 
 
 class WebhookTest(APITestCase):
     def test_get(self):
         project = self.project  # force creation
 
-        url = '/plugins/github/organizations/{}/webhook/'.format(
+        url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
             project.organization.id,
         )
 
@@ -26,8 +26,7 @@ class WebhookTest(APITestCase):
 
     def test_unregistered_event(self):
         project = self.project  # force creation
-        print(project.organization.id)
-        url = '/plugins/github/organizations/{}/webhook/'.format(
+        url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
             project.organization.id,
         )
 
@@ -35,7 +34,7 @@ class WebhookTest(APITestCase):
 
         OrganizationOption.objects.set_value(
             organization=project.organization,
-            key='github:webhook_secret',
+            key='bitbucket:webhook_secret',
             value=secret,
         )
 
@@ -43,9 +42,7 @@ class WebhookTest(APITestCase):
             path=url,
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
-            HTTP_X_GITHUB_EVENT='UnregisteredEvent',
-            HTTP_X_HUB_SIGNATURE='sha1=98196e70369945ffa6b248cf70f7dc5e46dff241',
-            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+            HTTP_X_EVENT_KEY='UnregisteredEvent',
         )
 
         assert response.status_code == 204
@@ -53,15 +50,15 @@ class WebhookTest(APITestCase):
     def test_invalid_signature_event(self):
         project = self.project  # force creation
 
-        url = '/plugins/github/organizations/{}/webhook/'.format(
+        url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
             project.organization.id,
         )
 
         secret = '2d7565c3537847b789d6995dca8d9f84'
-
+        #todo(maxbittker) this fails because the check isnt implemented
         OrganizationOption.objects.set_value(
             organization=project.organization,
-            key='github:webhook_secret',
+            key='bitbucket:webhook_secret',
             value=secret,
         )
 
@@ -69,9 +66,7 @@ class WebhookTest(APITestCase):
             path=url,
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
-            HTTP_X_GITHUB_EVENT='push',
-            HTTP_X_HUB_SIGNATURE='sha1=33521abeaaf9a57c2abf486e0ccd54d23cf36fec',
-            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+            HTTP_X_EVENT_KEY='repo:push',
         )
 
         assert response.status_code == 401
@@ -81,7 +76,7 @@ class PushEventWebhookTest(APITestCase):
     def test_simple(self):
         project = self.project  # force creation
 
-        url = '/plugins/github/organizations/{}/webhook/'.format(
+        url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
             project.organization.id,
         )
 
@@ -89,24 +84,22 @@ class PushEventWebhookTest(APITestCase):
 
         OrganizationOption.objects.set_value(
             organization=project.organization,
-            key='github:webhook_secret',
+            key='bitbucket:webhook_secret',
             value=secret,
         )
 
         Repository.objects.create(
             organization_id=project.organization.id,
-            external_id='35129377',
-            provider='github',
-            name='baxterthehacker/public-repo',
+            external_id='{c78dfb25-7882-4550-97b1-4e0d38f32859}',
+            provider='bitbucket',
+            name='maxbittker/newsdiffs',
         )
 
         response = self.client.post(
             path=url,
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
-            HTTP_X_GITHUB_EVENT='push',
-            HTTP_X_HUB_SIGNATURE='sha1=98196e70369945ffa6b248cf70f7dc5e46dff241',
-            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+            HTTP_X_EVENT_KEY='repo:push',
         )
 
         assert response.status_code == 204
@@ -115,30 +108,22 @@ class PushEventWebhookTest(APITestCase):
             organization_id=project.organization_id,
         ).select_related('author').order_by('-date_added'))
 
-        assert len(commit_list) == 2
+        assert len(commit_list) == 1
 
         commit = commit_list[0]
 
-        assert commit.key == '133d60480286590a610a0eb7352ff6e02b9674c4'
-        assert commit.message == u'Update README.md (àgain)'
-        assert commit.author.name == u'bàxterthehacker'
-        assert commit.author.email == 'baxterthehacker@users.noreply.github.com'
+        assert commit.key == 'e0e377d186e4f0e937bdb487a23384fe002df649'
+        assert commit.message == u'README.md edited online with Bitbucket'
+        assert commit.author.name == u'Max Bittker'
+        assert commit.author.email == 'max@getsentry.com'
         assert commit.author.external_id is None
-        assert commit.date_added == datetime(2015, 5, 5, 23, 45, 15, tzinfo=timezone.utc)
+        assert commit.date_added == datetime(2017, 5, 24, 1, 5, 47, tzinfo=timezone.utc)
 
-        commit = commit_list[1]
-
-        assert commit.key == '0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c'
-        assert commit.message == 'Update README.md'
-        assert commit.author.name == u'bàxterthehacker'
-        assert commit.author.email == 'baxterthehacker@users.noreply.github.com'
-        assert commit.author.external_id is None
-        assert commit.date_added == datetime(2015, 5, 5, 23, 40, 15, tzinfo=timezone.utc)
 
     def test_anonymous_lookup(self):
         project = self.project  # force creation
 
-        url = '/plugins/github/organizations/{}/webhook/'.format(
+        url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
             project.organization.id,
         )
 
@@ -146,19 +131,19 @@ class PushEventWebhookTest(APITestCase):
 
         OrganizationOption.objects.set_value(
             organization=project.organization,
-            key='github:webhook_secret',
+            key='bitbucket:webhook_secret',
             value=secret,
         )
 
         Repository.objects.create(
             organization_id=project.organization.id,
-            external_id='35129377',
-            provider='github',
-            name='baxterthehacker/public-repo',
+            external_id='{c78dfb25-7882-4550-97b1-4e0d38f32859}',
+            provider='bitbucket',
+            name='maxbittker/newsdiffs',
         )
 
         CommitAuthor.objects.create(
-            external_id='github:baxterthehacker',
+            external_id='bitbucket:baxterthehacker',
             organization_id=project.organization_id,
             email='baxterthehacker@example.com',
             name=u'bàxterthehacker',
@@ -168,9 +153,7 @@ class PushEventWebhookTest(APITestCase):
             path=url,
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
-            HTTP_X_GITHUB_EVENT='push',
-            HTTP_X_HUB_SIGNATURE='sha1=98196e70369945ffa6b248cf70f7dc5e46dff241',
-            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+            HTTP_X_EVENT_KEY='repo:push',
         )
 
         assert response.status_code == 204
@@ -180,20 +163,13 @@ class PushEventWebhookTest(APITestCase):
         ).select_related('author').order_by('-date_added'))
 
         # should be skipping the #skipsentry commit
-        assert len(commit_list) == 2
+        assert len(commit_list) == 1
 
         commit = commit_list[0]
 
-        assert commit.key == '133d60480286590a610a0eb7352ff6e02b9674c4'
-        assert commit.message == u'Update README.md (àgain)'
-        assert commit.author.name == u'bàxterthehacker'
-        assert commit.author.email == 'baxterthehacker@example.com'
-        assert commit.date_added == datetime(2015, 5, 5, 23, 45, 15, tzinfo=timezone.utc)
-
-        commit = commit_list[1]
-
-        assert commit.key == '0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c'
-        assert commit.message == 'Update README.md'
-        assert commit.author.name == u'bàxterthehacker'
-        assert commit.author.email == 'baxterthehacker@example.com'
-        assert commit.date_added == datetime(2015, 5, 5, 23, 40, 15, tzinfo=timezone.utc)
+        assert commit.key == 'e0e377d186e4f0e937bdb487a23384fe002df649'
+        assert commit.message == u'README.md edited online with Bitbucket'
+        assert commit.author.name == u'Max Bittker'
+        assert commit.author.email == 'max@getsentry.com'
+        assert commit.author.external_id is None
+        assert commit.date_added == datetime(2017, 5, 24, 1, 5, 47, tzinfo=timezone.utc)
