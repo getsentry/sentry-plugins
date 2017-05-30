@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 
+import six
+
 from django.conf import settings
 from requests.exceptions import HTTPError
+from unidiff import PatchSet
 from sentry.http import build_session
 
 from sentry_plugins.exceptions import ApiError
@@ -14,7 +17,6 @@ class BitbucketClient(object):
 
     def __init__(self, auth=None):
         self.auth = auth
-        # self.token = self.auth.tokens['oauth_token']
 
     def _request2(self, method, path, data=None, params=None):
         headers = {
@@ -22,8 +24,7 @@ class BitbucketClient(object):
         }
 
         session = build_session()
-        # print(headers)
-        print('{}2.0{}'.format(self.API_URL, path))
+
         try:
             resp = getattr(session, method.lower())(
                 url='{}2.0{}'.format(self.API_URL, path),
@@ -47,8 +48,8 @@ class BitbucketClient(object):
         # if version=='2.0':
             # return self._request2(method, path, data, params)
 
-        oauth = OAuth1(unicode(settings.BITBUCKET_CONSUMER_KEY),
-                       unicode(settings.BITBUCKET_CONSUMER_SECRET),
+        oauth = OAuth1(six.text_type(settings.BITBUCKET_CONSUMER_KEY),
+                       six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
                        self.auth.tokens['oauth_token'], self.auth.tokens['oauth_token_secret'],
                        signature_type='auth_header')
 
@@ -134,16 +135,17 @@ class BitbucketClient(object):
     def get_commit_filechanges(self, repo, sha):
         # return api request that fetches last ~30 commits
         # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
-        # using end_sha as parameter
-        patch_file =  self.request(
+        # using sha as parameter
+        patch_file = self.request(
             'GET',
             '2.0',
             '/repositories/{}/patch/{}'.format(
                 repo,
-                end_sha,
+                sha,
             )
         )
-
+        patch = PatchSet(patch_file, encoding='utf-8')
+        return patch
 
     def get_last_commits(self, repo, end_sha):
         # return api request that fetches last ~30 commits
@@ -171,7 +173,7 @@ class BitbucketClient(object):
         )
         commits = []
         for commit in data['values']:
-            #TODO(maxbittker) fetch extra pages when this is paginated
+            # TODO(maxbittker) fetch extra pages when this is paginated
             if commit['hash'] == start_sha:
                 break
             commits.append(commit)

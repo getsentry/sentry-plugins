@@ -16,14 +16,14 @@ from django.views.generic import View
 from django.utils import timezone
 from simplejson import JSONDecodeError
 from sentry.models import (
-    Commit, CommitAuthor, CommitFileChange, Organization, OrganizationOption,
-    Repository, User
+    Commit, CommitAuthor, Organization, OrganizationOption,
+    Repository
 )
 from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
 
-from sentry_plugins.exceptions import ApiError
-from sentry_plugins.bitbucket.client import BitbucketClient
+# from sentry_plugins.exceptions import ApiError
+# from sentry_plugins.bitbucket.client import BitbucketClient
 
 logger = logging.getLogger('sentry.webhooks')
 
@@ -42,16 +42,18 @@ class Webhook(object):
     def __call__(self, organization, event):
         raise NotImplementedError
 
+
 def parse_raw_user(raw):
     # captures content between angle brackets
     return re.search('(?<=<).*(?=>$)', raw).group(0)
+
 
 class PushEventWebhook(Webhook):
     # https://confluence.atlassian.com/bitbucket/event-payloads-740262817.html#EventPayloads-Push
     def __call__(self, organization, event):
         authors = {}
 
-        client = BitbucketClient()
+        # client = BitbucketClient()
         try:
             repo = Repository.objects.get(
                 organization_id=organization.id,
@@ -86,7 +88,8 @@ class PushEventWebhook(Webhook):
                     author = authors['author_email']
                 try:
                     with transaction.atomic():
-                        c = Commit.objects.create(
+
+                        Commit.objects.create(
                             repository_id=repo.id,
                             organization_id=organization.id,
                             key=commit['hash'],
@@ -96,27 +99,32 @@ class PushEventWebhook(Webhook):
                                 commit['date'],
                             ).astimezone(timezone.utc),
                         )
-                #         for fname in commit['added']:
-                #             CommitFileChange.objects.create(
-                #                 organization_id=organization.id,
-                #                 commit=c,
-                #                 filename=fname,
-                #                 type='A',
-                #             )
-                #         for fname in commit['removed']:
-                #             CommitFileChange.objects.create(
-                #                 organization_id=organization.id,
-                #                 commit=c,
-                #                 filename=fname,
-                #                 type='D',
-                #             )
-                #         for fname in commit['modified']:
-                #             CommitFileChange.objects.create(
-                #                 organization_id=organization.id,
-                #                 commit=c,
-                #                 filename=fname,
-                #                 type='M',
-                #             )
+
+                        # TODO(maxbittker) can't make these work until i save the auth token somewhere
+                        #
+                        # patch_set  = client.get_commit_filechanges(repo, commit['hash'])
+                        #
+                        # for patched_file in patch_set.added_files:
+                        #     CommitFileChange.objects.create(
+                        #         organization_id=organization.id,
+                        #         commit=c,
+                        #         filename=patched_file.path,
+                        #         type='A',
+                        #     )
+                        # for patched_file in patch_set.removed_files:
+                        #     CommitFileChange.objects.create(
+                        #         organization_id=organization.id,
+                        #         commit=c,
+                        #         filename=patched_file.path,
+                        #         type='D',
+                        #     )
+                        # for patched_file in path_set.modified_files:
+                        #     CommitFileChange.objects.create(
+                        #         organization_id=organization.id,
+                        #         commit=c,
+                        #         filename=patched_file.path,
+                        #         type='M',
+                        #     )
                 except IntegrityError:
                     pass
 

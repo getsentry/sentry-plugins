@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import logging
 import six
-import re
 
 from rest_framework.response import Response
 from uuid import uuid4
@@ -48,6 +47,7 @@ ERR_UNAUTHORIZED = (
 ERR_404 = ('Bitbucket returned a 404. Please make sure that '
            'the repo exists, you have access to it, and it has '
            'issue tracking enabled.')
+
 
 class BitbucketMixin(object):
     def message_from_error(self, exc):
@@ -215,16 +215,6 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
         repo = self.get_option('repo', group.project)
         return 'https://bitbucket.org/%s/issue/%s/' % (repo, issue_id)
 
-    def get_configure_plugin_fields(self, request, project, **kwargs):
-        return [{
-            'name': 'repo',
-            'label': 'Repository Name',
-            'default': self.get_option('repo', project),
-            'type': 'text',
-            'placeholder': 'e.g. getsentry/sentry',
-            'help': 'Enter your repository name, including the owner.'
-        }]
-
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
         query = request.GET.get('autocomplete_query')
@@ -301,7 +291,6 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
         lock = locks.get('bitbucket:webhook-secret:{}'.format(organization.id),
                          duration=60)
         with lock.acquire():
-            # TODO(dcramer): get_or_create would be a useful native solution
             secret = OrganizationOption.objects.get_value(
                 organization=organization,
                 key='bitbucket:webhook_secret',

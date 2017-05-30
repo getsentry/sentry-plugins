@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import six
-
 from datetime import datetime
 from django.utils import timezone
 from sentry.models import Commit, CommitAuthor, OrganizationOption, Repository
 from sentry.testutils import APITestCase
-from uuid import uuid4
 
 from sentry_plugins.bitbucket.testutils import PUSH_EVENT_EXAMPLE
 
@@ -118,7 +115,6 @@ class PushEventWebhookTest(APITestCase):
         assert commit.author.email == 'max@getsentry.com'
         assert commit.author.external_id is None
         assert commit.date_added == datetime(2017, 5, 24, 1, 5, 47, tzinfo=timezone.utc)
-
 
     def test_anonymous_lookup(self):
         project = self.project  # force creation

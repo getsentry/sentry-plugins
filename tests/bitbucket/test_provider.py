@@ -6,7 +6,7 @@ from sentry.testutils import PluginTestCase
 from sentry.utils import json
 
 from sentry_plugins.bitbucket.plugin import BitbucketRepositoryProvider
-from sentry_plugins.bitbucket.testutils import COMPARE_COMMITS_EXAMPLE, GET_LAST_COMMITS_EXAMPLE
+from sentry_plugins.bitbucket.testutils import COMPARE_COMMITS_EXAMPLE
 
 
 class BitbucketPluginTest(PluginTestCase):

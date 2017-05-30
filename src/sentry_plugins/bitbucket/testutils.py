@@ -276,7 +276,7 @@ PUSH_EVENT_EXAMPLE = b"""{
 }
 """
 
-COMPARE_COMMITS_EXAMPLE  = b"""{
+COMPARE_COMMITS_EXAMPLE = b"""{
 "pagelen": 30,
  "values":
      [{"hash": "e18e4e72de0d824edfbe0d73efe34cbd0d01d301",
