@@ -37,6 +37,7 @@ install_requires = [
     'python-dateutil',
     'PyJWT',
     'requests-oauthlib>=0.3.0'
+    'unidiff'
 ]
 
 
