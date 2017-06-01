@@ -18,36 +18,7 @@ class BitbucketClient(object):
     def __init__(self, auth=None):
         self.auth = auth
 
-    def _request2(self, method, path, data=None, params=None):
-        headers = {
-            'Authorization': 'token %s' % self.token,
-        }
-
-        session = build_session()
-
-        try:
-            resp = getattr(session, method.lower())(
-                url='{}2.0{}'.format(self.API_URL, path),
-                headers=headers,
-                json=data,
-                params=params,
-                allow_redirects=True,
-            )
-            resp.raise_for_status()
-        except HTTPError as e:
-            raise ApiError.from_response(e.response)
-
-        if resp.status_code == 204:
-            return {}
-
-        return resp.json()
-
-        return self._request(method, path, headers=headers, data=data, params=params)
-
     def request(self, method, version, path, data=None, params=None):
-        # if version=='2.0':
-            # return self._request2(method, path, data, params)
-
         oauth = OAuth1(six.text_type(settings.BITBUCKET_CONSUMER_KEY),
                        six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
                        self.auth.tokens['oauth_token'], self.auth.tokens['oauth_token_secret'],
@@ -173,7 +144,7 @@ class BitbucketClient(object):
         )
         commits = []
         for commit in data['values']:
-            # TODO(maxbittker) fetch extra pages when this is paginated
+            # TODO(maxbittker) fetch extra pages (up to a max) when this is paginated
             if commit['hash'] == start_sha:
                 break
             commits.append(commit)
