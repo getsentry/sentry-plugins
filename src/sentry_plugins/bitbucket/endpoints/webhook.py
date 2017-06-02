@@ -7,6 +7,8 @@ import logging
 import six
 import re
 
+import ipaddress
+
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse, Http404
 from django.utils.crypto import constant_time_compare
@@ -22,19 +24,18 @@ from sentry.models import (
 from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
 
-# from sentry_plugins.exceptions import ApiError
-# from sentry_plugins.bitbucket.client import BitbucketClient
-
 logger = logging.getLogger('sentry.webhooks')
 
+# Bitbucket Cloud IP range: https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html#Managewebhooks-trigger_webhookTriggeringwebhooks
+BITBUCKET_IP_RANGE = ipaddress.ip_network(u'104.192.143.0/24')
 
 def is_anonymous_email(email):
-    # todo(maxbittker)
+    # todo(maxbittker) investigate and improve behavior
     return email[-25:] == '@users.noreply.bitbucket.com'
 
 
 def get_external_id(username):
-    # todo(maxbittker)
+    # todo(maxbittker) investigate and improve behavior
     return 'bitbucket:%s' % username
 
 
@@ -174,20 +175,11 @@ class BitbucketWebhookEndpoint(View):
         if not handler:
             return HttpResponse(status=204)
 
-        # TODO(maxbittker) !!!validation is turned off here:
-        # try:
-        #     method, signature = request.META['HTTP_X_HUB_SIGNATURE'].split('=', 1)
-        # except (KeyError, IndexError):
-        #     logger.error('bitbucket.webhook.missing-signature', extra={
-        #         'organization_id': organization.id,
-        #     })
-        #     return HttpResponse(status=400)
-
-        # if not self.is_valid_signature(method, body, secret, signature):
-        #     logger.error('bitbucket.webhook.invalid-signature', extra={
-        #         'organization_id': organization.id,
-        #     })
-        #     return HttpResponse(status=401)
+        if not ipaddress.ip_address(six.text_type(request.META['REMOTE_ADDR'])) in BITBUCKET_IP_RANGE:
+            logger.error('bitbucket.webhook.invalid-ip-range', extra={
+                    'organization_id': organization.id,
+            })
+            return HttpResponse(status=401)
 
         try:
             event = json.loads(body.decode('utf-8'))
