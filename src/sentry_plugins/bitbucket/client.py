@@ -130,9 +130,8 @@ class BitbucketClient(object):
         return file_changes
 
     def get_commit_filechanges(self, repo, sha):
-        # return api request that fetches last ~30 commits
-        # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
-        # using sha as parameter
+        # returns unidiff file
+
         diff_file = self.request(
             'GET',
             '2.0',
@@ -144,7 +143,6 @@ class BitbucketClient(object):
             params=None,
             json=False,
         )
-        #todo see if the data gets here and is a patch
         ps = PatchSet.from_string(diff_file)
         return self.transform_patchset(ps)
 
@@ -157,7 +155,7 @@ class BitbucketClient(object):
         # return api request that fetches last ~30 commits
         # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
         # using end_sha as parameter
-        data =  self.request(
+        data = self.request(
             'GET',
             '2.0',
             '/repositories/{}/commits/{}'.format(

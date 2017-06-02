@@ -3,13 +3,14 @@ from __future__ import absolute_import
 
 from datetime import datetime
 from django.utils import timezone
-from sentry.models import Commit, CommitAuthor, OrganizationOption, Repository
+from sentry.models import Commit, CommitAuthor, Repository
 from sentry.testutils import APITestCase
 
 from sentry_plugins.bitbucket.testutils import PUSH_EVENT_EXAMPLE
 
 BAD_IP = '109.111.111.10'
 BITBUCKET_IP = '104.192.143.10'
+
 
 class WebhookTest(APITestCase):
     def test_get(self):

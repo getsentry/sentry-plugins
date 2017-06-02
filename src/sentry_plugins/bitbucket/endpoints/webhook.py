@@ -18,8 +18,7 @@ from django.views.generic import View
 from django.utils import timezone
 from simplejson import JSONDecodeError
 from sentry.models import (
-    Commit, CommitAuthor, Organization, OrganizationOption,
-    Repository
+    Commit, CommitAuthor, Organization, Repository
 )
 from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
@@ -28,6 +27,7 @@ logger = logging.getLogger('sentry.webhooks')
 
 # Bitbucket Cloud IP range: https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html#Managewebhooks-trigger_webhookTriggeringwebhooks
 BITBUCKET_IP_RANGE = ipaddress.ip_network(u'104.192.143.0/24')
+
 
 def is_anonymous_email(email):
     # todo(maxbittker) investigate and improve behavior
@@ -101,7 +101,6 @@ class PushEventWebhook(Webhook):
                             ).astimezone(timezone.utc),
                         )
 
-
                 except IntegrityError:
                     pass
 
@@ -111,7 +110,6 @@ class BitbucketWebhookEndpoint(View):
         'repo:push': PushEventWebhook,
     }
 
-    # https://developer.github.com/webhooks/
     def get_handler(self, event_type):
         return self._handlers.get(event_type)
 
@@ -167,7 +165,7 @@ class BitbucketWebhookEndpoint(View):
 
         if not ipaddress.ip_address(six.text_type(request.META['REMOTE_ADDR'])) in BITBUCKET_IP_RANGE:
             logger.error('bitbucket.webhook.invalid-ip-range', extra={
-                    'organization_id': organization.id,
+                'organization_id': organization.id,
             })
             return HttpResponse(status=401)
 
