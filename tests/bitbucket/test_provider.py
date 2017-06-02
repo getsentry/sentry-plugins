@@ -28,5 +28,6 @@ class BitbucketPluginTest(PluginTestCase):
             'author_name': 'Max Bittker',
             'message': 'README.md edited online with Bitbucket',
             'id': 'e18e4e72de0d824edfbe0d73efe34cbd0d01d301',
-            'repository': 'maxbittker/newsdiffs'
+            'repository': 'maxbittker/newsdiffs',
+            'patch_set': None
         }]

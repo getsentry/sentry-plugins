@@ -147,16 +147,6 @@ class BitbucketWebhookEndpoint(View):
             })
             return HttpResponse(status=400)
 
-        secret = OrganizationOption.objects.get_value(
-            organization=organization,
-            key='bitbucket:webhook_secret',
-        )
-        if secret is None:
-            logger.error('bitbucket.webhook.missing-secret', extra={
-                'organization_id': organization.id,
-            })
-            return HttpResponse(status=401)
-
         body = six.binary_type(request.body)
         if not body:
             logger.error('bitbucket.webhook.missing-body', extra={

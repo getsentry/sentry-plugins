@@ -8,6 +8,8 @@ from sentry.testutils import APITestCase
 
 from sentry_plugins.bitbucket.testutils import PUSH_EVENT_EXAMPLE
 
+BAD_IP = '109.111.111.10'
+BITBUCKET_IP = '104.192.143.10'
 
 class WebhookTest(APITestCase):
     def test_get(self):
@@ -27,46 +29,32 @@ class WebhookTest(APITestCase):
             project.organization.id,
         )
 
-        secret = 'b3002c3e321d4b7880360d397db2ccfd'
+        response = self.client.post(
+            path=url,
+            data=PUSH_EVENT_EXAMPLE,
+            content_type='application/json',
+            HTTP_X_EVENT_KEY='UnregisteredEvent',
+            REMOTE_ADDR=BITBUCKET_IP,
+        )
 
-        OrganizationOption.objects.set_value(
-            organization=project.organization,
-            key='bitbucket:webhook_secret',
-            value=secret,
+        assert response.status_code == 204
+
+    def test_invalid_signature_IP(self):
+        project = self.project  # force creation
+
+        url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
+            project.organization.id,
         )
 
         response = self.client.post(
             path=url,
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
-            HTTP_X_EVENT_KEY='UnregisteredEvent',
+            HTTP_X_EVENT_KEY='repo:push',
+            REMOTE_ADDR=BAD_IP,
         )
 
-        assert response.status_code == 204
-
-    #     #todo(maxbittker) this isn't testable yet because the check isnt implemented
-    # def test_invalid_signature_event(self):
-    #     project = self.project  # force creation
-    #
-    #     url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
-    #         project.organization.id,
-    #     )
-    #
-    #     secret = '2d7565c3537847b789d6995dca8d9f84'
-    #     OrganizationOption.objects.set_value(
-    #         organization=project.organization,
-    #         key='bitbucket:webhook_secret',
-    #         value=secret,
-    #     )
-    #
-    #     response = self.client.post(
-    #         path=url,
-    #         data=PUSH_EVENT_EXAMPLE,
-    #         content_type='application/json',
-    #         HTTP_X_EVENT_KEY='repo:push',
-    #     )
-    #
-    #     assert response.status_code == 401
+        assert response.status_code == 401
 
 
 class PushEventWebhookTest(APITestCase):
@@ -75,14 +63,6 @@ class PushEventWebhookTest(APITestCase):
 
         url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
             project.organization.id,
-        )
-
-        secret = 'b3002c3e321d4b7880360d397db2ccfd'
-
-        OrganizationOption.objects.set_value(
-            organization=project.organization,
-            key='bitbucket:webhook_secret',
-            value=secret,
         )
 
         Repository.objects.create(
@@ -97,6 +77,8 @@ class PushEventWebhookTest(APITestCase):
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
             HTTP_X_EVENT_KEY='repo:push',
+            REMOTE_ADDR=BITBUCKET_IP,
+
         )
 
         assert response.status_code == 204
@@ -123,14 +105,6 @@ class PushEventWebhookTest(APITestCase):
             project.organization.id,
         )
 
-        secret = 'b3002c3e321d4b7880360d397db2ccfd'
-
-        OrganizationOption.objects.set_value(
-            organization=project.organization,
-            key='bitbucket:webhook_secret',
-            value=secret,
-        )
-
         Repository.objects.create(
             organization_id=project.organization.id,
             external_id='{c78dfb25-7882-4550-97b1-4e0d38f32859}',
@@ -150,6 +124,7 @@ class PushEventWebhookTest(APITestCase):
             data=PUSH_EVENT_EXAMPLE,
             content_type='application/json',
             HTTP_X_EVENT_KEY='repo:push',
+            REMOTE_ADDR=BITBUCKET_IP,
         )
 
         assert response.status_code == 204
