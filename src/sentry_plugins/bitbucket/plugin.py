@@ -348,6 +348,7 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
             'author_email': parse_raw_user(c['author']['raw']),
             'author_name': c['author']['user']['display_name'],
             'message': c['message'],
+            'patch_set': c.get('patch_set'),
         } for c in commit_list]
 
     def compare_commits(self, repo, start_sha, end_sha, actor=None):

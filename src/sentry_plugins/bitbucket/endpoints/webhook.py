@@ -100,31 +100,7 @@ class PushEventWebhook(Webhook):
                             ).astimezone(timezone.utc),
                         )
 
-                        # TODO(maxbittker) can't make these work until i save the auth token somewhere
-                        #
-                        # patch_set  = client.get_commit_filechanges(repo, commit['hash'])
-                        #
-                        # for patched_file in patch_set.added_files:
-                        #     CommitFileChange.objects.create(
-                        #         organization_id=organization.id,
-                        #         commit=c,
-                        #         filename=patched_file.path,
-                        #         type='A',
-                        #     )
-                        # for patched_file in patch_set.removed_files:
-                        #     CommitFileChange.objects.create(
-                        #         organization_id=organization.id,
-                        #         commit=c,
-                        #         filename=patched_file.path,
-                        #         type='D',
-                        #     )
-                        # for patched_file in path_set.modified_files:
-                        #     CommitFileChange.objects.create(
-                        #         organization_id=organization.id,
-                        #         commit=c,
-                        #         filename=patched_file.path,
-                        #         type='M',
-                        #     )
+
                 except IntegrityError:
                     pass
 

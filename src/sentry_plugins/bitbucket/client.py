@@ -18,7 +18,7 @@ class BitbucketClient(object):
     def __init__(self, auth=None):
         self.auth = auth
 
-    def request(self, method, version, path, data=None, params=None):
+    def request(self, method, version, path, data=None, params=None, json=True):
         oauth = OAuth1(six.text_type(settings.BITBUCKET_CONSUMER_KEY),
                        six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
                        self.auth.tokens['oauth_token'], self.auth.tokens['oauth_token_secret'],
@@ -35,7 +35,11 @@ class BitbucketClient(object):
             resp.raise_for_status()
         except HTTPError as e:
             raise ApiError.from_response(e.response)
-        return resp.json()
+
+        if json:
+            return resp.json()
+        else:
+            return resp.text
 
     def get_issue(self, repo, issue_id):
         return self.request(
@@ -103,26 +107,57 @@ class BitbucketClient(object):
             ),
         )
 
+    def transform_patchset(self, patch_set):
+        file_changes = []
+        for patched_file in patch_set.added_files:
+            file_changes.append({
+                'path': patched_file.path,
+                'type': 'A',
+            })
+
+        for patched_file in patch_set.removed_files:
+            file_changes.append({
+                'path': patched_file.path,
+                'type': 'D',
+            })
+
+        for patched_file in patch_set.modified_files:
+            file_changes.append({
+                'path': patched_file.path,
+                'type': 'M',
+            })
+
+        return file_changes
+
     def get_commit_filechanges(self, repo, sha):
         # return api request that fetches last ~30 commits
         # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
         # using sha as parameter
-        patch_file = self.request(
+        diff_file = self.request(
             'GET',
             '2.0',
-            '/repositories/{}/patch/{}'.format(
+            '/repositories/{}/diff/{}'.format(
                 repo,
                 sha,
-            )
+            ),
+            data=None,
+            params=None,
+            json=False,
         )
-        patch = PatchSet(patch_file, encoding='utf-8')
-        return patch
+        #todo see if the data gets here and is a patch
+        ps = PatchSet.from_string(diff_file)
+        return self.transform_patchset(ps)
+
+    def zip_commit_data(self, repo, commit_list):
+        for commit in commit_list:
+            commit.update({"patch_set": self.get_commit_filechanges(repo, commit['hash'])})
+        return commit_list
 
     def get_last_commits(self, repo, end_sha):
         # return api request that fetches last ~30 commits
         # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
         # using end_sha as parameter
-        return self.request(
+        data =  self.request(
             'GET',
             '2.0',
             '/repositories/{}/commits/{}'.format(
@@ -130,6 +165,8 @@ class BitbucketClient(object):
                 end_sha,
             )
         )
+
+        return self.zip_commit_data(repo, data['values'])
 
     def compare_commits(self, repo, start_sha, end_sha):
         # where start sha is oldest and end is most recent
@@ -148,4 +185,5 @@ class BitbucketClient(object):
             if commit['hash'] == start_sha:
                 break
             commits.append(commit)
-        return commits
+
+        return self.zip_commit_data(repo, commits)
