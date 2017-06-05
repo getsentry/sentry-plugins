@@ -31,10 +31,11 @@ install:
 - nvm install $TRAVIS_NODE_VERSION
 - bundle install
 - make install-tests
+- python -m pip install codecov
 - pip freeze
 script:
 - bundle exec danger
 - make lint
-- py.test
+- coverage run --source=src -m py.test
 after_success:
 - codecov -e TEST_SUITE
