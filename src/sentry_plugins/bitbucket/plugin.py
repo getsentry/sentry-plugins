@@ -243,7 +243,6 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
         return [{
             'name': 'repo',
             'label': 'Repository Name',
-            'default': self.get_option('repo', project),
             'type': 'text',
             'placeholder': 'e.g. getsentry/sentry',
             'help': 'Enter your repository name, including the owner.',

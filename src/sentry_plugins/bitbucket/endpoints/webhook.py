@@ -30,12 +30,12 @@ BITBUCKET_IP_RANGE = ipaddress.ip_network(u'104.192.143.0/24')
 
 
 def is_anonymous_email(email):
-    # todo(maxbittker) investigate and improve behavior
-    return email[-25:] == '@users.noreply.bitbucket.com'
+    # TODO(maxbittker) investigate and improve behavior here
+    return email.endswith('@users.noreply.bitbucket.com')
 
 
 def get_external_id(username):
-    # todo(maxbittker) investigate and improve behavior
+    # TODO(maxbittker) investigate and improve behavior
     return 'bitbucket:%s' % username
 
 
@@ -54,7 +54,6 @@ class PushEventWebhook(Webhook):
     def __call__(self, organization, event):
         authors = {}
 
-        # client = BitbucketClient()
         try:
             repo = Repository.objects.get(
                 organization_id=organization.id,
@@ -63,7 +62,13 @@ class PushEventWebhook(Webhook):
             )
         except Repository.DoesNotExist:
             raise Http404()
-
+        
+        print(event['repository']['full_name'])
+        print(repo.config.get('name'))
+        if repo.config.get('name') != event['repository']['full_name']:
+            repo.config['name'] = event['repository']['full_name']
+            repo.save()
+        
         for change in event['push']['changes']:
             for commit in change['commits']:
                 if RepositoryProvider.should_ignore_commit(commit['message']):

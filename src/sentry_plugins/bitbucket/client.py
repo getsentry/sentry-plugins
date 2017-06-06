@@ -78,8 +78,6 @@ class BitbucketClient(object):
             data=data,
         )
 
-    # copied from github
-
     def get_repo(self, repo):
         return self.request(
             'GET',
@@ -148,7 +146,7 @@ class BitbucketClient(object):
 
     def zip_commit_data(self, repo, commit_list):
         for commit in commit_list:
-            commit.update({"patch_set": self.get_commit_filechanges(repo, commit['hash'])})
+            commit.update({'patch_set': self.get_commit_filechanges(repo, commit['hash'])})
         return commit_list
 
     def get_last_commits(self, repo, end_sha):

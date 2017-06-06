@@ -40,7 +40,7 @@ class WebhookTest(APITestCase):
 
         assert response.status_code == 204
 
-    def test_invalid_signature_IP(self):
+    def test_invalid_signature_ip(self):
         project = self.project  # force creation
 
         url = '/plugins/bitbucket/organizations/{}/webhook/'.format(
