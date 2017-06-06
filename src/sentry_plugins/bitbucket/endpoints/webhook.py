@@ -29,16 +29,6 @@ logger = logging.getLogger('sentry.webhooks')
 BITBUCKET_IP_RANGE = ipaddress.ip_network(u'104.192.143.0/24')
 
 
-def is_anonymous_email(email):
-    # TODO(maxbittker) investigate and improve behavior here
-    return email.endswith('@users.noreply.bitbucket.com')
-
-
-def get_external_id(username):
-    # TODO(maxbittker) investigate and improve behavior
-    return 'bitbucket:%s' % username
-
-
 class Webhook(object):
     def __call__(self, organization, event):
         raise NotImplementedError
@@ -73,8 +63,6 @@ class PushEventWebhook(Webhook):
                     continue
 
                 author_email = parse_raw_user(commit['author']['raw'])
-                if '@' not in author_email:
-                    author_email = u'{}@localhost'.format(author_email[:65])
 
                 # TODO(dcramer): we need to deal with bad values here, but since
                 # its optional, lets just throw it out for now
