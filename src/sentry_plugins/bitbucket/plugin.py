@@ -56,7 +56,6 @@ class BitbucketMixin(object):
         elif isinstance(exc, ApiError):
             if exc.code == 404:
                 return ERR_404
-            # import ipdb; ipdb.set_trace()
             return ('Error Communicating with Bitbucket (HTTP %s): %s' % (
                 exc.code,
                 exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
