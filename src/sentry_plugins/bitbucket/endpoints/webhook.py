@@ -63,8 +63,6 @@ class PushEventWebhook(Webhook):
         except Repository.DoesNotExist:
             raise Http404()
         
-        print(event['repository']['full_name'])
-        print(repo.config.get('name'))
         if repo.config.get('name') != event['repository']['full_name']:
             repo.config['name'] = event['repository']['full_name']
             repo.save()
