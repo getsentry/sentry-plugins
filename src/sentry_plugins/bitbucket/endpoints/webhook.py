@@ -52,11 +52,11 @@ class PushEventWebhook(Webhook):
             )
         except Repository.DoesNotExist:
             raise Http404()
-        
+
         if repo.config.get('name') != event['repository']['full_name']:
             repo.config['name'] = event['repository']['full_name']
             repo.save()
-        
+
         for change in event['push']['changes']:
             for commit in change['commits']:
                 if RepositoryProvider.should_ignore_commit(commit['message']):
