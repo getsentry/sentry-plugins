@@ -19,10 +19,17 @@ class BitbucketClient(object):
         self.auth = auth
 
     def request(self, method, version, path, data=None, params=None, json=True):
-        oauth = OAuth1(six.text_type(settings.BITBUCKET_CONSUMER_KEY),
-                       six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
-                       self.auth.tokens['oauth_token'], self.auth.tokens['oauth_token_secret'],
-                       signature_type='auth_header')
+
+        try:
+            oauth = OAuth1(
+                six.text_type(settings.BITBUCKET_CONSUMER_KEY),
+                six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
+                self.auth.tokens['oauth_token'],
+                self.auth.tokens['oauth_token_secret'],
+                signature_type='auth_header'
+            )
+        except KeyError as e:
+            oauth = None
 
         session = build_session()
         try:

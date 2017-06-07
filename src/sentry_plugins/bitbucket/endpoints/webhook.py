@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 
 import dateutil.parser
-import hashlib
-import hmac
 import logging
 import six
 import re
@@ -11,7 +9,6 @@ import ipaddress
 
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse, Http404
-from django.utils.crypto import constant_time_compare
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -103,20 +100,6 @@ class BitbucketWebhookEndpoint(View):
 
     def get_handler(self, event_type):
         return self._handlers.get(event_type)
-
-    def is_valid_signature(self, method, body, secret, signature):
-        if method == 'sha1':
-            mod = hashlib.sha1
-        else:
-            raise NotImplementedError('signature method %s is not supported' % (
-                method,
-            ))
-        expected = hmac.new(
-            key=secret.encode('utf-8'),
-            msg=body,
-            digestmod=mod,
-        ).hexdigest()
-        return constant_time_compare(expected, signature)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
