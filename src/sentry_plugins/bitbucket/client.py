@@ -36,7 +36,8 @@ class BitbucketClient(object):
             resp = getattr(session, method.lower())(
                 url='%s%s%s' % (self.API_URL, version, path),
                 auth=oauth,
-                json=data,
+                data= version == '1.0' and data,
+                json= version == '2.0' and data,
                 params=params,
             )
             resp.raise_for_status()
