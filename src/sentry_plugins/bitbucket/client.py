@@ -15,21 +15,18 @@ from requests_oauthlib import OAuth1
 class BitbucketClient(object):
     API_URL = u'https://api.bitbucket.org/'
 
-    def __init__(self, auth=None):
+    def __init__(self, auth):
         self.auth = auth
 
     def request(self, method, version, path, data=None, params=None, json=True):
 
-        try:
-            oauth = OAuth1(
-                six.text_type(settings.BITBUCKET_CONSUMER_KEY),
-                six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
-                self.auth.tokens['oauth_token'],
-                self.auth.tokens['oauth_token_secret'],
-                signature_type='auth_header'
-            )
-        except KeyError as e:
-            oauth = None
+        oauth = OAuth1(
+            six.text_type(settings.BITBUCKET_CONSUMER_KEY),
+            six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
+            self.auth.tokens['oauth_token'],
+            self.auth.tokens['oauth_token_secret'],
+            signature_type='auth_header'
+        )
 
         session = build_session()
         try:
@@ -185,7 +182,7 @@ class BitbucketClient(object):
         )
         commits = []
         for commit in data['values']:
-            # TODO(maxbittker) fetch extra pages (up to a max) when this is paginated
+            # TODO(maxbittker) fetch extra pages (up to a max) when this is paginated (more than 30 commits)
             if commit['hash'] == start_sha:
                 break
             commits.append(commit)

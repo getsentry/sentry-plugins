@@ -2,7 +2,6 @@
 from __future__ import absolute_import
 
 
-# we keep this as a raw string as order matters for hmac signing
 PUSH_EVENT_EXAMPLE = b"""{
     "push": {
         "changes": [
