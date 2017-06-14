@@ -1,16 +1,23 @@
 from __future__ import absolute_import
 
+import logging
 import six
 
 from rest_framework.response import Response
+from uuid import uuid4
 
+from sentry.app import locks
 from sentry.exceptions import InvalidIdentity, PluginError
+from sentry.models import OrganizationOption
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
+from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
+
 from .client import BitbucketClient
+from .endpoints.webhook import parse_raw_user
 
 ISSUE_TYPES = (
     ('bug', 'Bug'),
@@ -42,7 +49,39 @@ ERR_404 = ('Bitbucket returned a 404. Please make sure that '
            'issue tracking enabled.')
 
 
-class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
+class BitbucketMixin(object):
+    def message_from_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            return ERR_UNAUTHORIZED
+        elif isinstance(exc, ApiError):
+            if exc.code == 404:
+                return ERR_404
+            return ('Error Communicating with Bitbucket (HTTP %s): %s' % (
+                exc.code,
+                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
+            ))
+        else:
+            return ERR_INTERNAL
+
+    def raise_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            raise InvalidIdentity(self.message_from_error(exc))
+        elif isinstance(exc, ApiError):
+            raise PluginError(self.message_from_error(exc))
+        elif isinstance(exc, PluginError):
+            raise
+        else:
+            self.logger.exception(six.text_type(exc))
+            raise PluginError(self.message_from_error(exc))
+
+    def get_client(self, user):
+        auth = self.get_auth(user=user)
+        if auth is None:
+            raise PluginError('You still need to associate an identity with Bitbucket.')
+        return BitbucketClient(auth)
+
+
+class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
     description = 'Integrate Bitbucket issues by linking a repository to a project.'
     slug = 'bitbucket'
     title = 'Bitbucket'
@@ -57,6 +96,9 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
                 plugin=self,
             )),
         ]
+
+    def get_url_module(self):
+        return 'sentry_plugins.bitbucket.urls'
 
     def is_configured(self, request, project, **kwargs):
         return bool(self.get_option('repo', project))
@@ -172,16 +214,6 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
         repo = self.get_option('repo', group.project)
         return 'https://bitbucket.org/%s/issue/%s/' % (repo, issue_id)
 
-    def get_configure_plugin_fields(self, request, project, **kwargs):
-        return [{
-            'name': 'repo',
-            'label': 'Repository Name',
-            'default': self.get_option('repo', project),
-            'type': 'text',
-            'placeholder': 'e.g. getsentry/sentry',
-            'help': 'Enter your repository name, including the owner.'
-        }]
-
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
         query = request.GET.get('autocomplete_query')
@@ -205,3 +237,136 @@ class BitbucketPlugin(CorePluginMixin, IssuePlugin2):
         } for i in response.get('issues', [])]
 
         return Response({field: issues})
+
+    def get_configure_plugin_fields(self, request, project, **kwargs):
+        return [{
+            'name': 'repo',
+            'label': 'Repository Name',
+            'type': 'text',
+            'placeholder': 'e.g. getsentry/sentry',
+            'help': 'Enter your repository name, including the owner.',
+            'required': True,
+        }]
+
+    def setup(self, bindings):
+        bindings.add('repository.provider', BitbucketRepositoryProvider, id='bitbucket')
+
+
+class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
+    name = 'Bitbucket'
+    auth_provider = 'bitbucket'
+    logger = logging.getLogger('sentry.plugins.bitbucket')
+
+    def get_config(self):
+        return [{
+            'name': 'name',
+            'label': 'Repository Name',
+            'type': 'text',
+            'placeholder': 'e.g. getsentry/sentry',
+            'help': 'Enter your repository name, including the owner.',
+            'required': True,
+        }]
+
+    def validate_config(self, organization, config, actor=None):
+        """
+        ```
+        if config['foo'] and not config['bar']:
+            raise PluginError('You cannot configure foo with bar')
+        return config
+        ```
+        """
+        if config.get('name'):
+            client = self.get_client(actor)
+            try:
+                repo = client.get_repo(config['name'])
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                config['external_id'] = six.text_type(repo['uuid'])
+        return config
+
+    def get_webhook_secret(self, organization):
+        lock = locks.get('bitbucket:webhook-secret:{}'.format(organization.id),
+                         duration=60)
+        with lock.acquire():
+            secret = OrganizationOption.objects.get_value(
+                organization=organization,
+                key='bitbucket:webhook_secret',
+            )
+            if secret is None:
+                secret = uuid4().hex + uuid4().hex
+                OrganizationOption.objects.set_value(
+                    organization=organization,
+                    key='bitbucket:webhook_secret',
+                    value=secret,
+                )
+        return secret
+
+    def create_repository(self, organization, data, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot create a repository anonymously')
+
+        client = self.get_client(actor)
+        try:
+            resp = client.create_hook(data['name'], {
+                'description': 'sentry-bitbucket-repo-hook',
+                'url': absolute_uri('/plugins/bitbucket/organizations/{}/webhook/'.format(organization.id)),
+                'active': True,
+                'events': ['repo:push'],
+            })
+        except Exception as e:
+            self.raise_error(e)
+        else:
+            return {
+                'name': data['name'],
+                'external_id': data['external_id'],
+                'url': 'https://bitbucket.org/{}'.format(data['name']),
+                'config': {
+                    'name': data['name'],
+                    'webhook_id': resp['uuid'],
+                }
+            }
+
+    def delete_repository(self, repo, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot delete a repository anonymously')
+
+        client = self.get_client(actor)
+        try:
+            client.delete_hook(repo.config['name'], repo.config['webhook_id'])
+        except ApiError as exc:
+            if exc.code == 404:
+                return
+            raise
+
+    def _format_commits(self, repo, commit_list):
+        return [{
+            'id': c['hash'],
+            'repository': repo.name,
+            'author_email': parse_raw_user(c['author']['raw']),
+            'author_name': c['author']['user']['display_name'],
+            'message': c['message'],
+            'patch_set': c.get('patch_set'),
+        } for c in commit_list]
+
+    def compare_commits(self, repo, start_sha, end_sha, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot fetch commits anonymously')
+
+        client = self.get_client(actor)
+        # use config name because that is kept in sync via webhooks
+        name = repo.config['name']
+        if start_sha is None:
+            try:
+                res = client.get_last_commits(name, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return self._format_commits(repo, res[:10])
+        else:
+            try:
+                res = client.compare_commits(name, start_sha, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return self._format_commits(repo, res)

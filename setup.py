@@ -36,7 +36,8 @@ install_requires = [
     'boto3>=1.4.4,<1.5.0',
     'python-dateutil',
     'PyJWT',
-    'requests-oauthlib>=0.3.0'
+    'requests-oauthlib>=0.3.0',
+    'unidiff>=0.5.4'
 ]
 
 

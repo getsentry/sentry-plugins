@@ -7,6 +7,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from sentry.plugins.bases.issue2 import PluginError
 from sentry.testutils import PluginTestCase
+
 from social_auth.models import UserSocialAuth
 
 from sentry_plugins.bitbucket.plugin import BitbucketPlugin
@@ -33,21 +34,21 @@ class BitbucketPluginTest(PluginTestCase):
         assert self.plugin.get_issue_label(group, 1) == 'Bitbucket-1'
 
     def test_get_issue_url(self):
-        self.plugin.set_option('repo', 'getsentry/sentry', self.project)
+        self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
-        assert self.plugin.get_issue_url(group, 1) == 'https://bitbucket.org/getsentry/sentry/issue/1/'
+        assert self.plugin.get_issue_url(group, 1) == 'https://bitbucket.org/maxbittker/newsdiffs/issue/1/'
 
     def test_is_configured(self):
         assert self.plugin.is_configured(None, self.project) is False
-        self.plugin.set_option('repo', 'getsentry/sentry', self.project)
+        self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
         assert self.plugin.is_configured(None, self.project) is True
 
     @responses.activate
     def test_create_issue(self):
-        responses.add(responses.POST, 'https://api.bitbucket.org/1.0/repositories/getsentry/sentry/issues',
+        responses.add(responses.POST, 'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues',
             body='{"local_id": 1, "title": "Hello world"}')
 
-        self.plugin.set_option('repo', 'getsentry/sentry', self.project)
+        self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
         request = self.request.get('/')
@@ -72,12 +73,12 @@ class BitbucketPluginTest(PluginTestCase):
 
     @responses.activate
     def test_link_issue(self):
-        responses.add(responses.GET, 'https://api.bitbucket.org/1.0/repositories/getsentry/sentry/issues/1',
+        responses.add(responses.GET, 'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1',
             body='{"local_id": 1, "title": "Hello world"}')
-        responses.add(responses.POST, 'https://api.bitbucket.org/1.0/repositories/getsentry/sentry/issues/1/comments',
+        responses.add(responses.POST, 'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1/comments',
             body='{"body": "Hello"}')
 
-        self.plugin.set_option('repo', 'getsentry/sentry', self.project)
+        self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
         request = self.request.get('/')

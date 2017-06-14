@@ -26,7 +26,6 @@ class WebhookTest(APITestCase):
 
     def test_unregistered_event(self):
         project = self.project  # force creation
-
         url = '/plugins/github/organizations/{}/webhook/'.format(
             project.organization.id,
         )
