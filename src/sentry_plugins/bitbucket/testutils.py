@@ -125,23 +125,6 @@ PUSH_EVENT_EXAMPLE = b"""{
                         "message": "README.md edited online with Bitbucket",
                         "author": {
                             "type": "author",
-                            "user": {
-                                "type": "user",
-                                "display_name": "Max Bittker",
-                                "uuid": "{b128e0f6-196a-4dde-b72d-f42abc6dc239}",
-                                "username": "maxbittker",
-                                "links": {
-                                    "html": {
-                                        "href": "https://bitbucket.org/maxbittker/"
-                                    },
-                                    "avatar": {
-                                        "href": "https://bitbucket.org/account/maxbittker/avatar/32/"
-                                    },
-                                    "self": {
-                                        "href": "https://api.bitbucket.org/2.0/users/maxbittker"
-                                    }
-                                }
-                            },
                             "raw": "Max Bittker <max@getsentry.com>"
                         }
                     },
