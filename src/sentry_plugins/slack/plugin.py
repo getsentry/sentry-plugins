@@ -214,7 +214,6 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 })
 
         payload = {
-            'parse': 'none',
             'attachments': [{
                 'fallback': '[%s] %s' % (project_name, title),
                 'title': title,

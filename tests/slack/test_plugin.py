@@ -42,7 +42,6 @@ class SlackPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(parse_qs(request.body)['payload'][0])
         assert payload == {
-            'parse': 'none',
             'username': 'Sentry',
             'attachments': [
                 {
@@ -85,7 +84,6 @@ class SlackPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(parse_qs(request.body)['payload'][0])
         assert payload == {
-            'parse': 'none',
             'username': 'Sentry',
             'attachments': [
                 {
@@ -123,7 +121,6 @@ class SlackPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(parse_qs(request.body)['payload'][0])
         assert payload == {
-            'parse': 'none',
             'username': 'Sentry',
             'attachments': [
                 {
