@@ -35,7 +35,7 @@ class HerokuReleaseHook(ReleaseHook):
                 project=self.project,
                 key='heroku:environment',
                 default='production',
-            )
+            ) or 'production'
             if repo_project_option:
                 try:
                     repository = Repository.objects.get(
