@@ -41,6 +41,9 @@ class BitbucketClient(object):
         except HTTPError as e:
             raise ApiError.from_response(e.response)
 
+        if resp.status_code == 204:
+            return {}
+
         if json:
             return resp.json()
         else:
