@@ -173,23 +173,6 @@ PUSH_EVENT_EXAMPLE = b"""{
                         "message": "README.md edited online with Bitbucket",
                         "author": {
                             "type": "author",
-                            "user": {
-                                "type": "user",
-                                "display_name": "Max Bittker",
-                                "uuid": "{b128e0f6-196a-4dde-b72d-f42abc6dc239}",
-                                "username": "maxbittker",
-                                "links": {
-                                    "html": {
-                                        "href": "https://bitbucket.org/maxbittker/"
-                                    },
-                                    "avatar": {
-                                        "href": "https://bitbucket.org/account/maxbittker/avatar/32/"
-                                    },
-                                    "self": {
-                                        "href": "https://api.bitbucket.org/2.0/users/maxbittker"
-                                    }
-                                }
-                            },
                             "raw": "Max Bittker <max@getsentry.com>"
                         }
                     },
@@ -262,7 +245,12 @@ COMPARE_COMMITS_EXAMPLE = b"""{
 "pagelen": 30,
  "values":
      [{"hash": "e18e4e72de0d824edfbe0d73efe34cbd0d01d301",
-      "repository": {"links": {"self": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs"}, "html": {"href": "https://bitbucket.org/maxbittker/newsdiffs"}, "avatar": {"href": "https://bitbucket.org/maxbittker/newsdiffs/avatar/32/"}}, "type": "repository", "name": "newsdiffs", "full_name": "maxbittker/newsdiffs", "uuid": "{c78dfb25-7882-4550-97b1-4e0d38f32859}"}, "links": {"self": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "comments": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301/comments"}, "patch": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/patch/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "html": {"href": "https://bitbucket.org/maxbittker/newsdiffs/commits/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "diff": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/diff/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "approve": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301/approve"}, "statuses": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301/statuses"}}, "author": {"raw": "Max Bittker <max@getsentry.com>", "type": "author", "user": {"username": "maxbittker", "display_name": "Max Bittker", "type": "user", "uuid": "{b128e0f6-196a-4dde-b72d-f42abc6dc239}", "links": {"self": {"href": "https://api.bitbucket.org/2.0/users/maxbittker"}, "html": {"href": "https://bitbucket.org/maxbittker/"}, "avatar": {"href": "https://bitbucket.org/account/maxbittker/avatar/32/"}}}}, "parents": [{"hash": "26de9b63d09aa9c787e899f149c672023e292925", "type": "commit", "links": {"self": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/26de9b63d09aa9c787e899f149c672023e292925"}, "html": {"href": "https://bitbucket.org/maxbittker/newsdiffs/commits/26de9b63d09aa9c787e899f149c672023e292925"}}}], "date": "2017-05-16T23:21:40+00:00", "message": "README.md edited online with Bitbucket", "type": "commit"}],
+      "repository": {"links": {"self": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs"}, "html": {"href": "https://bitbucket.org/maxbittker/newsdiffs"}, "avatar": {"href": "https://bitbucket.org/maxbittker/newsdiffs/avatar/32/"}}, "type": "repository", "name": "newsdiffs", "full_name": "maxbittker/newsdiffs", "uuid": "{c78dfb25-7882-4550-97b1-4e0d38f32859}"}, "links": {"self": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "comments": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301/comments"}, "patch": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/patch/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "html": {"href": "https://bitbucket.org/maxbittker/newsdiffs/commits/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "diff": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/diff/e18e4e72de0d824edfbe0d73efe34cbd0d01d301"}, "approve": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301/approve"}, "statuses": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/e18e4e72de0d824edfbe0d73efe34cbd0d01d301/statuses"}},
+       "author": {
+            "raw": "Max Bittker <max@getsentry.com>",
+            "type": "author"
+        },
+        "parents": [{"hash": "26de9b63d09aa9c787e899f149c672023e292925", "type": "commit", "links": {"self": {"href": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commit/26de9b63d09aa9c787e899f149c672023e292925"}, "html": {"href": "https://bitbucket.org/maxbittker/newsdiffs/commits/26de9b63d09aa9c787e899f149c672023e292925"}}}], "date": "2017-05-16T23:21:40+00:00", "message": "README.md edited online with Bitbucket", "type": "commit"}],
   "next": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commits/e18e4e72de0d824edfbe0d73efe34cbd0d01d301?page=2"
 }
 """

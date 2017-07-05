@@ -17,7 +17,7 @@ from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 
 from .client import BitbucketClient
-from .endpoints.webhook import parse_raw_user
+from .endpoints.webhook import parse_raw_user_email, parse_raw_user_name
 
 ISSUE_TYPES = (
     ('bug', 'Bug'),
@@ -343,8 +343,8 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
         return [{
             'id': c['hash'],
             'repository': repo.name,
-            'author_email': parse_raw_user(c['author']['raw']),
-            'author_name': c['author']['user']['display_name'],
+            'author_email': parse_raw_user_email(c['author']['raw']),
+            'author_name': parse_raw_user_name(c['author']['raw']),
             'message': c['message'],
             'patch_set': c.get('patch_set'),
         } for c in commit_list]
