@@ -92,10 +92,14 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 or schema.get('custom') == JIRA_CUSTOM_FIELD_TYPES['select']):
             fieldtype = 'select'
             fkwargs['choices'] = self.make_choices(field_meta.get('allowedValues'))
-        elif schema.get('items') == 'user' or schema['type'] == 'user':
+        elif field_meta.get('autoCompleteUrl') and \
+                (schema.get('items') == 'user' or schema['type'] == 'user'):
             fieldtype = 'select'
             sentry_url = '/api/0/issues/%s/plugins/%s/autocomplete' % (group.id, self.slug)
-            fkwargs['url'] = '%s?jira_url=%s' % (sentry_url, quote_plus(field_meta.get('autoCompleteUrl')))
+            fkwargs['url'] = '%s?jira_url=%s' % (
+                sentry_url,
+                quote_plus(field_meta['autoCompleteUrl']),
+            )
             fkwargs['has_autocomplete'] = True
             fkwargs['placeholder'] = 'Start typing to search for a user'
         elif schema['type'] in ['timetracking']:
