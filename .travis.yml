@@ -29,6 +29,7 @@ install:
 - rvm install 2.2.5
 - rvm use 2.2.5
 - nvm install $TRAVIS_NODE_VERSION
+- npm install -g yarn@0.27.5
 - bundle install
 - make install-tests
 - python -m pip install codecov
