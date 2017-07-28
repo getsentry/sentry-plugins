@@ -3,6 +3,7 @@
   "plugins": [
     "transform-object-rest-spread",
     "add-module-exports",
+    "lodash",
     ["babel-plugin-transform-builtin-extend", {
       "globals": ["Array"]
     }]

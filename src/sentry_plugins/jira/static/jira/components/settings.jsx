@@ -1,5 +1,5 @@
 import React from 'react';
-import _ from 'underscore';
+import _ from 'lodash';
 import {Form, FormState, LoadingIndicator, plugins} from 'sentry';
 
 
