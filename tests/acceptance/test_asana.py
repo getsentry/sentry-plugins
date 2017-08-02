@@ -11,10 +11,7 @@ class AsanaTest(AcceptanceTestCase):
             name='Rowdy Tiger',
             owner=None,
         )
-        self.team = self.create_team(
-            organization=self.org,
-            name='Mariachi Band'
-        )
+        self.team = self.create_team(organization=self.org, name='Mariachi Band')
         self.project = self.create_project(
             organization=self.org,
             team=self.team,
@@ -27,9 +24,7 @@ class AsanaTest(AcceptanceTestCase):
             teams=[self.team],
         )
         self.login_as(self.user)
-        self.path = '/{}/{}/settings/plugins/asana/'.format(
-            self.org.slug, self.project.slug
-        )
+        self.path = '/{}/{}/settings/plugins/asana/'.format(self.org.slug, self.project.slug)
 
     def test_simple(self):
         self.browser.get(self.path)

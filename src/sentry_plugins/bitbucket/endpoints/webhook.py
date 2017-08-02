@@ -14,9 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils import timezone
 from simplejson import JSONDecodeError
-from sentry.models import (
-    Commit, CommitAuthor, Organization, Repository
-)
+from sentry.models import (Commit, CommitAuthor, Organization, Repository)
 from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
 
@@ -74,9 +72,7 @@ class PushEventWebhook(Webhook):
                     authors[author_email] = author = CommitAuthor.objects.get_or_create(
                         organization_id=organization.id,
                         email=author_email,
-                        defaults={
-                            'name': commit['author']['raw'].split('<')[0].strip()
-                        }
+                        defaults={'name': commit['author']['raw'].split('<')[0].strip()}
                     )[0]
                 else:
                     author = authors[author_email]
@@ -119,41 +115,55 @@ class BitbucketWebhookEndpoint(View):
                 id=organization_id,
             )
         except Organization.DoesNotExist:
-            logger.error('bitbucket.webhook.invalid-organization', extra={
-                'organization_id': organization_id,
-            })
+            logger.error(
+                'bitbucket.webhook.invalid-organization',
+                extra={
+                    'organization_id': organization_id,
+                }
+            )
             return HttpResponse(status=400)
 
         body = six.binary_type(request.body)
         if not body:
-            logger.error('bitbucket.webhook.missing-body', extra={
-                'organization_id': organization.id,
-            })
+            logger.error(
+                'bitbucket.webhook.missing-body', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=400)
 
         try:
             handler = self.get_handler(request.META['HTTP_X_EVENT_KEY'])
         except KeyError:
-            logger.error('bitbucket.webhook.missing-event', extra={
-                'organization_id': organization.id,
-            })
+            logger.error(
+                'bitbucket.webhook.missing-event', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=400)
 
         if not handler:
             return HttpResponse(status=204)
 
-        if not ipaddress.ip_address(six.text_type(request.META['REMOTE_ADDR'])) in BITBUCKET_IP_RANGE:
-            logger.error('bitbucket.webhook.invalid-ip-range', extra={
-                'organization_id': organization.id,
-            })
+        if not ipaddress.ip_address(six.text_type(request.META['REMOTE_ADDR'])
+                                    ) in BITBUCKET_IP_RANGE:
+            logger.error(
+                'bitbucket.webhook.invalid-ip-range', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=401)
 
         try:
             event = json.loads(body.decode('utf-8'))
         except JSONDecodeError:
-            logger.error('bitbucket.webhook.invalid-json', extra={
-                'organization_id': organization.id,
-            }, exc_info=True)
+            logger.error(
+                'bitbucket.webhook.invalid-json',
+                extra={
+                    'organization_id': organization.id,
+                },
+                exc_info=True
+            )
             return HttpResponse(status=400)
 
         handler()(organization, event)

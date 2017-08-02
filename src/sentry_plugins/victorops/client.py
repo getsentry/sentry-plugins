@@ -35,14 +35,24 @@ class VictorOpsClient(object):
             raise ApiError.from_response(e.response)
         return resp.json()
 
-    def trigger_incident(self, message_type, entity_id, timestamp, state_message,
-                         entity_display_name=None, monitoring_tool=None, **kwargs):
-        kwargs.update({
-            'message_type': message_type,
-            'entity_id': entity_id,
-            'entity_display_name': entity_display_name,
-            'timestamp': timestamp,
-            'state_message': state_message,
-            'monitoring_tool': monitoring_tool or self.monitoring_tool,
-        })
+    def trigger_incident(
+        self,
+        message_type,
+        entity_id,
+        timestamp,
+        state_message,
+        entity_display_name=None,
+        monitoring_tool=None,
+        **kwargs
+    ):
+        kwargs.update(
+            {
+                'message_type': message_type,
+                'entity_id': entity_id,
+                'entity_display_name': entity_display_name,
+                'timestamp': timestamp,
+                'state_message': state_message,
+                'monitoring_tool': monitoring_tool or self.monitoring_tool,
+            }
+        )
         return self.request(kwargs)

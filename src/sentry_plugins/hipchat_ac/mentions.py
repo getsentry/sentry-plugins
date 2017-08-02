@@ -9,10 +9,8 @@ from sentry.models import Project, Group, Event
 from django.utils import timezone
 from django.conf import settings
 
-
 MAX_RECENT = 15
 RECENT_HOURS = 24 * 30
-
 
 # The Redis cluster manager (``clusters``) was added in Sentry 8.2 (GH-2714)
 # and replaces ``make_rb_cluster`` (which will be removed in a future version.)
@@ -31,22 +29,28 @@ def get_key(tenant):
 def get_recent_mentions(tenant):
     client = cluster.get_routing_client()
     key = get_key(tenant)
-    ids = [x for x in client.zrangebyscore(
-        key, time.time() - (RECENT_HOURS * 60), '+inf')][-MAX_RECENT:]
+    ids = [x for x in client.zrangebyscore(key, time.time() - (RECENT_HOURS * 60), '+inf')
+           ][-MAX_RECENT:]
 
     with cluster.map() as map_client:
         items = [map_client.get('%s:%s' % (key, id)) for id in ids]
     items = [json.loads(x.value) for x in items if x.value is not None]
 
-    projects = items and dict((x.id, x) for x in Project.objects.filter(
-        pk__in=[x['project'] for x in items],
-    )) or {}
-    groups = items and dict((x.id, x) for x in Group.objects.filter(
-        pk__in=[x['group'] for x in items],
-    )) or {}
-    events = items and dict((x.id, x) for x in Event.objects.filter(
-        pk__in=[x['event'] for x in items if x['event'] is not None],
-    )) or {}
+    projects = items and dict(
+        (x.id, x) for x in Project.objects.filter(
+            pk__in=[x['project'] for x in items],
+        )
+    ) or {}
+    groups = items and dict(
+        (x.id, x) for x in Group.objects.filter(
+            pk__in=[x['group'] for x in items],
+        )
+    ) or {}
+    events = items and dict(
+        (x.id, x) for x in Event.objects.filter(
+            pk__in=[x['event'] for x in items if x['event'] is not None],
+        )
+    ) or {}
 
     for item in items:
         item['project'] = projects.get(item['project'])
@@ -62,8 +66,7 @@ def get_recent_mentions(tenant):
 def count_recent_mentions(tenant):
     client = cluster.get_routing_client()
     key = get_key(tenant)
-    return min(MAX_RECENT, client.zcount(
-        key, time.time() - (RECENT_HOURS * 60), '+inf'))
+    return min(MAX_RECENT, client.zcount(key, time.time() - (RECENT_HOURS * 60), '+inf'))
 
 
 def clear_tenant_mentions(tenant):
@@ -93,12 +96,14 @@ def clear_project_mentions(tenant, projects):
 def mention_event(project, group, tenant, event=None):
     ts = to_timestamp(timezone.now())
     id = '%s/%s' % (group.id, event.id if event is not None else '-')
-    item = json.dumps({
-        'project': project.id,
-        'group': group.id,
-        'event': event.id if event is not None else None,
-        'last_mentioned': ts,
-    })
+    item = json.dumps(
+        {
+            'project': project.id,
+            'group': group.id,
+            'event': event.id if event is not None else None,
+            'last_mentioned': ts,
+        }
+    )
 
     expires = (RECENT_HOURS + 1) * 60 * 60
     with cluster.map() as client:

@@ -25,7 +25,9 @@ class AmazonSQSPluginTest(PluginTestCase):
         self.plugin.set_option('access_key', 'access-key', self.project)
         self.plugin.set_option('secret_key', 'secret-key', self.project)
         self.plugin.set_option('region', 'us-east-1', self.project)
-        self.plugin.set_option('queue_url', 'https://sqs-us-east-1.amazonaws.com/12345678/myqueue', self.project)
+        self.plugin.set_option(
+            'queue_url', 'https://sqs-us-east-1.amazonaws.com/12345678/myqueue', self.project
+        )
 
         group = self.create_group(message='Hello world', culprit='foo.bar')
         event = self.create_event(

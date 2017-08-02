@@ -8,7 +8,6 @@ from sentry.utils import json
 
 from sentry_plugins.sessionstack.plugin import SessionStackPlugin
 
-
 EXPECTED_SESSION_URL = (
     'https://app.sessionstack.com/player/#/sessions/588778a6c5762c1d566653ff'
     '?access_token=example-access-token'
@@ -50,12 +49,10 @@ class SessionStackPluginTest(PluginTestCase):
             responses.GET,
             ACCESS_TOKENS_URL,
             body=json.dumps({
-                'data': [
-                    {
-                        'name': 'Sentry',
-                        'access_token': 'example-access-token'
-                    }
-                ]
+                'data': [{
+                    'name': 'Sentry',
+                    'access_token': 'example-access-token'
+                }]
             })
         )
 

@@ -21,13 +21,10 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
 
     def get_config(self, **kwargs):
         service_key = self.get_option('service_key', kwargs['project'])
-        secret_field = get_secret_field_config(service_key,
-                                               'PagerDuty\'s Sentry service Integration Key',
-                                               include_prefix=True)
-        secret_field.update({
-            'name': 'service_key',
-            'label': 'Service Key'
-        })
+        secret_field = get_secret_field_config(
+            service_key, 'PagerDuty\'s Sentry service Integration Key', include_prefix=True
+        )
+        secret_field.update({'name': 'service_key', 'label': 'Service Key'})
         return [secret_field]
 
     def get_client(self, project):
@@ -58,10 +55,12 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
             event_type='trigger',
             incident_key=group.id,
             details=details,
-            contexts=[{
-                'type': 'link',
-                'href': absolute_uri(group.get_absolute_url()),
-                'text': 'Issue Details',
-            }],
+            contexts=[
+                {
+                    'type': 'link',
+                    'href': absolute_uri(group.get_absolute_url()),
+                    'text': 'Issue Details',
+                }
+            ],
         )
         assert response['status'] == 'success'

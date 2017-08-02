@@ -39,8 +39,7 @@ class HerokuReleaseHook(ReleaseHook):
             if repo_project_option:
                 try:
                     repository = Repository.objects.get(
-                        organization_id=self.project.organization_id,
-                        name=repo_project_option
+                        organization_id=self.project.organization_id, name=repo_project_option
                     )
                 except Repository.DoesNotExist:
                     pass
@@ -48,7 +47,8 @@ class HerokuReleaseHook(ReleaseHook):
                     release.set_refs(
                         refs=[{
                             'commit': release.version,
-                            'repository': repository.name}],
+                            'repository': repository.name
+                        }],
                         user=values['owner'],
                         fetch=True,
                     )
@@ -96,29 +96,29 @@ class HerokuPlugin(CorePluginMixin, ReleaseTrackingPlugin):
         return 'heroku'
 
     def get_config(self, project, **kwargs):
-        repo_list = list(Repository.objects.filter(
-            organization_id=project.organization_id)
-        )
+        repo_list = list(Repository.objects.filter(organization_id=project.organization_id))
         if not ProjectOption.objects.get_value(project=project, key="heroku:repository"):
             choices = [('', 'select a repo')]
         else:
             choices = []
         choices.extend([(repo.name, repo.name) for repo in repo_list])
-        return [{
-            'name': 'repository',
-            'label': 'Respository',
-            'type': 'select',
-            'required': True,
-            'choices': choices,
-            'help': 'Select which repository you would like to be associated with this project',
-        }, {
-            'name': 'environment',
-            'label': 'Deploy Environment',
-            'type': 'text',
-            'required': False,
-            'default': 'production',
-            'help': 'Specify an environment name for your Heroku deploys',
-        },
+        return [
+            {
+                'name': 'repository',
+                'label': 'Respository',
+                'type': 'select',
+                'required': True,
+                'choices': choices,
+                'help': 'Select which repository you would like to be associated with this project',
+            },
+            {
+                'name': 'environment',
+                'label': 'Deploy Environment',
+                'type': 'text',
+                'required': False,
+                'default': 'production',
+                'help': 'Specify an environment name for your Heroku deploys',
+            },
         ]
 
     def get_release_doc_html(self, hook_url):

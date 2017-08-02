@@ -27,52 +27,56 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
 
     def is_configured(self, request, project, **kwargs):
         return bool(
-            self.get_option('gitlab_repo', project) and
-            self.get_option('gitlab_token', project) and
+            self.get_option('gitlab_repo', project) and self.get_option('gitlab_token', project) and
             self.get_option('gitlab_url', project)
         )
 
     def get_new_issue_fields(self, request, group, event, **kwargs):
-        fields = super(GitLabPlugin, self).get_new_issue_fields(
-            request, group, event, **kwargs)
-        return [{
-            'name': 'repo',
-            'label': 'Repository',
-            'default': self.get_option('gitlab_repo', group.project),
-            'type': 'text',
-            'readonly': True
-        }] + fields + [{
-            'name': 'assignee',
-            'label': 'Assignee',
-            'default': '',
-            'type': 'select',
-            'required': False,
-            'choices': self.get_allowed_assignees(request, group),
-        }, {
-            'name': 'labels',
-            'label': 'Labels',
-            'default': self.get_option('gitlab_labels', group.project),
-            'type': 'text',
-            'placeholder': 'e.g. high, bug',
-            'required': False,
-        }]
+        fields = super(GitLabPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
+        return [
+            {
+                'name': 'repo',
+                'label': 'Repository',
+                'default': self.get_option('gitlab_repo', group.project),
+                'type': 'text',
+                'readonly': True
+            }
+        ] + fields + [
+            {
+                'name': 'assignee',
+                'label': 'Assignee',
+                'default': '',
+                'type': 'select',
+                'required': False,
+                'choices': self.get_allowed_assignees(request, group),
+            }, {
+                'name': 'labels',
+                'label': 'Labels',
+                'default': self.get_option('gitlab_labels', group.project),
+                'type': 'text',
+                'placeholder': 'e.g. high, bug',
+                'required': False,
+            }
+        ]
 
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
-        return [{
-            'name': 'issue_id',
-            'label': 'Issue #',
-            'default': '',
-            'placeholder': 'e.g. 1543',
-            'type': 'text',
-        }, {
-            'name': 'comment',
-            'label': 'Comment',
-            'default': absolute_uri(group.get_absolute_url()),
-            'type': 'textarea',
-            'help': ('Leave blank if you don\'t want to '
-                     'add a comment to the GitLab issue.'),
-            'required': False
-        }]
+        return [
+            {
+                'name': 'issue_id',
+                'label': 'Issue #',
+                'default': '',
+                'placeholder': 'e.g. 1543',
+                'type': 'text',
+            }, {
+                'name': 'comment',
+                'label': 'Comment',
+                'default': absolute_uri(group.get_absolute_url()),
+                'type': 'textarea',
+                'help': ('Leave blank if you don\'t want to '
+                         'add a comment to the GitLab issue.'),
+                'required': False
+            }
+        ]
 
     def get_allowed_assignees(self, request, group):
         repo = self.get_option('gitlab_repo', group.project)
@@ -83,7 +87,7 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
             self.raise_error(e)
         users = tuple((u['id'], u['username']) for u in response)
 
-        return (('', '(Unassigned)'),) + users
+        return (('', '(Unassigned)'), ) + users
 
     def get_new_issue_title(self, **kwargs):
         return 'Create GitLab Issue'
@@ -100,12 +104,14 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
         client = self.get_client(group.project)
 
         try:
-            response = client.create_issue(repo, {
-                'title': form_data['title'],
-                'description': form_data['description'],
-                'labels': form_data.get('labels'),
-                'assignee_id': form_data.get('assignee'),
-            })
+            response = client.create_issue(
+                repo, {
+                    'title': form_data['title'],
+                    'description': form_data['description'],
+                    'labels': form_data.get('labels'),
+                    'assignee_id': form_data.get('assignee'),
+                }
+            )
         except Exception as e:
             self.raise_error(e)
 
@@ -135,18 +141,18 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
             except Exception as e:
                 self.raise_error(e)
 
-        return {
-            'title': issue['title']
-        }
+        return {'title': issue['title']}
 
     def raise_error(self, exc):
         if isinstance(exc, ApiUnauthorized):
             raise PluginError(ERR_UNAUTHORIZED)
         elif isinstance(exc, ApiError):
-            raise PluginError('Error Communicating with GitLab (HTTP %s): %s' % (
-                exc.code,
-                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
-            ))
+            raise PluginError(
+                'Error Communicating with GitLab (HTTP %s): %s' % (
+                    exc.code, exc.json.get('message', 'unknown error')
+                    if exc.json else 'unknown error',
+                )
+            )
         elif isinstance(exc, PluginError):
             raise
         else:
@@ -164,38 +170,42 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
         gitlab_token = self.get_option('gitlab_token', project)
-        secret_field = get_secret_field_config(gitlab_token,
-                                               'Enter your GitLab API token.',
-                                               include_prefix=True)
-        secret_field.update({
-            'name': 'gitlab_token',
-            'label': 'Access Token',
-            'placeholder': 'e.g. g5DWFtLzaztgYFrqhVfE'
-        })
+        secret_field = get_secret_field_config(
+            gitlab_token, 'Enter your GitLab API token.', include_prefix=True
+        )
+        secret_field.update(
+            {
+                'name': 'gitlab_token',
+                'label': 'Access Token',
+                'placeholder': 'e.g. g5DWFtLzaztgYFrqhVfE'
+            }
+        )
 
-        return [{
-            'name': 'gitlab_url',
-            'label': 'GitLab URL',
-            'type': 'url',
-            'default': 'https://gitlab.com',
-            'placeholder': 'e.g. https://gitlab.example.com',
-            'required': True,
-            'help': 'Enter the URL for your GitLab server.'
-        }, secret_field, {
-            'name': 'gitlab_repo',
-            'label': 'Repository Name',
-            'type': 'text',
-            'placeholder': 'e.g. getsentry/sentry',
-            'required': True,
-            'help': 'Enter your repository name, including the owner.'
-        }, {
-            'name': 'gitlab_labels',
-            'label': 'Issue Labels',
-            'type': 'text',
-            'placeholder': 'e.g. high, bug',
-            'required': False,
-            'help': 'Enter the labels you want to auto assign to new issues.',
-        }]
+        return [
+            {
+                'name': 'gitlab_url',
+                'label': 'GitLab URL',
+                'type': 'url',
+                'default': 'https://gitlab.com',
+                'placeholder': 'e.g. https://gitlab.example.com',
+                'required': True,
+                'help': 'Enter the URL for your GitLab server.'
+            }, secret_field, {
+                'name': 'gitlab_repo',
+                'label': 'Repository Name',
+                'type': 'text',
+                'placeholder': 'e.g. getsentry/sentry',
+                'required': True,
+                'help': 'Enter your repository name, including the owner.'
+            }, {
+                'name': 'gitlab_labels',
+                'label': 'Issue Labels',
+                'type': 'text',
+                'placeholder': 'e.g. high, bug',
+                'required': False,
+                'help': 'Enter the labels you want to auto assign to new issues.',
+            }
+        ]
 
     def validate_config(self, project, config, actor=None):
         url = config['gitlab_url'].rstrip('/')

@@ -15,7 +15,6 @@ from .cards import make_event_notification, make_activity_notification
 from .endpoints.tenants import HipchatTenantsEndpoint
 from .endpoints.test_config import HipchatTestConfigEndpoint
 
-
 COLORS = {
     'ALERT': 'red',
     'ERROR': 'red',
@@ -129,8 +128,7 @@ class HipchatPlugin(CorePluginMixin, NotifyPlugin):
         tenants = Tenant.objects.filter(projects=event.project)
         for tenant in tenants:
             with Context.for_tenant(tenant) as ctx:
-                ctx.send_notification(**make_event_notification(
-                    group, event, tenant))
+                ctx.send_notification(**make_event_notification(group, event, tenant))
 
                 mentions.mention_event(
                     project=event.project,

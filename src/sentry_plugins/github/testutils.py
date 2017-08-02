@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-
 # we keep this as a raw string as order matters for hmac signing
 PUSH_EVENT_EXAMPLE = b"""{
   "ref": "refs/heads/changes",
@@ -220,7 +219,6 @@ PUSH_EVENT_EXAMPLE = b"""{
     "site_admin": false
   }
 }"""
-
 
 COMPARE_COMMITS_EXAMPLE = """{
   "url": "https://api.github.com/repos/octocat/Hello-World/compare/master...topic",
@@ -474,7 +472,6 @@ COMPARE_COMMITS_EXAMPLE = """{
     }
   ]
 }"""
-
 
 GET_LAST_COMMITS_EXAMPLE = """[
   {

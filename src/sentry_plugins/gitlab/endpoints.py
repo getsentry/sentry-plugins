@@ -5,7 +5,6 @@ from __future__ import absolute_import
 # from sentry.plugins.bases.issue2 import IssueGroupActionEndpoint
 # from six.moves.urllib.parse import urlencode
 
-
 # class GitlabIssueSearchEndpoint(IssueGroupActionEndpoint):
 #     def get(self, request, group, **kwargs):
 #         field = request.GET.get('autocomplete_field')

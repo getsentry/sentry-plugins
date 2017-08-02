@@ -36,7 +36,9 @@ class BitbucketPluginTest(PluginTestCase):
     def test_get_issue_url(self):
         self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
-        assert self.plugin.get_issue_url(group, 1) == 'https://bitbucket.org/maxbittker/newsdiffs/issue/1/'
+        assert self.plugin.get_issue_url(
+            group, 1
+        ) == 'https://bitbucket.org/maxbittker/newsdiffs/issue/1/'
 
     def test_is_configured(self):
         assert self.plugin.is_configured(None, self.project) is False
@@ -45,8 +47,11 @@ class BitbucketPluginTest(PluginTestCase):
 
     @responses.activate
     def test_create_issue(self):
-        responses.add(responses.POST, 'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues',
-            body='{"local_id": 1, "title": "Hello world"}')
+        responses.add(
+            responses.POST,
+            'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues',
+            body='{"local_id": 1, "title": "Hello world"}'
+        )
 
         self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
@@ -64,19 +69,32 @@ class BitbucketPluginTest(PluginTestCase):
 
         request.user = self.user
         self.login_as(self.user)
-        UserSocialAuth.objects.create(user=self.user, provider=self.plugin.auth_provider,
-                                      extra_data={'access_token': ('oauth_token=123456789abcdefghi&'
-                                                                   'oauth_token_secret='
-                                                                   '123456789123456789abcdefghijklmn')})
+        UserSocialAuth.objects.create(
+            user=self.user,
+            provider=self.plugin.auth_provider,
+            extra_data={
+                'access_token': (
+                    'oauth_token=123456789abcdefghi&'
+                    'oauth_token_secret='
+                    '123456789123456789abcdefghijklmn'
+                )
+            }
+        )
 
         assert self.plugin.create_issue(request, group, form_data) == 1
 
     @responses.activate
     def test_link_issue(self):
-        responses.add(responses.GET, 'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1',
-            body='{"local_id": 1, "title": "Hello world"}')
-        responses.add(responses.POST, 'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1/comments',
-            body='{"body": "Hello"}')
+        responses.add(
+            responses.GET,
+            'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1',
+            body='{"local_id": 1, "title": "Hello world"}'
+        )
+        responses.add(
+            responses.POST,
+            'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1/comments',
+            body='{"body": "Hello"}'
+        )
 
         self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
@@ -95,8 +113,13 @@ class BitbucketPluginTest(PluginTestCase):
         UserSocialAuth.objects.create(
             user=self.user,
             provider=self.plugin.auth_provider,
-            extra_data={'access_token': ('oauth_token=123456789abcdefghi&oauth_token_secret='
-                                         '123456789123456789abcdefghijklmn')})
+            extra_data={
+                'access_token': (
+                    'oauth_token=123456789abcdefghi&oauth_token_secret='
+                    '123456789123456789abcdefghijklmn'
+                )
+            }
+        )
 
         assert self.plugin.link_issue(request, group, form_data) == {
             'title': 'Hello world',

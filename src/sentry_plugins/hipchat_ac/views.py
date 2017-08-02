@@ -17,9 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 
 from sentry import options
-from sentry.models import (
-    Organization, Team, User, OrganizationMember, GroupAssignee
-)
+from sentry.models import (Organization, Team, User, OrganizationMember, GroupAssignee)
 from sentry.utils.http import absolute_uri
 from sentry.plugins import plugins
 from sentry.web.frontend.base import ProjectView
@@ -27,12 +25,10 @@ from sentry.web.frontend.base import ProjectView
 from .utils import JsonResponse, IS_DEBUG
 from .models import Tenant, Context
 from . import mentions
-from .plugin import (
-    enable_plugin_for_tenant, disable_plugin_for_tenant, get_addon_host_ident
-)
+from .plugin import (enable_plugin_for_tenant, disable_plugin_for_tenant, get_addon_host_ident)
 from .cards import (
-    make_event_notification, make_generic_notification,
-    make_subscription_update_notification, ICON, ICON2X
+    make_event_notification, make_generic_notification, make_subscription_update_notification, ICON,
+    ICON2X
 )
 
 _regexp_cache = {}
@@ -51,9 +47,10 @@ def get_link_pattern():
 def get_link_regexp():
     pattern = get_link_pattern()
     if pattern not in _regexp_cache:
-        _regexp_cache[pattern] = re.compile(pattern +
-            r'(?P<org>[^/]+)/(?P<proj>[^/]+)/(?:group|issues)/'
-            r'(?P<group>[^/]+)(/events/(?P<event>[^/]+)|/?)')
+        _regexp_cache[pattern] = re.compile(
+            pattern + r'(?P<org>[^/]+)/(?P<proj>[^/]+)/(?:group|issues)/'
+            r'(?P<group>[^/]+)(/events/(?P<event>[^/]+)|/?)'
+        )
     return _regexp_cache[pattern]
 
 
@@ -78,165 +75,173 @@ class InstallRedirectView(ProjectView):
 
 
 class DescriptorView(View):
-
     def get(self, request):
-        return JsonResponse({
-            'key': get_addon_key(),
-            'name': 'Sentry for HipChat',
-            'description': 'Sentry integration for HipChat.',
-            'links': {
-                'self': absolute_uri(reverse('sentry-hipchat-ac-descriptor')),
-            },
-            'icon': {
-                'url': ICON,
-            },
-            'capabilities': {
-                'installable': {
-                    'allowRoom': True,
-                    'allowGlobal': False,
-                    'callbackUrl': absolute_uri(reverse(
-                        'sentry-hipchat-ac-installable')),
+        return JsonResponse(
+            {
+                'key': get_addon_key(),
+                'name': 'Sentry for HipChat',
+                'description': 'Sentry integration for HipChat.',
+                'links': {
+                    'self': absolute_uri(reverse('sentry-hipchat-ac-descriptor')),
                 },
-                'hipchatApiConsumer': {
-                    'scopes': ['send_notification', 'view_room'],
+                'icon': {
+                    'url': ICON,
                 },
-                'configurable': {
-                    'url': absolute_uri(reverse('sentry-hipchat-ac-config')),
-                },
-                'webhook': [
-                    {
-                        'event': 'room_message',
-                        'url': absolute_uri(reverse(
-                            'sentry-hipchat-ac-link-message')),
-                        'pattern': get_link_pattern(),
-                        'authentication': 'jwt',
+                'capabilities': {
+                    'installable': {
+                        'allowRoom': True,
+                        'allowGlobal': False,
+                        'callbackUrl': absolute_uri(reverse('sentry-hipchat-ac-installable')),
                     },
-                ],
-                'webPanel': [
-                    {
-                        'key': 'sentry.sidebar.event-details',
-                        'name': {
-                            'value': 'Sentry Issue Details',
-                        },
-                        'location': 'hipchat.sidebar.right',
-                        'url': absolute_uri(reverse(
-                            'sentry-hipchat-ac-event-details')),
+                    'hipchatApiConsumer': {
+                        'scopes': ['send_notification', 'view_room'],
                     },
-                    {
-                        'key': 'sentry.sidebar.recent-events',
-                        'name': {
-                            'value': 'Recent Sentry Issues',
-                        },
-                        'location': 'hipchat.sidebar.right',
-                        'url': absolute_uri(reverse(
-                            'sentry-hipchat-ac-recent-events')),
+                    'configurable': {
+                        'url': absolute_uri(reverse('sentry-hipchat-ac-config')),
                     },
-                ],
-                'action': [
-                    {
-                        'key': 'message.sentry.event-details',
-                        'name': {
-                            'value': 'Show details',
+                    'webhook': [
+                        {
+                            'event': 'room_message',
+                            'url': absolute_uri(reverse('sentry-hipchat-ac-link-message')),
+                            'pattern': get_link_pattern(),
+                            'authentication': 'jwt',
                         },
-                        'target': 'sentry-event-details-glance',
-                        'location': 'hipchat.message.action',
-                        'conditions': [
-                            {
-                                'condition': 'card_matches',
-                                'params': {
-                                    'metadata': [
-                                        {'attr': 'sentry_message_type',
-                                         'eq': 'event'},
-                                    ]
-                                }
-                            }
-                        ],
-                    },
-                    {
-                        'key': 'message.sentry.assign-event',
-                        'name': {
-                            'value': 'Assign',
-                        },
-                        'target': 'sentry-assign-dialog',
-                        'location': 'hipchat.message.action',
-                        'conditions': [
-                            {
-                                'condition': 'card_matches',
-                                'params': {
-                                    'metadata': [
-                                        {'attr': 'sentry_message_type',
-                                         'eq': 'event'},
-                                    ]
-                                }
-                            }
-                        ],
-                    }
-                ],
-                'dialog': [
-                    {
-                        'key': 'sentry-assign-dialog',
-                        'title': {
-                            'value': 'Assign Issue',
-                        },
-                        'url': absolute_uri(reverse(
-                            'sentry-hipchat-assign-event')),
-                        'options': {
-                            'size': {
-                                'height': '400px',
-                                'width': '600px',
+                    ],
+                    'webPanel': [
+                        {
+                            'key': 'sentry.sidebar.event-details',
+                            'name': {
+                                'value': 'Sentry Issue Details',
                             },
+                            'location': 'hipchat.sidebar.right',
+                            'url': absolute_uri(reverse('sentry-hipchat-ac-event-details')),
                         },
-                    }
-                ],
-                'glance': [
-                    # Invisible dummy glance for normal sidebars
-                    {
-                        'name': {
-                            'value': 'Sentry Issue Details',
+                        {
+                            'key': 'sentry.sidebar.recent-events',
+                            'name': {
+                                'value': 'Recent Sentry Issues',
+                            },
+                            'location': 'hipchat.sidebar.right',
+                            'url': absolute_uri(reverse('sentry-hipchat-ac-recent-events')),
                         },
-                        'key': 'sentry-event-details-glance',
-                        'target': 'sentry.sidebar.event-details',
-                        'icon': {
-                            'url': ICON,
-                            'url@2x': ICON2X,
-                        },
-                        'conditions': [
-                            {
-                                'condition': 'glance_matches',
-                                "params": {
-                                    "metadata": [
-                                        {"attr": "this_is_a_dummy",
-                                         "eq": True}
-                                    ]
+                    ],
+                    'action': [
+                        {
+                            'key':
+                            'message.sentry.event-details',
+                            'name': {
+                                'value': 'Show details',
+                            },
+                            'target':
+                            'sentry-event-details-glance',
+                            'location':
+                            'hipchat.message.action',
+                            'conditions': [
+                                {
+                                    'condition': 'card_matches',
+                                    'params': {
+                                        'metadata': [
+                                            {
+                                                'attr': 'sentry_message_type',
+                                                'eq': 'event'
+                                            },
+                                        ]
+                                    }
                                 }
-                            }
-                        ],
-                    },
-                    {
-                        'name': {
-                            'value': 'Sentry',
+                            ],
+                        }, {
+                            'key':
+                            'message.sentry.assign-event',
+                            'name': {
+                                'value': 'Assign',
+                            },
+                            'target':
+                            'sentry-assign-dialog',
+                            'location':
+                            'hipchat.message.action',
+                            'conditions': [
+                                {
+                                    'condition': 'card_matches',
+                                    'params': {
+                                        'metadata': [
+                                            {
+                                                'attr': 'sentry_message_type',
+                                                'eq': 'event'
+                                            },
+                                        ]
+                                    }
+                                }
+                            ],
+                        }
+                    ],
+                    'dialog': [
+                        {
+                            'key': 'sentry-assign-dialog',
+                            'title': {
+                                'value': 'Assign Issue',
+                            },
+                            'url': absolute_uri(reverse('sentry-hipchat-assign-event')),
+                            'options': {
+                                'size': {
+                                    'height': '400px',
+                                    'width': '600px',
+                                },
+                            },
+                        }
+                    ],
+                    'glance': [
+                        # Invisible dummy glance for normal sidebars
+                        {
+                            'name': {
+                                'value': 'Sentry Issue Details',
+                            },
+                            'key':
+                            'sentry-event-details-glance',
+                            'target':
+                            'sentry.sidebar.event-details',
+                            'icon': {
+                                'url': ICON,
+                                'url@2x': ICON2X,
+                            },
+                            'conditions': [
+                                {
+                                    'condition': 'glance_matches',
+                                    "params": {
+                                        "metadata": [{
+                                            "attr": "this_is_a_dummy",
+                                            "eq": True
+                                        }]
+                                    }
+                                }
+                            ],
                         },
-                        'queryUrl': absolute_uri(reverse(
-                            'sentry-hipchat-ac-recent-events-glance')),
-                        'key': 'sentry-recent-events-glance',
-                        'target': 'sentry.sidebar.recent-events',
-                        'icon': {
-                            'url': ICON,
-                            'url@2x': ICON2X,
-                        },
-                        'conditions': [],
-                    }
-                ],
-            },
-            'vendor': {
-                'url': 'https://www.getsentry.com/',
-                'name': 'Sentry',
+                        {
+                            'name': {
+                                'value': 'Sentry',
+                            },
+                            'queryUrl':
+                            absolute_uri(reverse('sentry-hipchat-ac-recent-events-glance')),
+                            'key':
+                            'sentry-recent-events-glance',
+                            'target':
+                            'sentry.sidebar.recent-events',
+                            'icon': {
+                                'url': ICON,
+                                'url@2x': ICON2X,
+                            },
+                            'conditions': [],
+                        }
+                    ],
+                },
+                'vendor': {
+                    'url': 'https://www.getsentry.com/',
+                    'name': 'Sentry',
+                }
             }
-        })
+        )
 
 
 class InstallableView(View):
-
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return View.dispatch(self, *args, **kwargs)
@@ -246,13 +251,14 @@ class InstallableView(View):
 
         room_id = data.get('roomId', None)
         if room_id is None:
-            return HttpResponse('This add-on can only be installed in '
-                                'individual rooms.', status=400)
+            return HttpResponse(
+                'This add-on can only be installed in '
+                'individual rooms.', status=400
+            )
 
         capdoc = requests.get(data['capabilitiesUrl'], timeout=10).json()
         if capdoc['links'].get('self') != data['capabilitiesUrl']:
-            return HttpResponse('Mismatch on capabilities URL',
-                                status=400)
+            return HttpResponse('Mismatch on capabilities URL', status=400)
 
         try:
             tenant = Tenant.objects.get(pk=data['oauthId'])
@@ -278,9 +284,9 @@ class InstallableView(View):
 
 
 class GrantAccessForm(forms.Form):
-    orgs = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
-                                     label='Organizations',
-                                     required=False)
+    orgs = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple, label='Organizations', required=False
+    )
 
     def __init__(self, tenant, request, initial=None):
         self.user = request.user
@@ -294,11 +300,12 @@ class GrantAccessForm(forms.Form):
         self.fields['orgs'].choices = org_choices
 
     def clean_orgs(self):
-        rv = [org for org in self.all_orgs if six.text_type(org.id) in
-              self.cleaned_data['orgs']]
+        rv = [org for org in self.all_orgs if six.text_type(org.id) in self.cleaned_data['orgs']]
         if not rv:
-            raise forms.ValidationError('You need to select at least one '
-                                        'organization to give access to.')
+            raise forms.ValidationError(
+                'You need to select at least one '
+                'organization to give access to.'
+            )
         return rv
 
     def save_changes(self):
@@ -309,8 +316,9 @@ class GrantAccessForm(forms.Form):
 
 
 class ProjectSelectForm(forms.Form):
-    projects = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
-                                         label='Projects', required=False)
+    projects = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple, label='Projects', required=False
+    )
 
     def __init__(self, tenant, request, initial=None):
         self.tenant = tenant
@@ -318,13 +326,17 @@ class ProjectSelectForm(forms.Form):
         self.projects_by_id = {}
 
         for org in tenant.organizations.all():
-            teams = Team.objects.get_for_user(org, tenant.auth_user,
-                                              scope=REQUIRED_SCOPE,
-                                              with_projects=True)
+            teams = Team.objects.get_for_user(
+                org, tenant.auth_user, scope=REQUIRED_SCOPE, with_projects=True
+            )
             for team, projects in teams:
                 for project in projects:
-                    project_choices.append((six.text_type(project.id), '%s | %s / %s' % (
-                        org.name, team.name, project.name)))
+                    project_choices.append(
+                        (
+                            six.text_type(project.id),
+                            '%s | %s / %s' % (org.name, team.name, project.name)
+                        )
+                    )
                     self.projects_by_id[six.text_type(project.id)] = project
 
         project_choices.sort(key=lambda x: x[1].lower())
@@ -353,11 +365,11 @@ class ProjectSelectForm(forms.Form):
 
         if new_projects or removed_projects:
             with Context.for_tenant(self.tenant) as ctx:
-                ctx.send_notification(**make_subscription_update_notification(
-                    new_projects, removed_projects))
+                ctx.send_notification(
+                    **make_subscription_update_notification(new_projects, removed_projects)
+                )
                 if removed_projects:
-                    mentions.clear_project_mentions(
-                        self.tenant, removed_projects)
+                    mentions.clear_project_mentions(self.tenant, removed_projects)
                 ctx.push_recent_events_glance()
 
 
@@ -367,6 +379,7 @@ def webhook(f):
         data = json.loads(request.body) or {}
         with Context.for_request(request, data) as context:
             return f(request, context, data, *args, **kwargs)
+
     return update_wrapper(new_f, f)
 
 
@@ -374,6 +387,7 @@ def with_context(f):
     def new_f(request, *args, **kwargs):
         with Context.for_request(request) as context:
             return f(request, context, *args, **kwargs)
+
     return update_wrapper(new_f, f)
 
 
@@ -384,6 +398,7 @@ def allow_frame(f):
         # with deny.
         resp['X-Frame-Options'] = 'allow'
         return resp
+
     return update_wrapper(new_f, f)
 
 
@@ -397,6 +412,7 @@ def cors(f):
         resp['Access-Control-Allow-Credentials'] = 'true'
         resp['Access-Control-Max-Age'] = '1728000'
         return resp
+
     return update_wrapper(new_f, f)
 
 
@@ -426,9 +442,7 @@ def configure(request, context):
 
     if project and project not in set(projects):
         projects.append(project)
-    initial_project = {
-        'projects': projects
-    }
+    initial_project = {'projects': projects}
 
     if context.tenant.auth_user is None and request.user.is_authenticated():
         grant_form = GrantAccessForm(context.tenant, request, initial=initial_org)
@@ -438,25 +452,31 @@ def configure(request, context):
             return HttpResponseRedirect(request.get_full_path())
 
     elif context.tenant.auth_user is not None:
-        project_select_form = ProjectSelectForm(context.tenant, request, initial=initial_project or None)
+        project_select_form = ProjectSelectForm(
+            context.tenant, request, initial=initial_project or None
+        )
         request.session.pop(HIPCHAT_PROJECT_PREFERENCE, None)
         projects_by_id = project_select_form.projects_by_id
-        project_fields = [(f, projects_by_id[f.choice_value]) for f in project_select_form['projects']]
+        project_fields = [
+            (f, projects_by_id[f.choice_value]) for f in project_select_form['projects']
+        ]
         if request.method == 'POST' and project_select_form.is_valid():
             project_select_form.save_changes()
             messages.add_message(request, messages.SUCCESS, 'Changes saved')
             return HttpResponseRedirect(request.get_full_path())
 
-    return render(request, 'sentry_hipchat_ac/configure.html', {
-        'context': context,
-        'tenant': context.tenant,
-        'current_user': request.user,
-        'grant_form': grant_form,
-        'project_select_form': project_select_form,
-        'available_orgs': list(context.tenant.organizations.all()),
-        'hipchat_debug': IS_DEBUG,
-        'project_fields': project_fields,
-    })
+    return render(
+        request, 'sentry_hipchat_ac/configure.html', {
+            'context': context,
+            'tenant': context.tenant,
+            'current_user': request.user,
+            'grant_form': grant_form,
+            'project_select_form': project_select_form,
+            'available_orgs': list(context.tenant.organizations.all()),
+            'hipchat_debug': IS_DEBUG,
+            'project_fields': project_fields,
+        }
+    )
 
 
 @allow_frame
@@ -465,10 +485,7 @@ def back(request, context):
     tenant = context.tenant
     tenant.auth_user = None
     tenant.save()
-    cfg_url = '%s?signed_request=%s' % (
-        reverse('sentry-hipchat-ac-config'),
-        context.signed_request
-    )
+    cfg_url = '%s?signed_request=%s' % (reverse('sentry-hipchat-ac-config'), context.signed_request)
     return HttpResponseRedirect(cfg_url)
 
 
@@ -476,10 +493,7 @@ def back(request, context):
 @with_context
 def sign_out(request, context):
     tenant = context.tenant
-    cfg_url = '%s?signed_request=%s' % (
-        reverse('sentry-hipchat-ac-config'),
-        context.signed_request
-    )
+    cfg_url = '%s?signed_request=%s' % (reverse('sentry-hipchat-ac-config'), context.signed_request)
 
     if 'no' in request.POST:
         return HttpResponseRedirect(cfg_url)
@@ -490,10 +504,12 @@ def sign_out(request, context):
         url = "%s?next=%s" % (reverse('sentry-logout'), cfg_url)
         return HttpResponseRedirect(url)
 
-    return render(request, 'sentry_hipchat_ac/sign_out.html', {
-        'context': context,
-        'tenant': tenant,
-    })
+    return render(
+        request, 'sentry_hipchat_ac/sign_out.html', {
+            'context': context,
+            'tenant': tenant,
+        }
+    )
 
 
 @cors
@@ -520,8 +536,10 @@ def event_details(request, context):
         else:
             group = event.group
 
-            tags = [(k.split(':', 1)[1] if k.startswith('sentry:') else k,
-                     v) for k, v in event.get_tags()]
+            tags = [
+                (k.split(':', 1)[1] if k.startswith('sentry:') else k, v)
+                for k, v in event.get_tags()
+            ]
 
             interface_data.update(
                 http=event.interfaces.get('sentry.interfaces.Http'),
@@ -532,15 +550,17 @@ def event_details(request, context):
                 interface_data['exc'] = exc
                 interface_data['exc_as_string'] = exc.to_string(event)
 
-    return render(request, 'sentry_hipchat_ac/event_details.html', {
-        'context': context,
-        'event': event,
-        'from_recent': request.GET.get('from_recent') == 'yes',
-        'group': group,
-        'interfaces': interface_data,
-        'bad_event': bad_event,
-        'tags': tags,
-    })
+    return render(
+        request, 'sentry_hipchat_ac/event_details.html', {
+            'context': context,
+            'event': event,
+            'from_recent': request.GET.get('from_recent') == 'yes',
+            'group': group,
+            'interfaces': interface_data,
+            'bad_event': bad_event,
+            'tags': tags,
+        }
+    )
 
 
 @allow_frame
@@ -557,47 +577,57 @@ def assign_event(request, context):
         event = context.get_event(event_id)
         if event is not None:
             project = event.project
-            member_list = sorted(set(User.objects.filter(
-                is_active=True,
-                sentry_orgmember_set__organization=project.organization,
-                sentry_orgmember_set__id__in=OrganizationMember.objects.filter(
-                    organizationmemberteam__is_active=True,
-                    organizationmemberteam__team=project.team,
-                ).values('id')
-            ).distinct()[:1000]), key=lambda x: x.email)
-            assigned_to = GroupAssignee.objects.filter(
-                group=event.group
-            ).first()
+            member_list = sorted(
+                set(
+                    User.objects.filter(
+                        is_active=True,
+                        sentry_orgmember_set__organization=project.organization,
+                        sentry_orgmember_set__id__in=OrganizationMember.objects.filter(
+                            organizationmemberteam__is_active=True,
+                            organizationmemberteam__team=project.team,
+                        ).values('id')
+                    ).distinct()[:1000]
+                ),
+                key=lambda x: x.email
+            )
+            assigned_to = GroupAssignee.objects.filter(group=event.group).first()
 
             if request.method == 'POST':
                 if 'assign' in request.POST:
-                    assignee = next((
-                        x for x in member_list
-                        if six.text_type(x.id) == request.POST['assigned_to']), None)
+                    assignee = next(
+                        (
+                            x for x in member_list
+                            if six.text_type(x.id) == request.POST['assigned_to']
+                        ), None
+                    )
                     if assignee is not None:
                         GroupAssignee.objects.assign(event.group, assignee)
                 elif 'deassign' in request.POST:
                     GroupAssignee.objects.deassign(event.group)
                 dismiss_dialog = True
 
-    return render(request, 'sentry_hipchat_ac/assign_event.html', {
-        'context': context,
-        'event': event,
-        'project': project,
-        'member_list': member_list,
-        'assigned_to': assigned_to,
-        'dismiss_dialog': dismiss_dialog,
-    })
+    return render(
+        request, 'sentry_hipchat_ac/assign_event.html', {
+            'context': context,
+            'event': event,
+            'project': project,
+            'member_list': member_list,
+            'assigned_to': assigned_to,
+            'dismiss_dialog': dismiss_dialog,
+        }
+    )
 
 
 @allow_frame
 @with_context
 def recent_events(request, context):
     events = mentions.get_recent_mentions(context.tenant)
-    return render(request, 'sentry_hipchat_ac/recent_events.html', {
-        'context': context,
-        'events': events,
-    })
+    return render(
+        request, 'sentry_hipchat_ac/recent_events.html', {
+            'context': context,
+            'events': events,
+        }
+    )
 
 
 @webhook
@@ -612,9 +642,15 @@ def on_link_message(request, context, data):
                        'proj_slug': params['proj']}
         )
         if event is not None:
-            context.send_notification(**make_event_notification(
-                event.group, event, context.tenant, new=False,
-                event_target=params['event'] is not None))
+            context.send_notification(
+                **make_event_notification(
+                    event.group,
+                    event,
+                    context.tenant,
+                    new=False,
+                    event_target=params['event'] is not None
+                )
+            )
 
             mentions.mention_event(
                 project=event.project,
@@ -629,15 +665,19 @@ def on_link_message(request, context, data):
 
 def notify_tenant_added(tenant):
     with Context.for_tenant(tenant) as ctx:
-        ctx.send_notification(**make_generic_notification(
-            'The Sentry Hipchat integration was associated with this room.',
-            color='green'))
+        ctx.send_notification(
+            **make_generic_notification(
+                'The Sentry Hipchat integration was associated with this room.', color='green'
+            )
+        )
         ctx.push_recent_events_glance()
 
 
 def notify_tenant_removal(tenant):
     with Context.for_tenant(tenant) as ctx:
-        ctx.send_notification(**make_generic_notification(
-            'The Sentry Hipchat integration was disassociated with this room.',
-            color='red'))
+        ctx.send_notification(
+            **make_generic_notification(
+                'The Sentry Hipchat integration was disassociated with this room.', color='red'
+            )
+        )
         ctx.push_recent_events_glance()

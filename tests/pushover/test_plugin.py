@@ -36,14 +36,14 @@ class PushoverPluginTest(PluginTestCase):
 
     @responses.activate
     def test_simple_notification(self):
-        responses.add('POST', 'https://api.pushover.net/1/messages.json',
-                      body=SUCCESS)
+        responses.add('POST', 'https://api.pushover.net/1/messages.json', body=SUCCESS)
         self.plugin.set_option('userkey', 'abcdef', self.project)
         self.plugin.set_option('apikey', 'ghijkl', self.project)
 
         group = self.create_group(message='Hello world', culprit='foo.bar')
         event = self.create_event(
-            group=group, message='Hello world',
+            group=group,
+            message='Hello world',
             tags={'level': 'warning'},
         )
 
@@ -68,14 +68,8 @@ class PushoverPluginTest(PluginTestCase):
 
     def test_no_secrets(self):
         self.user = self.create_user('foo@example.com')
-        self.org = self.create_organization(
-            owner=self.user,
-            name='Rowdy Tiger'
-        )
-        self.team = self.create_team(
-            organization=self.org,
-            name='Mariachi Band'
-        )
+        self.org = self.create_organization(owner=self.user, name='Rowdy Tiger')
+        self.team = self.create_team(organization=self.org, name='Mariachi Band')
         self.project = self.create_project(
             organization=self.org,
             team=self.team,
@@ -84,8 +78,10 @@ class PushoverPluginTest(PluginTestCase):
         self.login_as(self.user)
         self.plugin.set_option('userkey', 'abcdef', self.project)
         self.plugin.set_option('apikey', 'abcdef', self.project)
-        url = reverse('sentry-api-0-project-plugin-details',
-                      args=[self.org.slug, self.project.slug, 'pushover'])
+        url = reverse(
+            'sentry-api-0-project-plugin-details',
+            args=[self.org.slug, self.project.slug, 'pushover']
+        )
         res = self.client.get(url)
         config = json.loads(res.content)['config']
         userkey_config = [item for item in config if item['name'] == 'userkey'][0]

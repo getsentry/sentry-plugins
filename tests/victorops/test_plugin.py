@@ -35,8 +35,11 @@ class VictorOpsPluginTest(PluginTestCase):
 
     @responses.activate
     def test_simple_notification(self):
-        responses.add('POST', 'https://alert.victorops.com/integrations/generic/20131114/alert/secret-api-key/everyone',
-                      body=SUCCESS)
+        responses.add(
+            'POST',
+            'https://alert.victorops.com/integrations/generic/20131114/alert/secret-api-key/everyone',
+            body=SUCCESS
+        )
         self.plugin.set_option('api_key', 'secret-api-key', self.project)
         self.plugin.set_option('routing_key', 'everyone', self.project)
 
@@ -53,10 +56,16 @@ class VictorOpsPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(request.body)
         assert {
-            'message_type': 'WARNING',
-            'entity_id': group.id,
-            'entity_display_name': 'Hello world',
-            'monitoring_tool': 'sentry',
-            'state_message': 'Stacktrace\n-----------\n\nStacktrace (most recent call last):\n\n  File "raven/base.py", line 29, in build_msg\n    string_max_length=self.string_max_length)\n\nMessage\n-----------\n\nHello world',
-            'timestamp': int(event.datetime.strftime('%s')),
+            'message_type':
+            'WARNING',
+            'entity_id':
+            group.id,
+            'entity_display_name':
+            'Hello world',
+            'monitoring_tool':
+            'sentry',
+            'state_message':
+            'Stacktrace\n-----------\n\nStacktrace (most recent call last):\n\n  File "raven/base.py", line 29, in build_msg\n    string_max_length=self.string_max_length)\n\nMessage\n-----------\n\nHello world',
+            'timestamp':
+            int(event.datetime.strftime('%s')),
         } == payload

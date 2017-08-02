@@ -42,10 +42,12 @@ class GitHubMixin(object):
         elif isinstance(exc, ApiError):
             if exc.code == 404:
                 return ERR_404
-            return ('Error Communicating with GitHub (HTTP %s): %s' % (
-                exc.code,
-                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
-            ))
+            return (
+                'Error Communicating with GitHub (HTTP %s): %s' % (
+                    exc.code, exc.json.get('message', 'unknown error')
+                    if exc.json else 'unknown error',
+                )
+            )
         else:
             return ERR_INTERNAL
 
@@ -81,10 +83,12 @@ class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
 
     def get_group_urls(self):
         return super(GitHubPlugin, self).get_group_urls() + [
-            (r'^autocomplete', IssueGroupActionEndpoint.as_view(
-                view_method_name='view_autocomplete',
-                plugin=self,
-            )),
+            (
+                r'^autocomplete', IssueGroupActionEndpoint.as_view(
+                    view_method_name='view_autocomplete',
+                    plugin=self,
+                )
+            ),
         ]
 
     def get_url_module(self):
@@ -95,40 +99,53 @@ class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
 
     def get_new_issue_fields(self, request, group, event, **kwargs):
         fields = super(GitHubPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
-        return [{
-            'name': 'repo',
-            'label': 'GitHub Repository',
-            'default': self.get_option('repo', group.project),
-            'type': 'text',
-            'readonly': True
-        }] + fields + [{
-            'name': 'assignee',
-            'label': 'Assignee',
-            'default': '',
-            'type': 'select',
-            'required': False,
-            'choices': self.get_allowed_assignees(request, group)
-        }]
+        return [
+            {
+                'name': 'repo',
+                'label': 'GitHub Repository',
+                'default': self.get_option('repo', group.project),
+                'type': 'text',
+                'readonly': True
+            }
+        ] + fields + [
+            {
+                'name': 'assignee',
+                'label': 'Assignee',
+                'default': '',
+                'type': 'select',
+                'required': False,
+                'choices': self.get_allowed_assignees(request, group)
+            }
+        ]
 
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
-        return [{
-            'name': 'issue_id',
-            'label': 'Issue',
-            'default': '',
-            'type': 'select',
-            'has_autocomplete': True,
-            'help': ('You can use any syntax supported by GitHub\'s '
-                     '<a href="https://help.github.com/articles/searching-issues/" '
-                     'target="_blank">issue search.</a>')
-        }, {
-            'name': 'comment',
-            'label': 'Comment',
-            'default': absolute_uri(group.get_absolute_url()),
-            'type': 'textarea',
-            'help': ('Leave blank if you don\'t want to '
-                     'add a comment to the GitHub issue.'),
-            'required': False
-        }]
+        return [
+            {
+                'name':
+                'issue_id',
+                'label':
+                'Issue',
+                'default':
+                '',
+                'type':
+                'select',
+                'has_autocomplete':
+                True,
+                'help': (
+                    'You can use any syntax supported by GitHub\'s '
+                    '<a href="https://help.github.com/articles/searching-issues/" '
+                    'target="_blank">issue search.</a>'
+                )
+            }, {
+                'name': 'comment',
+                'label': 'Comment',
+                'default': absolute_uri(group.get_absolute_url()),
+                'type': 'textarea',
+                'help': ('Leave blank if you don\'t want to '
+                         'add a comment to the GitHub issue.'),
+                'required': False
+            }
+        ]
 
     def get_allowed_assignees(self, request, group):
         client = self.get_client(request.user)
@@ -141,7 +158,7 @@ class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
 
         users = tuple((u['login'], u['login']) for u in response)
 
-        return (('', 'Unassigned'),) + users
+        return (('', 'Unassigned'), ) + users
 
     def create_issue(self, request, group, form_data, **kwargs):
         # TODO: support multiple identities via a selection input in the form?
@@ -185,9 +202,7 @@ class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
             except Exception as e:
                 self.raise_error(e)
 
-        return {
-            'title': issue['title']
-        }
+        return {'title': issue['title']}
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GH-%s' % issue_id
@@ -214,26 +229,38 @@ class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
         except Exception as e:
             return self.handle_api_error(e)
 
-        issues = [{
-            'text': '(#%s) %s' % (i['number'], i['title']),
-            'id': i['number']
-        } for i in response.get('items', [])]
+        issues = [
+            {
+                'text': '(#%s) %s' % (i['number'], i['title']),
+                'id': i['number']
+            } for i in response.get('items', [])
+        ]
 
         return Response({field: issues})
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
-        return [{
-            'name': 'repo',
-            'label': 'Repository Name',
-            'default': self.get_option('repo', project),
-            'type': 'text',
-            'placeholder': 'e.g. getsentry/sentry',
-            'help': ('Enter your repository name, including the owner. '
+        return [
+            {
+                'name':
+                'repo',
+                'label':
+                'Repository Name',
+                'default':
+                self.get_option('repo', project),
+                'type':
+                'text',
+                'placeholder':
+                'e.g. getsentry/sentry',
+                'help': (
+                    'Enter your repository name, including the owner. '
                     '<p><b>Looking to integrate commit data with releases?</b> You\'ll need to configure this through our'
-                     '<a href="/organizations/{}/repos/" '
-                     '> repos page</a>.</p>').format(project.organization.slug),
-            'required': True,
-        }]
+                    '<a href="/organizations/{}/repos/" '
+                    '> repos page</a>.</p>'
+                ).format(project.organization.slug),
+                'required':
+                True,
+            }
+        ]
 
     def setup(self, bindings):
         bindings.add('repository.provider', GitHubRepositoryProvider, id='github')
@@ -245,14 +272,16 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
     logger = logging.getLogger('sentry.plugins.github')
 
     def get_config(self):
-        return [{
-            'name': 'name',
-            'label': 'Repository Name',
-            'type': 'text',
-            'placeholder': 'e.g. getsentry/sentry',
-            'help': 'Enter your repository name, including the owner.',
-            'required': True,
-        }]
+        return [
+            {
+                'name': 'name',
+                'label': 'Repository Name',
+                'type': 'text',
+                'placeholder': 'e.g. getsentry/sentry',
+                'help': 'Enter your repository name, including the owner.',
+                'required': True,
+            }
+        ]
 
     def validate_config(self, organization, config, actor=None):
         """
@@ -273,8 +302,7 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
         return config
 
     def get_webhook_secret(self, organization):
-        lock = locks.get('github:webhook-secret:{}'.format(organization.id),
-                         duration=60)
+        lock = locks.get('github:webhook-secret:{}'.format(organization.id), duration=60)
         with lock.acquire():
             # TODO(dcramer): get_or_create would be a useful native solution
             secret = OrganizationOption.objects.get_value(
@@ -297,16 +325,23 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
         client = self.get_client(actor)
 
         try:
-            resp = client.create_hook(data['name'], {
-                'name': 'web',
-                'active': True,
-                'events': ['push'],
-                'config': {
-                    'url': absolute_uri('/plugins/github/organizations/{}/webhook/'.format(organization.id)),
-                    'content_type': 'json',
-                    'secret': self.get_webhook_secret(organization),
-                },
-            })
+            resp = client.create_hook(
+                data['name'], {
+                    'name': 'web',
+                    'active': True,
+                    'events': ['push'],
+                    'config': {
+                        'url':
+                        absolute_uri(
+                            '/plugins/github/organizations/{}/webhook/'.format(organization.id)
+                        ),
+                        'content_type':
+                        'json',
+                        'secret':
+                        self.get_webhook_secret(organization),
+                    },
+                }
+            )
         except Exception as e:
             self.raise_error(e)
         else:
@@ -333,13 +368,15 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
             raise
 
     def _format_commits(self, repo, commit_list):
-        return [{
-            'id': c['sha'],
-            'repository': repo.name,
-            'author_email': c['commit']['author'].get('email'),
-            'author_name': c['commit']['author'].get('name'),
-            'message': c['commit']['message'],
-        } for c in commit_list]
+        return [
+            {
+                'id': c['sha'],
+                'repository': repo.name,
+                'author_email': c['commit']['author'].get('email'),
+                'author_name': c['commit']['author'].get('name'),
+                'message': c['commit']['message'],
+            } for c in commit_list
+        ]
 
     def compare_commits(self, repo, start_sha, end_sha, actor=None):
         if actor is None:

@@ -17,9 +17,12 @@ if 'site-packages' not in __file__:
     if os.path.isdir(node_modules):
         from django.conf import settings
         settings.SENTRY_WATCHERS += (
-            ('webpack.plugins', [
-                os.path.join(node_modules, '.bin', 'webpack'),
-                '--output-pathinfo', '--watch',
-                '--config={}'.format(os.path.join(root, 'webpack.config.js')),
-            ]),
+            (
+                'webpack.plugins', [
+                    os.path.join(node_modules, '.bin', 'webpack'),
+                    '--output-pathinfo',
+                    '--watch',
+                    '--config={}'.format(os.path.join(root, 'webpack.config.js')),
+                ]
+            ),
         )

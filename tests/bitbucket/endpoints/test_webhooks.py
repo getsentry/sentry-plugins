@@ -88,14 +88,15 @@ class PushEventWebhookTest(APITestCase):
             content_type='application/json',
             HTTP_X_EVENT_KEY='repo:push',
             REMOTE_ADDR=BITBUCKET_IP,
-
         )
 
         assert response.status_code == 204
 
-        commit_list = list(Commit.objects.filter(
-            organization_id=project.organization_id,
-        ).select_related('author').order_by('-date_added'))
+        commit_list = list(
+            Commit.objects.filter(
+                organization_id=project.organization_id,
+            ).select_related('author').order_by('-date_added')
+        )
 
         assert len(commit_list) == 1
 
@@ -139,9 +140,11 @@ class PushEventWebhookTest(APITestCase):
 
         assert response.status_code == 204
 
-        commit_list = list(Commit.objects.filter(
-            organization_id=project.organization_id,
-        ).select_related('author').order_by('-date_added'))
+        commit_list = list(
+            Commit.objects.filter(
+                organization_id=project.organization_id,
+            ).select_related('author').order_by('-date_added')
+        )
 
         # should be skipping the #skipsentry commit
         assert len(commit_list) == 1

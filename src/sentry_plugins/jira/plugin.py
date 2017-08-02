@@ -50,9 +50,12 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_group_urls(self):
         _patterns = super(JiraPlugin, self).get_group_urls()
-        _patterns.append(url(r'^autocomplete',
-                             IssueGroupActionEndpoint.as_view(view_method_name='view_autocomplete',
-                                                              plugin=self)))
+        _patterns.append(
+            url(
+                r'^autocomplete',
+                IssueGroupActionEndpoint.as_view(view_method_name='view_autocomplete', plugin=self)
+            )
+        )
         return _patterns
 
     def is_configured(self, request, project, **kwargs):
@@ -97,8 +100,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             fieldtype = 'select'
             sentry_url = '/api/0/issues/%s/plugins/%s/autocomplete' % (group.id, self.slug)
             fkwargs['url'] = '%s?jira_url=%s' % (
-                sentry_url,
-                quote_plus(field_meta['autoCompleteUrl']),
+                sentry_url, quote_plus(field_meta['autoCompleteUrl']),
             )
             fkwargs['has_autocomplete'] = True
             fkwargs['placeholder'] = 'Start typing to search for a user'
@@ -110,11 +112,13 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             return None
         elif schema['type'] == 'array' and schema['items'] != 'string':
             fieldtype = 'select'
-            fkwargs.update({
-                'multiple': True,
-                'choices': self.make_choices(field_meta.get('allowedValues')),
-                'default': []
-            })
+            fkwargs.update(
+                {
+                    'multiple': True,
+                    'choices': self.make_choices(field_meta.get('allowedValues')),
+                    'default': []
+                }
+            )
 
         # break this out, since multiple field types could additionally
         # be configured to use a custom property instead of a default.
@@ -147,13 +151,17 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         try:
             meta = client.get_create_meta_for_project(jira_project_key)
         except JIRAUnauthorized:
-            raise PluginError('JIRA returned: Unauthorized. '
-                              'Please check your username, password, '
-                              'instance and project in your configuration settings.')
+            raise PluginError(
+                'JIRA returned: Unauthorized. '
+                'Please check your username, password, '
+                'instance and project in your configuration settings.'
+            )
 
         if not meta:
-            raise PluginError('Error in JIRA configuration, no projects '
-                              'found for user %s.' % client.username)
+            raise PluginError(
+                'Error in JIRA configuration, no projects '
+                'found for user %s.' % client.username
+            )
 
         # check if the issuetype was passed as a GET parameter
         issue_type = None
@@ -175,20 +183,24 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             if not any((c for c in issue_type_choices if c[0] == issue_type)):
                 issue_type = issue_type_meta['id']
 
-        fields = [{
-            'name': 'project',
-            'label': 'Jira Project',
-            'choices': ((meta['id'], jira_project_key),),
-            'default': meta['id'],
-            'type': 'select',
-            'readonly': True
-        }] + fields + [{
-            'name': 'issuetype',
-            'label': 'Issue Type',
-            'default': issue_type or issue_type_meta['id'],
-            'type': 'select',
-            'choices': issue_type_choices
-        }]
+        fields = [
+            {
+                'name': 'project',
+                'label': 'Jira Project',
+                'choices': ((meta['id'], jira_project_key), ),
+                'default': meta['id'],
+                'type': 'select',
+                'readonly': True
+            }
+        ] + fields + [
+            {
+                'name': 'issuetype',
+                'label': 'Issue Type',
+                'default': issue_type or issue_type_meta['id'],
+                'type': 'select',
+                'choices': issue_type_choices
+            }
+        ]
 
         # title is renamed to summary before sending to JIRA
         standard_fields = [f['name'] for f in fields] + ['summary']
@@ -196,10 +208,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
         # apply ordering to fields based on some known built-in JIRA fields.
         # otherwise weird ordering occurs.
-        anti_gravity = {"priority": -150,
-                        "fixVersions": -125,
-                        "components": -100,
-                        "security": -50}
+        anti_gravity = {"priority": -150, "fixVersions": -125, "components": -100, "security": -50}
 
         dynamic_fields = issue_type_meta.get('fields').keys()
         dynamic_fields.sort(key=lambda f: anti_gravity.get(f) or 0)
@@ -225,21 +234,23 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         return fields
 
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
-        return [{
-            'name': 'issue_id',
-            'label': 'Issue',
-            'default': '',
-            'type': 'select',
-            'has_autocomplete': True
-        }, {
-            'name': 'comment',
-            'label': 'Comment',
-            'default': absolute_uri(group.get_absolute_url()),
-            'type': 'textarea',
-            'help': ('Leave blank if you don\'t want to '
-                     'add a comment to the JIRA issue.'),
-            'required': False
-        }]
+        return [
+            {
+                'name': 'issue_id',
+                'label': 'Issue',
+                'default': '',
+                'type': 'select',
+                'has_autocomplete': True
+            }, {
+                'name': 'comment',
+                'label': 'Comment',
+                'default': absolute_uri(group.get_absolute_url()),
+                'type': 'textarea',
+                'help': ('Leave blank if you don\'t want to '
+                         'add a comment to the JIRA issue.'),
+                'required': False
+            }
+        ]
 
     def link_issue(self, request, group, form_data, **kwargs):
         client = self.get_jira_client(group.project)
@@ -255,9 +266,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             except Exception as e:
                 self.raise_error(e)
 
-        return {
-            'title': issue['fields']['summary']
-        }
+        return {'title': issue['fields']['summary']}
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return issue_id
@@ -276,15 +285,22 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             try:
                 response = client.search_issues(project, query)
             except JIRAError as e:
-                return Response({
-                    'error_type': 'validation',
-                    'errors': [{'__all__': self.message_from_error(e)}]
-                }, status=400)
+                return Response(
+                    {
+                        'error_type': 'validation',
+                        'errors': [{
+                            '__all__': self.message_from_error(e)
+                        }]
+                    },
+                    status=400
+                )
             else:
-                issues = [{
-                    'text': '(%s) %s' % (i['key'], i['fields']['summary']),
-                    'id': i['key']
-                } for i in response.json.get('issues', [])]
+                issues = [
+                    {
+                        'text': '(%s) %s' % (i['key'], i['fields']['summary']),
+                        'id': i['key']
+                    } for i in response.json.get('issues', [])
+                ]
                 return Response({field: issues})
 
         jira_url = request.GET.get('jira_url')
@@ -300,13 +316,16 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             if is_user_api:  # its the JSON version of the autocompleter
                 is_xml = False
                 jira_query['username'] = query.encode('utf8')
-                jira_query.pop('issueKey', False)  # some reason JIRA complains if this key is in the URL.
+                jira_query.pop(
+                    'issueKey', False
+                )  # some reason JIRA complains if this key is in the URL.
                 jira_query['project'] = project.encode('utf8')
             else:  # its the stupid XML version of the API.
                 is_xml = True
                 jira_query['query'] = query.encode('utf8')
                 if jira_query.get('fieldName'):
-                    jira_query['fieldName'] = jira_query['fieldName'][0]  # for some reason its a list.
+                    jira_query['fieldName'] = jira_query['fieldName'
+                                                         ][0]  # for some reason its a list.
 
             parsed[3] = urlencode(jira_query)
             final_url = urlunsplit(parsed)
@@ -316,36 +335,54 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
             if is_xml:
                 for userxml in autocomplete_response.xml.findAll("users"):
-                    users.append({
-                        'id': userxml.find('name').text,
-                        'text': userxml.find('html').text
-                    })
+                    users.append(
+                        {
+                            'id': userxml.find('name').text,
+                            'text': userxml.find('html').text
+                        }
+                    )
             else:
                 for user in autocomplete_response.json:
-                    users.append({
-                        'id': user['name'],
-                        'text': '%s %s(%s)' % (user['displayName'],
-                                               '- %s ' % user.get('emailAddress') if user.get('emailAddress') else '',
-                                               user['name'])
-                    })
+                    users.append(
+                        {
+                            'id':
+                            user['name'],
+                            'text':
+                            '%s %s(%s)' % (
+                                user['displayName'], '- %s ' % user.get('emailAddress')
+                                if user.get('emailAddress') else '', user['name']
+                            )
+                        }
+                    )
 
             # if JIRA user doesn't have proper permission for user api,
             # try the assignee api instead
             if not users and is_user_api:
                 try:
-                    autocomplete_response = jira_client.search_users_for_project(jira_query.get('project'),
-                                                                                 jira_query.get('username'))
+                    autocomplete_response = jira_client.search_users_for_project(
+                        jira_query.get('project'), jira_query.get('username')
+                    )
                 except (JIRAUnauthorized, JIRAError) as e:
-                    return Response({
-                        'error_type': 'validation',
-                        'errors': [{'__all__': self.message_from_error(e)}]
-                    }, status=400)
+                    return Response(
+                        {
+                            'error_type': 'validation',
+                            'errors': [{
+                                '__all__': self.message_from_error(e)
+                            }]
+                        },
+                        status=400
+                    )
 
                 for user in autocomplete_response.json:
-                    users.append({
-                        'id': user['name'],
-                        'text': '%s - %s (%s)' % (user['displayName'], user['emailAddress'], user['name'])
-                    })
+                    users.append(
+                        {
+                            'id':
+                            user['name'],
+                            'text':
+                            '%s - %s (%s)' %
+                            (user['displayName'], user['emailAddress'], user['name'])
+                        }
+                    )
 
             return Response({field: users})
 
@@ -360,10 +397,10 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 if message:
                     message += ' '
                 message += ' '.join(['%s: %s' % (k, v) for k, v in exc.json.get('errors').items()])
-            return ('Error Communicating with Jira (HTTP %s): %s' % (
-                exc.status_code,
-                message or 'unknown error',
-            ))
+            return (
+                'Error Communicating with Jira (HTTP %s): %s' %
+                (exc.status_code, message or 'unknown error', )
+            )
         else:
             return ERR_INTERNAL
 
@@ -433,8 +470,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         v = {'id': v}
                     cleaned_data[field] = v
 
-        if not (isinstance(cleaned_data['issuetype'], dict)
-                and 'id' in cleaned_data['issuetype']):
+        if not (isinstance(cleaned_data['issuetype'], dict) and 'id' in cleaned_data['issuetype']):
             # something fishy is going on with this field, working on some JIRA
             # instances, and some not.
             # testing against 5.1.5 and 5.1.4 does not convert (perhaps is no longer included
@@ -473,9 +509,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         return config
         ```
         """
-        client = JIRAClient(config['instance_url'],
-                            config['username'],
-                            config['password'])
+        client = JIRAClient(config['instance_url'], config['username'], config['password'])
         try:
             client.get_projects_list()
         except JIRAError as e:
@@ -503,7 +537,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             else:
                 projects = projects_response.json
                 if projects:
-                    project_choices = [(p.get('key'), '%s (%s)' % (p.get('name'), p.get('key'))) for p in projects]
+                    project_choices = [
+                        (p.get('key'), '%s (%s)' % (p.get('name'), p.get('key'))) for p in projects
+                    ]
                     jira_project = jira_project or projects[0]['key']
 
             if jira_project:
@@ -514,7 +550,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 else:
                     priorities = priorities_response.json
                     if priorities:
-                        priority_choices = [(p.get('id'), '%s' % (p.get('name'))) for p in priorities]
+                        priority_choices = [
+                            (p.get('id'), '%s' % (p.get('name'))) for p in priorities
+                        ]
                         default_priority = default_priority or priorities[0]['id']
 
                 try:
@@ -528,61 +566,61 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                             default_issue_type = default_issue_type or issue_type_choices[0][0]
 
         secret_field = get_secret_field_config(pw, '')
-        secret_field.update({
-            'name': 'password',
-            'label': 'Password'
-        })
+        secret_field.update({'name': 'password', 'label': 'Password'})
 
-        return [{
-            'name': 'instance_url',
-            'label': 'JIRA Instance URL',
-            'default': instance,
-            'type': 'text',
-            'placeholder': 'e.g. "https://jira.atlassian.com"',
-            'help': 'It must be visible to the Sentry server'
-        }, {
-            'name': 'username',
-            'label': 'Username',
-            'default': username,
-            'type': 'text',
-            'help': 'Ensure the JIRA user has admin permissions on the project'
-        }, secret_field, {
-            'name': 'default_project',
-            'label': 'Linked Project',
-            'type': 'select',
-            'choices': project_choices,
-            'default': jira_project,
-            'required': False
-        }, {
-            'name': 'ignored_fields',
-            'label': 'Ignored Fields',
-            'type': 'textarea',
-            'required': False,
-            'placeholder': 'e.g. "components, security, customfield_10006"',
-            'default': self.get_option('ignored_fields', project),
-            'help': 'Comma-separated list of properties that you don\'t want to show in the form'
-        }, {
-            'name': 'default_priority',
-            'label': 'Default Priority',
-            'type': 'select',
-            'choices': priority_choices,
-            'required': False,
-            'default': default_priority
-        }, {
-            'name': 'default_issue_type',
-            'label': 'Default Issue Type',
-            'type': 'select',
-            'choices': issue_type_choices,
-            'required': False,
-            'default': default_issue_type
-        }, {
-            'name': 'auto_create',
-            'label': 'Automatically create JIRA Tickets',
-            'default': self.get_option('auto_create', project) or False,
-            'type': 'bool',
-            'required': False,
-            'help': 'Automatically create a JIRA ticket for EVERY new issue'
-        }]
+        return [
+            {
+                'name': 'instance_url',
+                'label': 'JIRA Instance URL',
+                'default': instance,
+                'type': 'text',
+                'placeholder': 'e.g. "https://jira.atlassian.com"',
+                'help': 'It must be visible to the Sentry server'
+            }, {
+                'name': 'username',
+                'label': 'Username',
+                'default': username,
+                'type': 'text',
+                'help': 'Ensure the JIRA user has admin permissions on the project'
+            }, secret_field, {
+                'name': 'default_project',
+                'label': 'Linked Project',
+                'type': 'select',
+                'choices': project_choices,
+                'default': jira_project,
+                'required': False
+            }, {
+                'name': 'ignored_fields',
+                'label': 'Ignored Fields',
+                'type': 'textarea',
+                'required': False,
+                'placeholder': 'e.g. "components, security, customfield_10006"',
+                'default': self.get_option('ignored_fields', project),
+                'help':
+                'Comma-separated list of properties that you don\'t want to show in the form'
+            }, {
+                'name': 'default_priority',
+                'label': 'Default Priority',
+                'type': 'select',
+                'choices': priority_choices,
+                'required': False,
+                'default': default_priority
+            }, {
+                'name': 'default_issue_type',
+                'label': 'Default Issue Type',
+                'type': 'select',
+                'choices': issue_type_choices,
+                'required': False,
+                'default': default_issue_type
+            }, {
+                'name': 'auto_create',
+                'label': 'Automatically create JIRA Tickets',
+                'default': self.get_option('auto_create', project) or False,
+                'type': 'bool',
+                'required': False,
+                'help': 'Automatically create a JIRA ticket for EVERY new issue'
+            }
+        ]
 
     def should_create(self, group, event, is_new):
         if not is_new:
@@ -612,20 +650,20 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             if name in included_fields:
                 post_data[name] = field.get('default')
 
-        if not (post_data.get('priority') and post_data.get('issuetype') and post_data.get('project')):
+        if not (
+            post_data.get('priority') and post_data.get('issuetype') and post_data.get('project')
+        ):
             return
 
         interface = event.interfaces.get('sentry.interfaces.Exception')
 
         if interface:
-            post_data['description'] += '\n{code}%s{code}' % interface.get_stacktrace(event, system_frames=False,
-                                                                                      max_frames=settings.SENTRY_MAX_STACKTRACE_FRAMES)
+            post_data['description'] += '\n{code}%s{code}' % interface.get_stacktrace(
+                event, system_frames=False, max_frames=settings.SENTRY_MAX_STACKTRACE_FRAMES
+            )
 
         try:
-            issue_id = self.create_issue(
-                request={},
-                group=group,
-                form_data=post_data)
+            issue_id = self.create_issue(request={}, group=group, form_data=post_data)
         except PluginError as e:
             logging.exception('Error creating JIRA ticket: %s', e)
         else:
