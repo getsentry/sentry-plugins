@@ -45,10 +45,12 @@ class GitHubClient(object):
         if params is None:
             params = {}
 
-        params.update({
-            'client_id': settings.GITHUB_APP_ID,
-            'client_secret': settings.GITHUB_API_SECRET,
-        })
+        params.update(
+            {
+                'client_id': settings.GITHUB_APP_ID,
+                'client_secret': settings.GITHUB_API_SECRET,
+            }
+        )
 
         return self._request(method, path, data=data, params=params)
 
@@ -127,11 +129,8 @@ class GitHubClient(object):
     def compare_commits(self, repo, start_sha, end_sha):
         # see https://developer.github.com/v3/repos/commits/#compare-two-commits
         # where start sha is oldest and end is most recent
-        return self.request(
-            'GET',
-            '/repos/{}/compare/{}...{}'.format(
-                repo,
-                start_sha,
-                end_sha,
-            )
-        )
+        return self.request('GET', '/repos/{}/compare/{}...{}'.format(
+            repo,
+            start_sha,
+            end_sha,
+        ))

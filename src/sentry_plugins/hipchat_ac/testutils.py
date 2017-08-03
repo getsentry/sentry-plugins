@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from sentry_plugins.hipchat_ac.models import Tenant
 
-
 CAPDOC_EXAMPLE = {
     'vendor': {
         'url': 'http://atlassian.com',
@@ -39,9 +38,12 @@ CAPDOC_EXAMPLE = {
                     'id': 'manage_rooms'
                 },
                 'import_data': {
-                    'description': 'Import users, rooms, and chat history. Only available for select add-ons.',
-                    'name': 'Import Data',
-                    'id': 'import_data',
+                    'description':
+                    'Import users, rooms, and chat history. Only available for select add-ons.',
+                    'name':
+                    'Import Data',
+                    'id':
+                    'import_data',
                 },
                 'view_room': {
                     'description': 'View room information and participants, but not history',
@@ -54,14 +56,20 @@ CAPDOC_EXAMPLE = {
                     'id': 'send_message',
                 },
                 'view_messages': {
-                    'description': 'View messages from chat rooms and private chats you have access to',
-                    'name': 'View Messages',
-                    'id': 'view_messages'
+                    'description':
+                    'View messages from chat rooms and private chats you have access to',
+                    'name':
+                    'View Messages',
+                    'id':
+                    'view_messages'
                 },
                 'admin_group': {
-                    'description': "Perform group administrative tasks. Note that this scope is restricted from updating the group owner's profile.",
-                    'name': 'Administer Group',
-                    'id': 'admin_group',
+                    'description':
+                    "Perform group administrative tasks. Note that this scope is restricted from updating the group owner's profile.",
+                    'name':
+                    'Administer Group',
+                    'id':
+                    'admin_group',
                 },
                 'send_notification': {
                     'description': 'Send room notifications',
@@ -83,8 +91,7 @@ CAPDOC_EXAMPLE = {
 
 
 class HipchatFixture(object):
-    def create_tenant(self, id=None, room_id=None, secret=None, auth_user=None,
-                      projects=None):
+    def create_tenant(self, id=None, room_id=None, secret=None, auth_user=None, projects=None):
         tenant = Tenant.objects.create(
             id=id or six.text_type(randint(0, 10000000)),
             room_id=room_id or six.text_type(randint(0, 10000000)),

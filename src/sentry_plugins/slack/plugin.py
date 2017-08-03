@@ -31,80 +31,95 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
         return bool(self.get_option('webhook', project))
 
     def get_config(self, project, **kwargs):
-        return [{
-            'name': 'webhook',
-            'label': 'Webhook URL',
-            'type': 'url',
-            'placeholder': 'e.g. https://hooks.slack.com/services/000000000/000000000/00000000000000000',
-            'required': True,
-            'help': 'Your custom Slack webhook URL.'
-        }, {
-            'name': 'username',
-            'label': 'Bot Name',
-            'type': 'string',
-            'placeholder': 'e.g. Sentry',
-            'default': 'Sentry',
-            'required': False,
-            'help': 'The name used when publishing messages.'
-        }, {
-            'name': 'icon_url',
-            'label': 'Icon URL',
-            'type': 'url',
-            'required': False,
-            'help': (
-                'The url of the icon to appear beside your bot (32px png), '
-                'leave empty for none.<br />You may use '
-                'http://myovchev.github.io/sentry-slack/images/logo32.png'
-            ),
-        }, {
-            'name': 'channel',
-            'label': 'Destination',
-            'type': 'string',
-            'placeholder': 'e.g. #engineering',
-            'required': False,
-            'help': 'Optional #channel name or @user',
-        }, {
-            'name': 'include_tags',
-            'label': 'Include Tags',
-            'type': 'bool',
-            'required': False,
-            'help': 'Include tags with notifications',
-        }, {
-            'name': 'included_tag_keys',
-            'label': 'Included Tags',
-            'type': 'string',
-            'required': False,
-            'help': (
-                'Only include these tags (comma separated list). '
-                'Leave empty to include all.'
-            ),
-        }, {
-            'name': 'excluded_tag_keys',
-            'label': 'Excluded Tags',
-            'type': 'string',
-            'required': False,
-            'help': 'Exclude these tags (comma separated list).',
-        }, {
-            'name': 'include_rules',
-            'label': 'Include Rules',
-            'type': 'bool',
-            'required': False,
-            'help': 'Include triggering rules with notifications.',
-        }, {
-            'name': 'exclude_project',
-            'label': 'Exclude Project Name',
-            'type': 'bool',
-            'default': False,
-            'required': False,
-            'help': 'Exclude project name with notifications.',
-        }, {
-            'name': 'exclude_culprit',
-            'label': 'Exclude Culprit',
-            'type': 'bool',
-            'default': False,
-            'required': False,
-            'help': 'Exclude culprit with notifications.',
-        }]
+        return [
+            {
+                'name':
+                'webhook',
+                'label':
+                'Webhook URL',
+                'type':
+                'url',
+                'placeholder':
+                'e.g. https://hooks.slack.com/services/000000000/000000000/00000000000000000',
+                'required':
+                True,
+                'help':
+                'Your custom Slack webhook URL.'
+            }, {
+                'name': 'username',
+                'label': 'Bot Name',
+                'type': 'string',
+                'placeholder': 'e.g. Sentry',
+                'default': 'Sentry',
+                'required': False,
+                'help': 'The name used when publishing messages.'
+            }, {
+                'name':
+                'icon_url',
+                'label':
+                'Icon URL',
+                'type':
+                'url',
+                'required':
+                False,
+                'help': (
+                    'The url of the icon to appear beside your bot (32px png), '
+                    'leave empty for none.<br />You may use '
+                    'http://myovchev.github.io/sentry-slack/images/logo32.png'
+                ),
+            }, {
+                'name': 'channel',
+                'label': 'Destination',
+                'type': 'string',
+                'placeholder': 'e.g. #engineering',
+                'required': False,
+                'help': 'Optional #channel name or @user',
+            }, {
+                'name': 'include_tags',
+                'label': 'Include Tags',
+                'type': 'bool',
+                'required': False,
+                'help': 'Include tags with notifications',
+            }, {
+                'name':
+                'included_tag_keys',
+                'label':
+                'Included Tags',
+                'type':
+                'string',
+                'required':
+                False,
+                'help':
+                ('Only include these tags (comma separated list). '
+                 'Leave empty to include all.'),
+            }, {
+                'name': 'excluded_tag_keys',
+                'label': 'Excluded Tags',
+                'type': 'string',
+                'required': False,
+                'help': 'Exclude these tags (comma separated list).',
+            }, {
+                'name': 'include_rules',
+                'label': 'Include Rules',
+                'type': 'bool',
+                'required': False,
+                'help': 'Include triggering rules with notifications.',
+            }, {
+                'name': 'exclude_project',
+                'label': 'Exclude Project Name',
+                'type': 'bool',
+                'default': False,
+                'required': False,
+                'help': 'Exclude project name with notifications.',
+            }, {
+                'name': 'exclude_culprit',
+                'label': 'Exclude Culprit',
+                'type': 'bool',
+                'default': False,
+                'required': False,
+                'help': 'Exclude culprit with notifications.',
+            }
+        ]
 
     def color_for_event(self, event):
         return '#' + LEVEL_TO_COLOR.get(event.get_tag('level'), 'error')
@@ -129,10 +144,7 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 project=event.project,
             )
         }
-        return (
-            (key_labels.get(k, k), value_labels.get((k, v), v))
-            for k, v in tag_list
-        )
+        return ((key_labels.get(k, k), value_labels.get((k, v), v)) for k, v in tag_list)
 
     def get_tag_list(self, name, project):
         option = self.get_option(name, project)
@@ -182,20 +194,23 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
         if self.get_option('include_rules', project):
             rules = []
             for rule in notification.rules:
-                rule_link = reverse('sentry-edit-project-rule', args=[
-                    group.organization.slug, project.slug, rule.id
-                ])
+                rule_link = reverse(
+                    'sentry-edit-project-rule',
+                    args=[group.organization.slug, project.slug, rule.id]
+                )
                 # Make sure it's an absolute uri since we're sending this
                 # outside of Sentry into Slack
                 rule_link = absolute_uri(rule_link)
                 rules.append((rule_link, rule.label.encode('utf-8')))
 
             if rules:
-                fields.append({
-                    'title': 'Triggered By',
-                    'value': ', '.join('<%s | %s>' % r for r in rules),
-                    'short': False,
-                })
+                fields.append(
+                    {
+                        'title': 'Triggered By',
+                        'value': ', '.join('<%s | %s>' % r for r in rules),
+                        'short': False,
+                    }
+                )
 
         if self.get_option('include_tags', project):
             included_tags = set(self.get_tag_list('included_tag_keys', project) or [])
@@ -207,20 +222,24 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                     continue
                 if excluded_tags and (key in excluded_tags or std_key in excluded_tags):
                     continue
-                fields.append({
-                    'title': tag_key.encode('utf-8'),
-                    'value': tag_value.encode('utf-8'),
-                    'short': True,
-                })
+                fields.append(
+                    {
+                        'title': tag_key.encode('utf-8'),
+                        'value': tag_value.encode('utf-8'),
+                        'short': True,
+                    }
+                )
 
         payload = {
-            'attachments': [{
-                'fallback': '[%s] %s' % (project_name, title),
-                'title': title,
-                'title_link': group.get_absolute_url(),
-                'color': self.color_for_event(event),
-                'fields': fields,
-            }]
+            'attachments': [
+                {
+                    'fallback': '[%s] %s' % (project_name, title),
+                    'title': title,
+                    'title_link': group.get_absolute_url(),
+                    'color': self.color_for_event(event),
+                    'fields': fields,
+                }
+            ]
         }
 
         if username:

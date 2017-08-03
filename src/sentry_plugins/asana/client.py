@@ -51,22 +51,14 @@ class AsanaClient(object):
         )
 
     def create_issue(self, workspace, data):
-        asana_data = {
-            'name': data['title'],
-            'notes': data['description'],
-            'workspace': workspace
-        }
+        asana_data = {'name': data['title'], 'notes': data['description'], 'workspace': workspace}
         if data.get('project'):
             asana_data['projects'] = data['project']
 
         if data.get('assignee'):
             asana_data['assignee'] = data['assignee']
 
-        return self.request(
-            'POST',
-            '/tasks',
-            data={'data': asana_data}
-        )
+        return self.request('POST', '/tasks', data={'data': asana_data})
 
     def create_comment(self, issue_id, data):
         return self.request(
@@ -79,5 +71,6 @@ class AsanaClient(object):
         return self.request(
             'GET',
             '/workspaces/%s/typeahead' % workspace,
-            params={'type': object_type, 'query': query}
+            params={'type': object_type,
+                    'query': query}
         )

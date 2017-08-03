@@ -23,40 +23,49 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_group_urls(self):
         return super(PivotalPlugin, self).get_group_urls() + [
-            (r'^autocomplete', IssueGroupActionEndpoint.as_view(
-                view_method_name='view_autocomplete',
-                plugin=self,
-            )),
+            (
+                r'^autocomplete', IssueGroupActionEndpoint.as_view(
+                    view_method_name='view_autocomplete',
+                    plugin=self,
+                )
+            ),
         ]
 
     def is_configured(self, request, project, **kwargs):
         return all(self.get_option(k, project) for k in ('token', 'project'))
 
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
-        return [{
-            'name': 'issue_id',
-            'label': 'Story',
-            'default': '',
-            'type': 'select',
-            'has_autocomplete': True,
-            'help': 'Search Pivotal Stories by name or description.'
-        }, {
-            'name': 'comment',
-            'label': 'Comment',
-            'default': group.get_absolute_url(),
-            'type': 'textarea',
-            'help': ('Leave blank if you don\'t want to '
-                     'add a comment to the Pivotal story.'),
-            'required': False
-        }]
+        return [
+            {
+                'name': 'issue_id',
+                'label': 'Story',
+                'default': '',
+                'type': 'select',
+                'has_autocomplete': True,
+                'help': 'Search Pivotal Stories by name or description.'
+            }, {
+                'name': 'comment',
+                'label': 'Comment',
+                'default': group.get_absolute_url(),
+                'type': 'textarea',
+                'help':
+                ('Leave blank if you don\'t want to '
+                 'add a comment to the Pivotal story.'),
+                'required': False
+            }
+        ]
 
     def handle_api_error(self, error):
         msg = u'Error communicating with Pivotal Tracker'
         status = 400 if isinstance(error, PluginError) else 502
-        return Response({
-            'error_type': 'validation',
-            'errors': {'__all__': msg},
-        }, status=status)
+        return Response(
+            {
+                'error_type': 'validation',
+                'errors': {
+                    '__all__': msg
+                },
+            }, status=status
+        )
 
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
@@ -79,10 +88,7 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
 
         resp = json_resp.get('stories', {})
         stories = resp.get('stories', [])
-        issues = [{
-            'text': '(#%s) %s' % (i['id'], i['name']),
-            'id': i['id']
-        } for i in stories]
+        issues = [{'text': '(#%s) %s' % (i['id'], i['name']), 'id': i['id']} for i in stories]
 
         return Response({field: issues})
 
@@ -96,13 +102,13 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = six.text_type(e)
-            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
+            raise PluginError('Error communicating with Pivotal: %s' % (msg, ))
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
             msg = six.text_type(e)
-            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
+            raise PluginError('Error communicating with Pivotal: %s' % (msg, ))
 
         if req.status_code > 399:
             raise PluginError(json_resp['error'])
@@ -135,13 +141,13 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
             body = safe_urlread(req)
         except requests.RequestException as e:
             msg = six.text_type(e)
-            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
+            raise PluginError('Error communicating with Pivotal: %s' % (msg, ))
 
         try:
             json_resp = json.loads(body)
         except ValueError as e:
             msg = six.text_type(e)
-            raise PluginError('Error communicating with Pivotal: %s' % (msg,))
+            raise PluginError('Error communicating with Pivotal: %s' % (msg, ))
 
         if req.status_code > 399:
             raise PluginError(json_resp['error'])
@@ -164,20 +170,26 @@ class PivotalPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
         token = self.get_option('token', project)
-        helptext = ('Enter your API Token (found on '
-                    '<a href="https://www.pivotaltracker.com/profile"'
-                    '>pivotaltracker.com/profile</a>).')
+        helptext = (
+            'Enter your API Token (found on '
+            '<a href="https://www.pivotaltracker.com/profile"'
+            '>pivotaltracker.com/profile</a>).'
+        )
         secret_field = get_secret_field_config(token, helptext, include_prefix=True)
-        secret_field.update({
-            'name': 'token',
-            'label': 'API Token',
-            'placeholder': 'e.g. a9877d72b6d13b23410a7109b35e88bc'
-        })
-        return [secret_field, {
-            'name': 'project',
-            'label': 'Project ID',
-            'default': self.get_option('project', project),
-            'type': 'text',
-            'placeholder': 'e.g. 639281',
-            'help': 'Enter your project\'s numerical ID.'
-        }]
+        secret_field.update(
+            {
+                'name': 'token',
+                'label': 'API Token',
+                'placeholder': 'e.g. a9877d72b6d13b23410a7109b35e88bc'
+            }
+        )
+        return [
+            secret_field, {
+                'name': 'project',
+                'label': 'Project ID',
+                'default': self.get_option('project', project),
+                'type': 'text',
+                'placeholder': 'e.g. 639281',
+                'help': 'Enter your project\'s numerical ID.'
+            }
+        ]

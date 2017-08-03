@@ -10,19 +10,14 @@ text_type = type(u'')
 
 # git usurbs your bin path for hooks and will always run system python
 if 'VIRTUAL_ENV' in os.environ:
-    site_packages = glob(
-        '%s/lib/*/site-packages' % os.environ['VIRTUAL_ENV'])[0]
+    site_packages = glob('%s/lib/*/site-packages' % os.environ['VIRTUAL_ENV'])[0]
     sys.path.insert(0, site_packages)
 
 
 def main():
     from sentry.lint.engine import get_modified_files, run
 
-    files_modified = [
-        text_type(f)
-        for f in get_modified_files(os.getcwd())
-        if os.path.exists(f)
-    ]
+    files_modified = [text_type(f) for f in get_modified_files(os.getcwd()) if os.path.exists(f)]
 
     return run(files_modified)
 

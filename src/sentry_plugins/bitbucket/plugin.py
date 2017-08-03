@@ -20,17 +20,11 @@ from .client import BitbucketClient
 from .endpoints.webhook import parse_raw_user_email, parse_raw_user_name
 
 ISSUE_TYPES = (
-    ('bug', 'Bug'),
-    ('enhancement', 'Enhancement'),
-    ('proposal', 'Proposal'),
-    ('task', 'Task'),
+    ('bug', 'Bug'), ('enhancement', 'Enhancement'), ('proposal', 'Proposal'), ('task', 'Task'),
 )
 
 PRIORITIES = (
-    ('trivial', 'Trivial',),
-    ('minor', 'Minor',),
-    ('major', 'Major'),
-    ('critical', 'Critical'),
+    ('trivial', 'Trivial', ), ('minor', 'Minor', ), ('major', 'Major'), ('critical', 'Critical'),
     ('blocker', 'Blocker'),
 )
 
@@ -44,9 +38,11 @@ ERR_UNAUTHORIZED = (
     'you do not have access'
 )
 
-ERR_404 = ('Bitbucket returned a 404. Please make sure that '
-           'the repo exists, you have access to it, and it has '
-           'issue tracking enabled.')
+ERR_404 = (
+    'Bitbucket returned a 404. Please make sure that '
+    'the repo exists, you have access to it, and it has '
+    'issue tracking enabled.'
+)
 
 
 class BitbucketMixin(object):
@@ -56,10 +52,12 @@ class BitbucketMixin(object):
         elif isinstance(exc, ApiError):
             if exc.code == 404:
                 return ERR_404
-            return ('Error Communicating with Bitbucket (HTTP %s): %s' % (
-                exc.code,
-                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
-            ))
+            return (
+                'Error Communicating with Bitbucket (HTTP %s): %s' % (
+                    exc.code, exc.json.get('message', 'unknown error')
+                    if exc.json else 'unknown error',
+                )
+            )
         else:
             return ERR_INTERNAL
 
@@ -91,10 +89,12 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
 
     def get_group_urls(self):
         return super(BitbucketPlugin, self).get_group_urls() + [
-            (r'^autocomplete', IssueGroupActionEndpoint.as_view(
-                view_method_name='view_autocomplete',
-                plugin=self,
-            )),
+            (
+                r'^autocomplete', IssueGroupActionEndpoint.as_view(
+                    view_method_name='view_autocomplete',
+                    plugin=self,
+                )
+            ),
         ]
 
     def get_url_module(self):
@@ -105,42 +105,49 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
 
     def get_new_issue_fields(self, request, group, event, **kwargs):
         fields = super(BitbucketPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
-        return [{
-            'name': 'repo',
-            'label': 'Bitbucket Repository',
-            'default': self.get_option('repo', group.project),
-            'type': 'text',
-            'readonly': True
-        }] + fields + [{
-            'name': 'issue_type',
-            'label': 'Issue type',
-            'default': ISSUE_TYPES[0][0],
-            'type': 'select',
-            'choices': ISSUE_TYPES
-        }, {
-            'name': 'priority',
-            'label': 'Priority',
-            'default': PRIORITIES[0][0],
-            'type': 'select',
-            'choices': PRIORITIES
-        }]
+        return [
+            {
+                'name': 'repo',
+                'label': 'Bitbucket Repository',
+                'default': self.get_option('repo', group.project),
+                'type': 'text',
+                'readonly': True
+            }
+        ] + fields + [
+            {
+                'name': 'issue_type',
+                'label': 'Issue type',
+                'default': ISSUE_TYPES[0][0],
+                'type': 'select',
+                'choices': ISSUE_TYPES
+            }, {
+                'name': 'priority',
+                'label': 'Priority',
+                'default': PRIORITIES[0][0],
+                'type': 'select',
+                'choices': PRIORITIES
+            }
+        ]
 
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
-        return [{
-            'name': 'issue_id',
-            'label': 'Issue',
-            'default': '',
-            'type': 'select',
-            'has_autocomplete': True
-        }, {
-            'name': 'comment',
-            'label': 'Comment',
-            'default': absolute_uri(group.get_absolute_url()),
-            'type': 'textarea',
-            'help': ('Leave blank if you don\'t want to '
-                     'add a comment to the Bitbucket issue.'),
-            'required': False
-        }]
+        return [
+            {
+                'name': 'issue_id',
+                'label': 'Issue',
+                'default': '',
+                'type': 'select',
+                'has_autocomplete': True
+            }, {
+                'name': 'comment',
+                'label': 'Comment',
+                'default': absolute_uri(group.get_absolute_url()),
+                'type': 'textarea',
+                'help':
+                ('Leave blank if you don\'t want to '
+                 'add a comment to the Bitbucket issue.'),
+                'required': False
+            }
+        ]
 
     def get_client(self, user):
         auth = self.get_auth_for_user(user=user)
@@ -154,10 +161,12 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
         elif isinstance(exc, ApiError):
             if exc.code == 404:
                 return ERR_404
-            return ('Error Communicating with Bitbucket (HTTP %s): %s' % (
-                exc.code,
-                exc.json.get('message', 'unknown error') if exc.json else 'unknown error',
-            ))
+            return (
+                'Error Communicating with Bitbucket (HTTP %s): %s' % (
+                    exc.code, exc.json.get('message', 'unknown error')
+                    if exc.json else 'unknown error',
+                )
+            )
         else:
             return ERR_INTERNAL
 
@@ -177,8 +186,7 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
 
         try:
             response = client.create_issue(
-                repo=self.get_option('repo', group.project),
-                data=form_data
+                repo=self.get_option('repo', group.project), data=form_data
             )
         except Exception as e:
             self.raise_error(e)
@@ -203,9 +211,7 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
             except Exception as e:
                 self.raise_error(e)
 
-        return {
-            'title': issue['title']
-        }
+        return {'title': issue['title']}
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'Bitbucket-%s' % issue_id
@@ -226,27 +232,36 @@ class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
         try:
             response = client.search_issues(repo, query.encode('utf-8'))
         except Exception as e:
-            return Response({
-                'error_type': 'validation',
-                'errors': [{'__all__': self.message_from_error(e)}]
-            }, status=400)
+            return Response(
+                {
+                    'error_type': 'validation',
+                    'errors': [{
+                        '__all__': self.message_from_error(e)
+                    }]
+                },
+                status=400
+            )
 
-        issues = [{
-            'text': '(#%s) %s' % (i['local_id'], i['title']),
-            'id': i['local_id']
-        } for i in response.get('issues', [])]
+        issues = [
+            {
+                'text': '(#%s) %s' % (i['local_id'], i['title']),
+                'id': i['local_id']
+            } for i in response.get('issues', [])
+        ]
 
         return Response({field: issues})
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
-        return [{
-            'name': 'repo',
-            'label': 'Repository Name',
-            'type': 'text',
-            'placeholder': 'e.g. getsentry/sentry',
-            'help': 'Enter your repository name, including the owner.',
-            'required': True,
-        }]
+        return [
+            {
+                'name': 'repo',
+                'label': 'Repository Name',
+                'type': 'text',
+                'placeholder': 'e.g. getsentry/sentry',
+                'help': 'Enter your repository name, including the owner.',
+                'required': True,
+            }
+        ]
 
     def setup(self, bindings):
         bindings.add('repository.provider', BitbucketRepositoryProvider, id='bitbucket')
@@ -258,14 +273,16 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
     logger = logging.getLogger('sentry.plugins.bitbucket')
 
     def get_config(self):
-        return [{
-            'name': 'name',
-            'label': 'Repository Name',
-            'type': 'text',
-            'placeholder': 'e.g. getsentry/sentry',
-            'help': 'Enter your repository name, including the owner.',
-            'required': True,
-        }]
+        return [
+            {
+                'name': 'name',
+                'label': 'Repository Name',
+                'type': 'text',
+                'placeholder': 'e.g. getsentry/sentry',
+                'help': 'Enter your repository name, including the owner.',
+                'required': True,
+            }
+        ]
 
     def validate_config(self, organization, config, actor=None):
         """
@@ -286,8 +303,7 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
         return config
 
     def get_webhook_secret(self, organization):
-        lock = locks.get('bitbucket:webhook-secret:{}'.format(organization.id),
-                         duration=60)
+        lock = locks.get('bitbucket:webhook-secret:{}'.format(organization.id), duration=60)
         with lock.acquire():
             secret = OrganizationOption.objects.get_value(
                 organization=organization,
@@ -308,12 +324,19 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
 
         client = self.get_client(actor)
         try:
-            resp = client.create_hook(data['name'], {
-                'description': 'sentry-bitbucket-repo-hook',
-                'url': absolute_uri('/plugins/bitbucket/organizations/{}/webhook/'.format(organization.id)),
-                'active': True,
-                'events': ['repo:push'],
-            })
+            resp = client.create_hook(
+                data['name'], {
+                    'description':
+                    'sentry-bitbucket-repo-hook',
+                    'url':
+                    absolute_uri(
+                        '/plugins/bitbucket/organizations/{}/webhook/'.format(organization.id)
+                    ),
+                    'active':
+                    True,
+                    'events': ['repo:push'],
+                }
+            )
         except Exception as e:
             self.raise_error(e)
         else:
@@ -340,14 +363,16 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
             raise
 
     def _format_commits(self, repo, commit_list):
-        return [{
-            'id': c['hash'],
-            'repository': repo.name,
-            'author_email': parse_raw_user_email(c['author']['raw']),
-            'author_name': parse_raw_user_name(c['author']['raw']),
-            'message': c['message'],
-            'patch_set': c.get('patch_set'),
-        } for c in commit_list]
+        return [
+            {
+                'id': c['hash'],
+                'repository': repo.name,
+                'author_email': parse_raw_user_email(c['author']['raw']),
+                'author_name': parse_raw_user_name(c['author']['raw']),
+                'message': c['message'],
+                'patch_set': c.get('patch_set'),
+            } for c in commit_list
+        ]
 
     def compare_commits(self, repo, start_sha, end_sha, actor=None):
         if actor is None:

@@ -12,7 +12,6 @@ from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 from .client import AsanaClient
 
-
 ERR_INTERNAL = (
     'An internal error occurred with the integration and '
     'the Sentry team has been notified'
@@ -23,9 +22,7 @@ ERR_UNAUTHORIZED = (
     'you do not have access'
 )
 
-ERR_AUTH_NOT_CONFIGURED = (
-    'You still need to associate an Asana identity with this account.'
-)
+ERR_AUTH_NOT_CONFIGURED = ('You still need to associate an Asana identity with this account.')
 
 
 class AsanaPlugin(CorePluginMixin, IssuePlugin2):
@@ -38,10 +35,12 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_group_urls(self):
         return super(AsanaPlugin, self).get_group_urls() + [
-            (r'^autocomplete', IssueGroupActionEndpoint.as_view(
-                view_method_name='view_autocomplete',
-                plugin=self,
-            )),
+            (
+                r'^autocomplete', IssueGroupActionEndpoint.as_view(
+                    view_method_name='view_autocomplete',
+                    plugin=self,
+                )
+            ),
         ]
 
     def is_configured(self, request, project, **kwargs):
@@ -73,45 +72,51 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
                 field['label'] = 'Notes'
                 field['required'] = False
 
-        return [{
-            'name': 'workspace',
-            'label': 'Asana Workspace',
-            'default': workspace,
-            'type': 'select',
-            'choices': workspace_choices,
-            'readonly': True
-        }] + fields + [{
-            'name': 'project',
-            'label': 'Project',
-            'type': 'select',
-            'has_autocomplete': True,
-            'required': False,
-            'placeholder': 'Start typing to search for a project'
-        }, {
-            'name': 'assignee',
-            'label': 'Assignee',
-            'type': 'select',
-            'has_autocomplete': True,
-            'required': False,
-            'placeholder': 'Start typing to search for a user'
-        }]
+        return [
+            {
+                'name': 'workspace',
+                'label': 'Asana Workspace',
+                'default': workspace,
+                'type': 'select',
+                'choices': workspace_choices,
+                'readonly': True
+            }
+        ] + fields + [
+            {
+                'name': 'project',
+                'label': 'Project',
+                'type': 'select',
+                'has_autocomplete': True,
+                'required': False,
+                'placeholder': 'Start typing to search for a project'
+            }, {
+                'name': 'assignee',
+                'label': 'Assignee',
+                'type': 'select',
+                'has_autocomplete': True,
+                'required': False,
+                'placeholder': 'Start typing to search for a user'
+            }
+        ]
 
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
-        return [{
-            'name': 'issue_id',
-            'label': 'Task',
-            'default': '',
-            'type': 'select',
-            'has_autocomplete': True
-        }, {
-            'name': 'comment',
-            'label': 'Comment',
-            'default': absolute_uri(group.get_absolute_url()),
-            'type': 'textarea',
-            'help': ('Leave blank if you don\'t want to '
-                     'add a comment to the Asana issue.'),
-            'required': False
-        }]
+        return [
+            {
+                'name': 'issue_id',
+                'label': 'Task',
+                'default': '',
+                'type': 'select',
+                'has_autocomplete': True
+            }, {
+                'name': 'comment',
+                'label': 'Comment',
+                'default': absolute_uri(group.get_absolute_url()),
+                'type': 'textarea',
+                'help': ('Leave blank if you don\'t want to '
+                         'add a comment to the Asana issue.'),
+                'required': False
+            }
+        ]
 
     def get_client(self, user):
         auth = self.get_auth_for_user(user=user)
@@ -127,10 +132,7 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
             errors = exc.json and exc.json.get('errors')
             if errors:
                 message = ' '.join([e['message'] for e in errors])
-            return ('Error Communicating with Asana (HTTP %s): %s' % (
-                exc.code,
-                message
-            ))
+            return ('Error Communicating with Asana (HTTP %s): %s' % (exc.code, message))
         else:
             return ERR_INTERNAL
 
@@ -150,8 +152,7 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
 
         try:
             response = client.create_issue(
-                workspace=self.get_option('workspace', group.project),
-                data=form_data
+                workspace=self.get_option('workspace', group.project), data=form_data
             )
         except Exception as e:
             self.raise_error(e)
@@ -174,9 +175,7 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
             except Exception as e:
                 self.raise_error(e)
 
-        return {
-            'title': issue['name']
-        }
+        return {'title': issue['name']}
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'Asana Issue'
@@ -212,19 +211,23 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
         helptext = None
         if workspace and not self.has_workspace_access(workspace, workspace_choices):
             workspace_choices.append((workspace, workspace))
-            helptext = ('This plugin has been configured for an Asana workspace '
-                        'that either you don\'t have access to or doesn\'t '
-                        'exist. You can edit the configuration, but you will not '
-                        'be able to change it back to the current configuration '
-                        'unless a teammate grants you access to the workspace in Asana.')
-        return [{
-            'name': 'workspace',
-            'label': 'Workspace',
-            'type': 'select',
-            'choices': workspace_choices,
-            'default': workspace or workspaces['data'][0]['id'],
-            'help': helptext
-        }]
+            helptext = (
+                'This plugin has been configured for an Asana workspace '
+                'that either you don\'t have access to or doesn\'t '
+                'exist. You can edit the configuration, but you will not '
+                'be able to change it back to the current configuration '
+                'unless a teammate grants you access to the workspace in Asana.'
+            )
+        return [
+            {
+                'name': 'workspace',
+                'label': 'Workspace',
+                'type': 'select',
+                'choices': workspace_choices,
+                'default': workspace or workspaces['data'][0]['id'],
+                'help': helptext
+            }
+        ]
 
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
@@ -241,14 +244,21 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
         try:
             response = client.search(workspace, field_name, query.encode('utf-8'))
         except Exception as e:
-            return Response({
-                'error_type': 'validation',
-                'errors': [{'__all__': self.message_from_error(e)}]
-            }, status=400)
+            return Response(
+                {
+                    'error_type': 'validation',
+                    'errors': [{
+                        '__all__': self.message_from_error(e)
+                    }]
+                },
+                status=400
+            )
         else:
-            results = [{
-                'text': '(#%s) %s' % (i['id'], i['name']),
-                'id': i['id']
-            } for i in response.get('data', [])]
+            results = [
+                {
+                    'text': '(#%s) %s' % (i['id'], i['name']),
+                    'id': i['id']
+                } for i in response.get('data', [])
+            ]
 
         return Response({field: results})

@@ -34,8 +34,7 @@ class VictorOpsPlugin(CorePluginMixin, NotifyPlugin):
                 secret=self.get_option('api_key', kwargs['project']),
                 help_text='VictorOps\'s Sentry API Key',
                 include_prefix=True,
-            ),
-            {
+            ), {
                 'name': 'routing_key',
                 'label': 'Routing Key',
                 'type': 'string',
@@ -60,14 +59,9 @@ class VictorOpsPlugin(CorePluginMixin, NotifyPlugin):
             body = interface.to_string(event)
             if not body:
                 continue
-            interface_list.append(
-                (interface.get_title(), body)
-            )
+            interface_list.append((interface.get_title(), body))
 
-        return '\n\n'.join((
-            '{}\n-----------\n\n{}'.format(k, v)
-            for k, v in interface_list
-        ))
+        return '\n\n'.join(('{}\n-----------\n\n{}'.format(k, v) for k, v in interface_list))
 
     def notify_users(self, group, event, fail_silently=False):
         if not self.is_configured(group.project):

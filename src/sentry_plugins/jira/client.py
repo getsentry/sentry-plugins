@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import logging
 import re
+import six
 from hashlib import md5 as _md5
 
 from requests.exceptions import ConnectionError, RequestException
@@ -56,6 +57,7 @@ class JIRAResponse(object):
     JSON from JIRA's ordered dicts (fields come back in order, but python obv.
     doesn't care)
     """
+
     def __init__(self, response_text, status_code):
         self.text = response_text
         self.xml = None
@@ -105,7 +107,10 @@ class JIRAClient(object):
         return self.get_cached(self.PROJECT_URL)
 
     def get_create_meta(self, project):
-        return self.make_request('get', self.META_URL, {'projectKeys': project, 'expand': 'projects.issuetypes.fields'})
+        return self.make_request(
+            'get', self.META_URL, {'projectKeys': project,
+                                   'expand': 'projects.issuetypes.fields'}
+        )
 
     def get_create_meta_for_project(self, project):
         response = self.get_create_meta(project)
@@ -134,10 +139,7 @@ class JIRAClient(object):
         return self.make_request('get', self.USERS_URL, {'project': project})
 
     def search_users_for_project(self, project, username):
-        return self.make_request('get', self.USERS_URL, {
-            'project': project,
-            'username': username
-        })
+        return self.make_request('get', self.USERS_URL, {'project': project, 'username': username})
 
     def create_issue(self, raw_form_data):
         data = {'fields': raw_form_data}
@@ -147,9 +149,7 @@ class JIRAClient(object):
         return self.make_request('get', self.ISSUE_URL % key)
 
     def create_comment(self, issue_key, comment):
-        return self.make_request('post', self.COMMENT_URL % issue_key, {
-            'body': comment
-        })
+        return self.make_request('post', self.COMMENT_URL % issue_key, {'body': comment})
 
     def search_issues(self, project, query):
         # check if it looks like an issue id
@@ -168,14 +168,14 @@ class JIRAClient(object):
         try:
             if method == 'get':
                 r = session.get(
-                    url, params=payload, auth=auth,
-                    verify=False, timeout=self.HTTP_TIMEOUT)
+                    url, params=payload, auth=auth, verify=False, timeout=self.HTTP_TIMEOUT
+                )
             else:
                 r = session.post(
-                    url, json=payload, auth=auth,
-                    verify=False, timeout=self.HTTP_TIMEOUT)
+                    url, json=payload, auth=auth, verify=False, timeout=self.HTTP_TIMEOUT
+                )
         except ConnectionError as e:
-            raise JIRAError(unicode(e))
+            raise JIRAError(six.text_type(e))
         except RequestException as e:
             resp = e.response
             if not resp:
@@ -184,8 +184,7 @@ class JIRAClient(object):
                 raise JIRAUnauthorized.from_response(resp)
             raise JIRAError.from_response(resp)
         except Exception as e:
-            logging.error('Error in request to %s: %s', url, e.message[:128],
-                          exc_info=True)
+            logging.error('Error in request to %s: %s', url, e.message[:128], exc_info=True)
             raise JIRAError('Internal error', 500)
 
         if r.status_code == 401:

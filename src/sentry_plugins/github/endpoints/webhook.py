@@ -15,8 +15,7 @@ from django.views.generic import View
 from django.utils import timezone
 from simplejson import JSONDecodeError
 from sentry.models import (
-    Commit, CommitAuthor, CommitFileChange, Organization, OrganizationOption,
-    Repository, User
+    Commit, CommitAuthor, CommitFileChange, Organization, OrganizationOption, Repository, User
 )
 from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
@@ -92,7 +91,9 @@ class PushEventWebhook(Webhook):
                         except CommitAuthor.DoesNotExist:
                             commit_author = None
 
-                        if commit_author is not None and not is_anonymous_email(commit_author.email):
+                        if commit_author is not None and not is_anonymous_email(
+                            commit_author.email
+                        ):
                             author_email = commit_author.email
                             gh_username_cache[gh_username] = author_email
                         else:
@@ -211,9 +212,7 @@ class GithubWebhookEndpoint(View):
         if method == 'sha1':
             mod = hashlib.sha1
         else:
-            raise NotImplementedError('signature method %s is not supported' % (
-                method,
-            ))
+            raise NotImplementedError('signature method %s is not supported' % (method, ))
         expected = hmac.new(
             key=secret.encode('utf-8'),
             msg=body,
@@ -234,9 +233,11 @@ class GithubWebhookEndpoint(View):
                 id=organization_id,
             )
         except Organization.DoesNotExist:
-            logger.error('github.webhook.invalid-organization', extra={
-                'organization_id': organization_id,
-            })
+            logger.error(
+                'github.webhook.invalid-organization', extra={
+                    'organization_id': organization_id,
+                }
+            )
             return HttpResponse(status=400)
 
         secret = OrganizationOption.objects.get_value(
@@ -244,24 +245,30 @@ class GithubWebhookEndpoint(View):
             key='github:webhook_secret',
         )
         if secret is None:
-            logger.error('github.webhook.missing-secret', extra={
-                'organization_id': organization.id,
-            })
+            logger.error(
+                'github.webhook.missing-secret', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=401)
 
         body = six.binary_type(request.body)
         if not body:
-            logger.error('github.webhook.missing-body', extra={
-                'organization_id': organization.id,
-            })
+            logger.error(
+                'github.webhook.missing-body', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=400)
 
         try:
             handler = self.get_handler(request.META['HTTP_X_GITHUB_EVENT'])
         except KeyError:
-            logger.error('github.webhook.missing-event', extra={
-                'organization_id': organization.id,
-            })
+            logger.error(
+                'github.webhook.missing-event', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=400)
 
         if not handler:
@@ -270,23 +277,31 @@ class GithubWebhookEndpoint(View):
         try:
             method, signature = request.META['HTTP_X_HUB_SIGNATURE'].split('=', 1)
         except (KeyError, IndexError):
-            logger.error('github.webhook.missing-signature', extra={
-                'organization_id': organization.id,
-            })
+            logger.error(
+                'github.webhook.missing-signature', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=400)
 
         if not self.is_valid_signature(method, body, secret, signature):
-            logger.error('github.webhook.invalid-signature', extra={
-                'organization_id': organization.id,
-            })
+            logger.error(
+                'github.webhook.invalid-signature', extra={
+                    'organization_id': organization.id,
+                }
+            )
             return HttpResponse(status=401)
 
         try:
             event = json.loads(body.decode('utf-8'))
         except JSONDecodeError:
-            logger.error('github.webhook.invalid-json', extra={
-                'organization_id': organization.id,
-            }, exc_info=True)
+            logger.error(
+                'github.webhook.invalid-json',
+                extra={
+                    'organization_id': organization.id,
+                },
+                exc_info=True
+            )
             return HttpResponse(status=400)
 
         handler()(organization, event)

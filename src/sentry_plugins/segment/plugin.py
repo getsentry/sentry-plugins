@@ -42,11 +42,13 @@ class SegmentPlugin(CorePluginMixin, DataForwardingPlugin):
             if not isinstance(headers, dict):
                 headers = dict(headers or ())
 
-            props.update({
-                'requestUrl': http.url,
-                'requestMethod': http.method,
-                'requestReferer': headers.get('Referer', ''),
-            })
+            props.update(
+                {
+                    'requestUrl': http.url,
+                    'requestMethod': http.method,
+                    'requestReferer': headers.get('Referer', ''),
+                }
+            )
         if 'sentry.interfaces.Exception' in event.interfaces:
             exc = event.interfaces['sentry.interfaces.Exception'].values[0]
             props.update({
@@ -84,15 +86,17 @@ class SegmentPlugin(CorePluginMixin, DataForwardingPlugin):
             if not isinstance(headers, dict):
                 headers = dict(headers or ())
 
-            context.update({
-                'userAgent': headers.get('User-Agent', ''),
-                'page': {
-                    'url': http.url,
-                    'method': http.method,
-                    'search': http.query_string or '',
-                    'referrer': headers.get('Referer', ''),
-                },
-            })
+            context.update(
+                {
+                    'userAgent': headers.get('User-Agent', ''),
+                    'page': {
+                        'url': http.url,
+                        'method': http.method,
+                        'search': http.query_string or '',
+                        'referrer': headers.get('Referer', ''),
+                    },
+                }
+            )
 
         if 'sentry.interfaces.Exception' in event.interfaces:
             exc = event.interfaces['sentry.interfaces.Exception'].values[0]

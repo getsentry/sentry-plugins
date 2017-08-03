@@ -48,8 +48,11 @@ class GitLabPluginTest(PluginTestCase):
 
     @responses.activate
     def test_create_issue(self):
-        responses.add(responses.POST, 'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues',
-            body='{"iid": 1, "id": "10"}')
+        responses.add(
+            responses.POST,
+            'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues',
+            body='{"iid": 1, "id": "10"}'
+        )
 
         self.plugin.set_option('gitlab_url', 'https://gitlab.com', self.project)
         self.plugin.set_option('gitlab_repo', 'getsentry/sentry', self.project)
@@ -77,11 +80,17 @@ class GitLabPluginTest(PluginTestCase):
 
     @responses.activate
     def test_link_issue(self):
-        responses.add(responses.GET, 'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues?iid=1',
+        responses.add(
+            responses.GET,
+            'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues?iid=1',
             body='[{"iid": 1, "id": "10", "title": "Hello world"}]',
-            match_querystring=True)
-        responses.add(responses.POST, 'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues/10/notes',
-            body='{"body": "Hello"}')
+            match_querystring=True
+        )
+        responses.add(
+            responses.POST,
+            'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues/10/notes',
+            body='{"body": "Hello"}'
+        )
 
         self.plugin.set_option('gitlab_url', 'https://gitlab.com', self.project)
         self.plugin.set_option('gitlab_repo', 'getsentry/sentry', self.project)
@@ -108,14 +117,8 @@ class GitLabPluginTest(PluginTestCase):
 
     def test_no_secrets(self):
         self.user = self.create_user('foo@example.com')
-        self.org = self.create_organization(
-            owner=self.user,
-            name='Rowdy Tiger'
-        )
-        self.team = self.create_team(
-            organization=self.org,
-            name='Mariachi Band'
-        )
+        self.org = self.create_organization(owner=self.user, name='Rowdy Tiger')
+        self.team = self.create_team(organization=self.org, name='Mariachi Band')
         self.project = self.create_project(
             organization=self.org,
             team=self.team,
@@ -125,8 +128,10 @@ class GitLabPluginTest(PluginTestCase):
         self.plugin.set_option('gitlab_url', 'https://gitlab.com', self.project)
         self.plugin.set_option('gitlab_repo', 'getsentry/sentry', self.project)
         self.plugin.set_option('gitlab_token', 'abcdefg', self.project)
-        url = reverse('sentry-api-0-project-plugin-details',
-                      args=[self.org.slug, self.project.slug, 'gitlab'])
+        url = reverse(
+            'sentry-api-0-project-plugin-details',
+            args=[self.org.slug, self.project.slug, 'gitlab']
+        )
         res = self.client.get(url)
         config = json.loads(res.content)['config']
         token_config = [item for item in config if item['name'] == 'gitlab_token'][0]

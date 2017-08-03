@@ -39,10 +39,16 @@ class PagerDutyPluginTest(PluginTestCase):
 
     @responses.activate
     def test_simple_notification(self):
-        responses.add('GET', 'https://events.pagerduty.com/generic/2010-04-15/create_event.json',
-                      body=INVALID_METHOD)
-        responses.add('POST', 'https://events.pagerduty.com/generic/2010-04-15/create_event.json',
-                      body=SUCCESS)
+        responses.add(
+            'GET',
+            'https://events.pagerduty.com/generic/2010-04-15/create_event.json',
+            body=INVALID_METHOD
+        )
+        responses.add(
+            'POST',
+            'https://events.pagerduty.com/generic/2010-04-15/create_event.json',
+            body=SUCCESS
+        )
         self.plugin.set_option('service_key', 'abcdef', self.project)
 
         group = self.create_group(message='Hello world', culprit='foo.bar')
@@ -58,15 +64,21 @@ class PagerDutyPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(request.body)
         assert payload == {
-            'client_url': 'http://example.com',
-            'event_type': 'trigger',
-            'contexts': [{
-                'text': 'Issue Details',
-                'href': 'http://example.com/baz/bar/issues/{}/'.format(group.id),
-                'type': 'link',
-            }],
-            'incident_key': group.id,
-            'client': 'sentry',
+            'client_url':
+            'http://example.com',
+            'event_type':
+            'trigger',
+            'contexts': [
+                {
+                    'text': 'Issue Details',
+                    'href': 'http://example.com/baz/bar/issues/{}/'.format(group.id),
+                    'type': 'link',
+                }
+            ],
+            'incident_key':
+            group.id,
+            'client':
+            'sentry',
             'details': {
                 'project': self.project.name,
                 'release': None,
@@ -79,20 +91,16 @@ class PagerDutyPluginTest(PluginTestCase):
                 },
                 'datetime': event.datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
             },
-            'service_key': 'abcdef',
-            'description': event.get_legacy_message(),
+            'service_key':
+            'abcdef',
+            'description':
+            event.get_legacy_message(),
         }
 
     def test_no_secrets(self):
         self.user = self.create_user('foo@example.com')
-        self.org = self.create_organization(
-            owner=self.user,
-            name='Rowdy Tiger'
-        )
-        self.team = self.create_team(
-            organization=self.org,
-            name='Mariachi Band'
-        )
+        self.org = self.create_organization(owner=self.user, name='Rowdy Tiger')
+        self.team = self.create_team(organization=self.org, name='Mariachi Band')
         self.project = self.create_project(
             organization=self.org,
             team=self.team,
@@ -100,8 +108,10 @@ class PagerDutyPluginTest(PluginTestCase):
         )
         self.login_as(self.user)
         self.plugin.set_option('service_key', 'abcdef', self.project)
-        url = reverse('sentry-api-0-project-plugin-details',
-                      args=[self.org.slug, self.project.slug, 'pagerduty'])
+        url = reverse(
+            'sentry-api-0-project-plugin-details',
+            args=[self.org.slug, self.project.slug, 'pagerduty']
+        )
         res = self.client.get(url)
         config = json.loads(res.content)['config']
         key_config = [item for item in config if item['name'] == 'service_key'][0]

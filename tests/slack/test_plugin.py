@@ -42,10 +42,12 @@ class SlackPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(parse_qs(request.body)['payload'][0])
         assert payload == {
-            'username': 'Sentry',
+            'username':
+            'Sentry',
             'attachments': [
                 {
-                    'color': '#f18500',
+                    'color':
+                    '#f18500',
                     'fields': [
                         {
                             'short': False,
@@ -58,9 +60,12 @@ class SlackPluginTest(PluginTestCase):
                             'title': 'Project'
                         },
                     ],
-                    'fallback': '[foo Bar] Hello world',
-                    'title': 'Hello world',
-                    'title_link': 'http://example.com/baz/bar/issues/1/',
+                    'fallback':
+                    '[foo Bar] Hello world',
+                    'title':
+                    'Hello world',
+                    'title_link':
+                    'http://example.com/baz/bar/issues/1/',
                 },
             ],
         }
@@ -84,7 +89,8 @@ class SlackPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(parse_qs(request.body)['payload'][0])
         assert payload == {
-            'username': 'Sentry',
+            'username':
+            'Sentry',
             'attachments': [
                 {
                     'color': '#f18500',
@@ -121,7 +127,8 @@ class SlackPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(parse_qs(request.body)['payload'][0])
         assert payload == {
-            'username': 'Sentry',
+            'username':
+            'Sentry',
             'attachments': [
                 {
                     'color': '#f18500',

@@ -63,18 +63,13 @@ class BitbucketClient(object):
             'kind': data['issue_type'],
             'priority': data['priority']
         }
-        return self.request(
-            'POST',
-            '1.0',
-            '/repositories/%s/issues' % (repo,),
-            data=data
-        )
+        return self.request('POST', '1.0', '/repositories/%s/issues' % (repo, ), data=data)
 
     def search_issues(self, repo, query):
         return self.request(
             'GET',
             '1.0',
-            '/repositories/%s/issues' % (repo,),
+            '/repositories/%s/issues' % (repo, ),
             params={'search': query},
         )
 
@@ -161,28 +156,17 @@ class BitbucketClient(object):
         # return api request that fetches last ~30 commits
         # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
         # using end_sha as parameter
-        data = self.request(
-            'GET',
-            '2.0',
-            '/repositories/{}/commits/{}'.format(
-                repo,
-                end_sha,
-            )
-        )
+        data = self.request('GET', '2.0', '/repositories/{}/commits/{}'.format(
+            repo,
+            end_sha,
+        ))
 
         return self.zip_commit_data(repo, data['values'])
 
     def compare_commits(self, repo, start_sha, end_sha):
         # where start sha is oldest and end is most recent
         # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
-        data = self.request(
-            'GET',
-            '2.0',
-            '/repositories/{}/commits/{}'.format(
-                repo,
-                end_sha
-            )
-        )
+        data = self.request('GET', '2.0', '/repositories/{}/commits/{}'.format(repo, end_sha))
         commits = []
         for commit in data['values']:
             # TODO(maxbittker) fetch extra pages (up to a max) when this is paginated (more than 30 commits)

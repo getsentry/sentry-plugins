@@ -5,12 +5,7 @@ import requests
 
 from sentry.http import safe_urlopen
 
-from .utils import (
-    get_basic_auth,
-    remove_trailing_slashes,
-    add_query_params
-)
-
+from .utils import (get_basic_auth, remove_trailing_slashes, add_query_params)
 
 ACCESS_TOKEN_NAME = 'Sentry'
 
@@ -26,7 +21,6 @@ MILLISECONDS_BEFORE_EVENT = 5000
 
 
 class SessionStackClient(object):
-
     def __init__(self, account_email, api_token, website_id, **kwargs):
         self.website_id = website_id
 
@@ -101,11 +95,7 @@ class SessionStackClient(object):
 
     def _create_access_token(self, session_id):
         response = self._make_access_tokens_request(
-            session_id=session_id,
-            method='POST',
-            body={
-                'name': ACCESS_TOKEN_NAME
-            }
+            session_id=session_id, method='POST', body={'name': ACCESS_TOKEN_NAME}
         )
 
         if response.status_code != requests.codes.OK:
@@ -130,10 +120,7 @@ class SessionStackClient(object):
     def _make_request(self, endpoint, method, **kwargs):
         url = self.api_url + endpoint
 
-        request_kwargs = {
-            'method': method,
-            'headers': self.request_headers
-        }
+        request_kwargs = {'method': method, 'headers': self.request_headers}
 
         body = kwargs.get('body')
         if body:

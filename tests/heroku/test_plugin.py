@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-
 from mock import Mock, patch
 
 from django.utils import timezone
@@ -8,9 +7,10 @@ from django.utils import timezone
 from datetime import timedelta
 
 from sentry.exceptions import HookValidationError
-from sentry.models import (Commit, Deploy, Environment,
-    ProjectOption, Release, ReleaseCommit,
-    ReleaseHeadCommit, Repository, User)
+from sentry.models import (
+    Commit, Deploy, Environment, ProjectOption, Release, ReleaseCommit, ReleaseHeadCommit,
+    Repository, User
+)
 from sentry.testutils import TestCase
 
 from sentry_plugins.heroku.plugin import HerokuReleaseHook
@@ -22,6 +22,7 @@ class SetRefsTest(TestCase):
     we try to get the previous commits based on the version ref
     and that we create `ReleaseHeadCommit`s for the version
     """
+
     @patch('sentry.tasks.commits.fetch_commits')
     def test_minimal(self, mock_fetch_commits):
         project = self.create_project()
@@ -54,16 +55,10 @@ class SetRefsTest(TestCase):
             name=project.name,
             provider='dummy',
         )
-        ProjectOption.objects.set_value(
-            key='heroku:repository',
-            project=project,
-            value=repo.name
-        )
+        ProjectOption.objects.set_value(key='heroku:repository', project=project, value=repo.name)
         for data in data_list:
             Commit.objects.create(
-                key=data['id'],
-                organization_id=self.project.organization_id,
-                repository_id=repo.id
+                key=data['id'], organization_id=self.project.organization_id, repository_id=repo.id
             )
 
         old_release = Release.objects.create(
@@ -84,7 +79,8 @@ class SetRefsTest(TestCase):
             organization_id=project.organization_id,
             repository_id=repo.id,
             release=old_release,
-            commit=Commit.objects.get(key='c7155651831549cf8a5e47889fce17eb'))
+            commit=Commit.objects.get(key='c7155651831549cf8a5e47889fce17eb')
+        )
         release_heads = ReleaseHeadCommit.objects.filter(
             organization_id=project.organization_id,
             repository_id=repo.id,
@@ -93,7 +89,8 @@ class SetRefsTest(TestCase):
 
         assert len(release_heads) == 0
         hook = HerokuReleaseHook(project)
-        hook.finish_release(version=version,
+        hook.finish_release(
+            version=version,
             owner=user,
         )
 
@@ -126,7 +123,10 @@ class SetRefsTest(TestCase):
                 'release_id': release.id,
                 'user_id': user.id,
                 'refs': [
-                    {'commit': 'bbee5b51f84611e4b14834363b8514c2', 'repository': repo.name},
+                    {
+                        'commit': 'bbee5b51f84611e4b14834363b8514c2',
+                        'repository': repo.name
+                    },
                 ],
                 'prev_release_id': old_release.id,
             }

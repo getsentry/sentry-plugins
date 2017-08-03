@@ -23,13 +23,15 @@ class GitHubPluginTest(PluginTestCase):
 
         res = self.provider._format_commits(repo, json.loads(COMPARE_COMMITS_EXAMPLE)['commits'])
 
-        assert res == [{
-            'author_email': 'support@github.com',
-            'author_name': 'Monalisa Octocat',
-            'message': 'Fix all the bugs',
-            'id': '6dcb09b5b57875f334f61aebed695e2e4193db5e',
-            'repository': 'example'
-        }]
+        assert res == [
+            {
+                'author_email': 'support@github.com',
+                'author_name': 'Monalisa Octocat',
+                'message': 'Fix all the bugs',
+                'id': '6dcb09b5b57875f334f61aebed695e2e4193db5e',
+                'repository': 'example'
+            }
+        ]
 
     def test_get_last_commits(self):
         repo = Repository.objects.create(
@@ -40,10 +42,12 @@ class GitHubPluginTest(PluginTestCase):
 
         res = self.provider._format_commits(repo, json.loads(GET_LAST_COMMITS_EXAMPLE)[:10])
 
-        assert res == [{
-            'author_email': 'support@github.com',
-            'author_name': 'Monalisa Octocat',
-            'message': 'Fix all the bugs',
-            'id': '6dcb09b5b57875f334f61aebed695e2e4193db5e',
-            'repository': 'example'
-        }]
+        assert res == [
+            {
+                'author_email': 'support@github.com',
+                'author_name': 'Monalisa Octocat',
+                'message': 'Fix all the bugs',
+                'id': '6dcb09b5b57875f334f61aebed695e2e4193db5e',
+                'repository': 'example'
+            }
+        ]

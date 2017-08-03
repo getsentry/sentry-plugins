@@ -19,9 +19,7 @@ from sentry.db.models import BaseModel, BaseManager, FlexibleForeignKey
 
 from . import mentions
 
-
 logger = logging.getLogger(__name__)
-
 
 MAX_RECENT = 15
 RECENT_HOURS = 12
@@ -37,7 +35,6 @@ class HipChatException(Exception):
 
 
 class OauthClientInvalidError(HipChatException):
-
     def __init__(self, client, *args, **kwargs):
         super(OauthClientInvalidError, self).__init__(*args, **kwargs)
         self.client = client
@@ -48,10 +45,16 @@ class BadTenantError(HipChatException):
 
 
 class TenantManager(BaseManager):
-
-    def create(self, id, secret=None, homepage=None,
-               capabilities_url=None, room_id=None, token_url=None,
-               capdoc=None):
+    def create(
+        self,
+        id,
+        secret=None,
+        homepage=None,
+        capabilities_url=None,
+        room_id=None,
+        token_url=None,
+        capdoc=None
+    ):
         if homepage is None and capdoc is not None:
             homepage = capdoc['links']['homepage']
         if token_url is None and capdoc is not None:
@@ -64,7 +67,8 @@ class TenantManager(BaseManager):
             api_base_url = capabilities_url.rsplit('/', 1)[0]
         installed_from = token_url and base_url(token_url) or None
 
-        return BaseManager.create(self,
+        return BaseManager.create(
+            self,
             id=id,
             room_id=room_id,
             secret=secret,
@@ -118,12 +122,9 @@ class Tenant(BaseModel):
     api_base_url = models.CharField(max_length=250)
     installed_from = models.CharField(max_length=250)
 
-    auth_user = FlexibleForeignKey('sentry.User', null=True,
-                                   related_name='hipchat_tenant_set')
-    organizations = models.ManyToManyField(
-        'sentry.Organization', related_name='hipchat_tenant_set')
-    projects = models.ManyToManyField(
-        'sentry.Project', related_name='hipchat_tenant_set')
+    auth_user = FlexibleForeignKey('sentry.User', null=True, related_name='hipchat_tenant_set')
+    organizations = models.ManyToManyField('sentry.Organization', related_name='hipchat_tenant_set')
+    projects = models.ManyToManyField('sentry.Project', related_name='hipchat_tenant_set')
 
     class Meta:
         app_label = 'hipchat_ac'
@@ -140,9 +141,9 @@ class Tenant(BaseModel):
                 'grant_type': 'client_credentials',
                 'scope': ' '.join(scopes),
             }
-            resp = requests.post(self.token_url, data=data,
-                                 auth=HTTPBasicAuth(self.id, self.secret),
-                                 timeout=10)
+            resp = requests.post(
+                self.token_url, data=data, auth=HTTPBasicAuth(self.id, self.secret), timeout=10
+            )
             if resp.status_code == 200:
                 return resp.json()
             elif resp.status_code == 401:
@@ -166,9 +167,7 @@ class Tenant(BaseModel):
         now = int(time.time())
         exp = now + timedelta(hours=1).total_seconds()
 
-        jwt_data = {'iss': self.id,
-                    'iat': now,
-                    'exp': exp}
+        jwt_data = {'iss': self.id, 'iat': now, 'exp': exp}
 
         if user_id:
             jwt_data['sub'] = user_id
@@ -196,8 +195,9 @@ class Tenant(BaseModel):
             'Authorization': 'Bearer %s' % self.get_token(),
             'Content-Type': 'application/json'
         }
-        room = requests.get(urljoin(self.api_base_url, 'room/%s') %
-                            self.room_id, headers=headers, timeout=5).json()
+        room = requests.get(
+            urljoin(self.api_base_url, 'room/%s') % self.room_id, headers=headers, timeout=5
+        ).json()
         self.room_name = room['name']
         self.room_owner_id = six.text_type(room['owner']['id'])
         self.room_owner_name = room['owner']['name']
@@ -205,10 +205,7 @@ class Tenant(BaseModel):
             self.save()
 
     def __repr__(self):
-        return '<Tenant id=%r from=%r>' % (
-            self.id,
-            self.installed_from,
-        )
+        return '<Tenant id=%r from=%r>' % (self.id, self.installed_from, )
 
     def __unicode__(self):
         return 'Tenant %s' % self.id
@@ -223,7 +220,6 @@ def _extract_sender(item):
 
 
 class HipchatUser(object):
-
     def __init__(self, id, mention_name=None, name=None):
         self.id = id
         self.mention_name = mention_name
@@ -231,7 +227,6 @@ class HipchatUser(object):
 
 
 class Context(object):
-
     def __init__(self, tenant, sender, context, signed_request=None):
         self.tenant = tenant
         self.sender = sender
@@ -300,17 +295,20 @@ class Context(object):
         return self.context.get('room_id', self.tenant.room_id)
 
     def post(self, url, data):
-        resp = requests.post(urljoin(self.tenant.api_base_url, url), headers={
-            'Authorization': 'Bearer %s' % self.tenant_token,
-            'Content-Type': 'application/json'
-        }, data=json.dumps(data), timeout=10)
+        resp = requests.post(
+            urljoin(self.tenant.api_base_url, url),
+            headers={
+                'Authorization': 'Bearer %s' % self.tenant_token,
+                'Content-Type': 'application/json'
+            },
+            data=json.dumps(data),
+            timeout=10
+        )
         if not resp.ok:
-            logger.warning('Request to "%s" failed:\n%s',
-                           url, resp.text)
+            logger.warning('Request to "%s" failed:\n%s', url, resp.text)
         return resp
 
-    def send_notification(self, message, color='yellow', notify=False,
-                          format='html', card=None):
+    def send_notification(self, message, color='yellow', notify=False, format='html', card=None):
         data = {'message': message, 'format': format, 'notify': notify}
         if color is not None:
             data['color'] = color
@@ -323,18 +321,21 @@ class Context(object):
         return {
             'label': {
                 'type': 'html',
-                'value': '<b>%s</b> Recent Sentry Issue%s' % (
-                    count, count != 1 and 's' or '')
+                'value': '<b>%s</b> Recent Sentry Issue%s' % (count, count != 1 and 's' or '')
             },
         }
 
     def push_recent_events_glance(self):
-        self.post('addon/ui/room/%s' % self.room_id, {
-            'glance': [{
-                'content': self.get_recent_events_glance(),
-                'key': 'sentry-recent-events-glance',
-            }]
-        })
+        self.post(
+            'addon/ui/room/%s' % self.room_id, {
+                'glance': [
+                    {
+                        'content': self.get_recent_events_glance(),
+                        'key': 'sentry-recent-events-glance',
+                    }
+                ]
+            }
+        )
 
     def _ensure_and_bind_event(self, event):
         rv = self.tenant.projects.filter(pk=event.project.id).first()

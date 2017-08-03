@@ -23,4 +23,6 @@ def assert_package_not_installed(name):
     except pkg_resources.DistributionNotFound:
         return
     else:
-        raise RuntimeError("Found %r. This has been superseded by 'sentry-plugins', so please uninstall." % name)
+        raise RuntimeError(
+            "Found %r. This has been superseded by 'sentry-plugins', so please uninstall." % name
+        )

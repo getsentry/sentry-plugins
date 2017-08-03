@@ -38,12 +38,16 @@ class GitLabClient(object):
 
     def get_issue(self, repo, issue_id):
         try:
-            return self.request('GET', '/projects/{}/issues'.format(
-                quote(repo, safe=''),
-            ), params={
-                # XXX(dcramer): this is an undocumented API
-                'iid': issue_id,
-            })[0]
+            return self.request(
+                'GET',
+                '/projects/{}/issues'.format(
+                    quote(repo, safe=''),
+                ),
+                params={
+                    # XXX(dcramer): this is an undocumented API
+                    'iid': issue_id,
+                }
+            )[0]
         except IndexError:
             raise ApiError('Issue not found with ID', 404)
 

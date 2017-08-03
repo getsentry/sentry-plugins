@@ -23,11 +23,13 @@ class BitbucketPluginTest(PluginTestCase):
 
         res = self.provider._format_commits(repo, json.loads(COMPARE_COMMITS_EXAMPLE)['values'])
 
-        assert res == [{
-            'author_email': 'max@getsentry.com',
-            'author_name': 'Max Bittker',
-            'message': 'README.md edited online with Bitbucket',
-            'id': 'e18e4e72de0d824edfbe0d73efe34cbd0d01d301',
-            'repository': 'maxbittker/newsdiffs',
-            'patch_set': None
-        }]
+        assert res == [
+            {
+                'author_email': 'max@getsentry.com',
+                'author_name': 'Max Bittker',
+                'message': 'README.md edited online with Bitbucket',
+                'id': 'e18e4e72de0d824edfbe0d73efe34cbd0d01d301',
+                'repository': 'maxbittker/newsdiffs',
+                'patch_set': None
+            }
+        ]

@@ -11,10 +11,7 @@ from sentry.exceptions import PluginError
 from sentry_plugins.base import CorePluginMixin
 
 from .client import (
-    SessionStackClient,
-    UnauthorizedError,
-    InvalidWebsiteIdError,
-    InvalidApiUrlError
+    SessionStackClient, UnauthorizedError, InvalidWebsiteIdError, InvalidApiUrlError
 )
 
 UNAUTHORIZED_ERROR = (
@@ -98,47 +95,65 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         api_url = self.get_option('api_url', project)
         player_url = self.get_option('player_url', project)
 
-        configurations = [{
-            'name': 'account_email',
-            'label': 'Account Email',
-            'default': account_email,
-            'type': 'text',
-            'placeholder': 'e.g. "user@example.com"',
-            'required': True
-        }, {
-            'name': 'api_token',
-            'label': 'API Token',
-            'default': api_token,
-            'type': 'text',
-            'help': 'SessionStack generated API token.',
-            'required': True
-        }, {
-            'name': 'website_id',
-            'label': 'Website ID',
-            'default': website_id,
-            'type': 'number',
-            'help': 'ID of the corresponding website in SessionStack.',
-            'required': True
-        }]
+        configurations = [
+            {
+                'name': 'account_email',
+                'label': 'Account Email',
+                'default': account_email,
+                'type': 'text',
+                'placeholder': 'e.g. "user@example.com"',
+                'required': True
+            }, {
+                'name': 'api_token',
+                'label': 'API Token',
+                'default': api_token,
+                'type': 'text',
+                'help': 'SessionStack generated API token.',
+                'required': True
+            }, {
+                'name': 'website_id',
+                'label': 'Website ID',
+                'default': website_id,
+                'type': 'number',
+                'help': 'ID of the corresponding website in SessionStack.',
+                'required': True
+            }
+        ]
 
         if settings.SENTRY_ONPREMISE:
-            configurations.extend([{
-                'name': 'api_url',
-                'label': 'SessionStack API URL',
-                'default': api_url,
-                'type': 'text',
-                'help': 'URL to SessionStack\'s REST API. The default '
+            configurations.extend(
+                [
+                    {
+                        'name':
+                        'api_url',
+                        'label':
+                        'SessionStack API URL',
+                        'default':
+                        api_url,
+                        'type':
+                        'text',
+                        'help':
+                        'URL to SessionStack\'s REST API. The default '
                         'value is "https://api.sessionstack.com/"',
-                'required': False
-            }, {
-                'name': 'player_url',
-                'label': 'SessionStack Player URL',
-                'default': player_url,
-                'type': 'text',
-                'help': 'URL to SessionStack\'s session player. The default '
+                        'required':
+                        False
+                    }, {
+                        'name':
+                        'player_url',
+                        'label':
+                        'SessionStack Player URL',
+                        'default':
+                        player_url,
+                        'type':
+                        'text',
+                        'help':
+                        'URL to SessionStack\'s session player. The default '
                         'value is "http://app.sessionstack.com/player/"',
-                'required': False
-            }])
+                        'required':
+                        False
+                    }
+                ]
+            )
 
         return configurations
 
@@ -168,8 +183,7 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
             )
 
             session_url = sessionstack_client.get_session_url(
-                session_id=session_id,
-                event_timestamp=context.get('timestamp')
+                session_id=session_id, event_timestamp=context.get('timestamp')
             )
 
             context['session_url'] = session_url

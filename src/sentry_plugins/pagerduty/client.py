@@ -35,14 +35,24 @@ class PagerDutyClient(object):
             raise ApiError.from_response(e.response)
         return resp.json()
 
-    def trigger_incident(self, description, event_type, details, incident_key,
-                         client=None, client_url=None, contexts=None):
-        return self.request({
-            'event_type': event_type,
-            'description': description,
-            'details': details,
-            'incident_key': incident_key,
-            'client': client or self.client,
-            'client_url': client_url or absolute_uri(),
-            'contexts': contexts,
-        })
+    def trigger_incident(
+        self,
+        description,
+        event_type,
+        details,
+        incident_key,
+        client=None,
+        client_url=None,
+        contexts=None
+    ):
+        return self.request(
+            {
+                'event_type': event_type,
+                'description': description,
+                'details': details,
+                'incident_key': incident_key,
+                'client': client or self.client,
+                'client_url': client_url or absolute_uri(),
+                'contexts': contexts,
+            }
+        )
