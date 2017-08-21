@@ -86,7 +86,7 @@ class GitHubClient(object):
     def list_assignees(self, repo):
         return self.request(
             'GET',
-            '/repos/{}/assignees'.format(repo),
+            '/repos/{}/assignees?per_page=100'.format(repo),
         )
 
     def search_issues(self, query):
