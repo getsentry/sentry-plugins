@@ -1,7 +1,7 @@
 SENTRY_PATH := `python -c 'import sentry; print sentry.__file__.rsplit("/", 3)[0]'`
 
 develop: setup-git install-yarn
-	pip install "pip>=7"
+	pip install "pip>=9,<10"
 	pip install -e git+https://github.com/getsentry/sentry.git#egg=sentry[dev]
 	pip install -e .
 	yarn install

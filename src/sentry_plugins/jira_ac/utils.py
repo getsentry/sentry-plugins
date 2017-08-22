@@ -17,7 +17,8 @@ def percent_encode(val):
 
 
 def get_query_hash(uri, method, query_params=None):
-    # see https://developer.atlassian.com/static/connect/docs/latest/concepts/understanding-jwt.html#qsh
+    # see
+    # https://developer.atlassian.com/static/connect/docs/latest/concepts/understanding-jwt.html#qsh
     uri = uri.rstrip('/')
     method = method.upper()
     if query_params is None:

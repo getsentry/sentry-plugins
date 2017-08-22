@@ -20,7 +20,8 @@ from sentry.utils import json
 
 logger = logging.getLogger('sentry.webhooks')
 
-# Bitbucket Cloud IP range: https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html#Managewebhooks-trigger_webhookTriggeringwebhooks
+# Bitbucket Cloud IP range:
+# https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html#Managewebhooks-trigger_webhookTriggeringwebhooks
 BITBUCKET_IP_RANGE = ipaddress.ip_network(u'104.192.143.0/24')
 
 

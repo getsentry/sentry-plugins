@@ -172,7 +172,7 @@ def make_event_notification(group, event, tenant, new=True, event_target=False):
                    'project_name': '<strong>%s</strong>' % escape(project.name),
                    'message': escape(event.error()),
                    'link': escape(link),
-               }
+    }
 
     return {
         'color': color,

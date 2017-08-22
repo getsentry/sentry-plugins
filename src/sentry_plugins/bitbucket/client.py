@@ -165,11 +165,13 @@ class BitbucketClient(object):
 
     def compare_commits(self, repo, start_sha, end_sha):
         # where start sha is oldest and end is most recent
-        # see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
+        # see
+        # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
         data = self.request('GET', '2.0', '/repositories/{}/commits/{}'.format(repo, end_sha))
         commits = []
         for commit in data['values']:
-            # TODO(maxbittker) fetch extra pages (up to a max) when this is paginated (more than 30 commits)
+            # TODO(maxbittker) fetch extra pages (up to a max) when this is paginated
+            # (more than 30 commits)
             if commit['hash'] == start_sha:
                 break
             commits.append(commit)
