@@ -133,7 +133,7 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
         key_labels = {
             o.key: o.get_label()
             for o in TagKey.objects.filter(
-                project=event.project,
+                project_id=event.project_id,
                 key__in=[t[0] for t in tag_list],
             )
         }
@@ -141,7 +141,7 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
             (o.key, o.value): o.get_label()
             for o in TagValue.objects.filter(
                 reduce(operator.or_, (Q(key=k, value=v) for k, v in tag_list)),
-                project=event.project,
+                project_id=event.project_id,
             )
         }
         return ((key_labels.get(k, k), value_labels.get((k, v), v)) for k, v in tag_list)
