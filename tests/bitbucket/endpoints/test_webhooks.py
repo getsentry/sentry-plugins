@@ -17,6 +17,8 @@ class UtilityFunctionTest(TestCase):
     def test_parse_raw_user_email(self):
         assert parse_raw_user_email('Max Bittker <max@getsentry.com>') == 'max@getsentry.com'
 
+        assert parse_raw_user_email('Jess MacQueen@JessMacqueen') is None
+
     def parse_raw_user_name(self):
         assert parse_raw_user_name('Max Bittker <max@getsentry.com>') == 'Max Bittker'
 

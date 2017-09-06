@@ -32,7 +32,10 @@ class Webhook(object):
 
 def parse_raw_user_email(raw):
     # captures content between angle brackets
-    return re.search('(?<=<).*(?=>$)', raw).group(0)
+    match = re.search('(?<=<).*(?=>$)', raw)
+    if match is None:
+        return
+    return match.group(0)
 
 
 def parse_raw_user_name(raw):
@@ -67,7 +70,7 @@ class PushEventWebhook(Webhook):
 
                 # TODO(dcramer): we need to deal with bad values here, but since
                 # its optional, lets just throw it out for now
-                if len(author_email) > 75:
+                if author_email is None or len(author_email) > 75:
                     author = None
                 elif author_email not in authors:
                     authors[author_email] = author = CommitAuthor.objects.get_or_create(
