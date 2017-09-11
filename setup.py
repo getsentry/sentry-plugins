@@ -17,7 +17,7 @@ from setuptools.command.develop import develop as DevelopCommand
 
 from sentry.utils.distutils import (BuildAssetsCommand)
 
-VERSION = '8.20.0.dev0'
+VERSION = '8.21.0.dev0'
 
 tests_require = [
     'exam',
