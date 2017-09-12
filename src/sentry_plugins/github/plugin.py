@@ -26,25 +26,25 @@ ERR_INTERNAL = (
     ' been notified'
 )
 
-ERR_UNAUTHORIZED = (
-    'Unauthorized: either your access token was invalid or you do not have'
-    ' access'
-)
-
-ERR_404 = (
-    'GitHub returned a 404 Not Found error. If this repository exists, ensure'
-    ' you have access to it and that Sentry is being allowed to read data from'
-    ' this organization (Account Settings > Authorized Applications > Sentry).'
-)
+API_ERRORS = {
+    404: 'GitHub returned a 404 Not Found error. If this repository exists, ensure'
+         ' you have access to it and that Sentry is being allowed to read data from'
+         ' this organization (Account Settings > Authorized Applications > Sentry).',
+    422: 'GitHub returned a 422 Validation failed. This usually means that there is '
+         'already a webhook set up for Sentry for this repository. Please go to your '
+         'repository settings, click on the Webhooks tab, and delete the existing webhook '
+         'before adding the repository again.',
+    401: 'Unauthorized: either your access token was invalid or you do not have'
+         ' access',
+}
 
 
 class GitHubMixin(object):
     def message_from_error(self, exc):
-        if isinstance(exc, ApiUnauthorized):
-            return ERR_UNAUTHORIZED
-        elif isinstance(exc, ApiError):
-            if exc.code == 404:
-                return ERR_404
+        if isinstance(exc, ApiError):
+            message = API_ERRORS.get(exc.code)
+            if message:
+                return message
             return (
                 'Error Communicating with GitHub (HTTP %s): %s' % (
                     exc.code, exc.json.get('message', 'unknown error')
@@ -68,7 +68,7 @@ class GitHubMixin(object):
     def get_client(self, user):
         auth = self.get_auth(user=user)
         if auth is None:
-            raise PluginError(ERR_UNAUTHORIZED)
+            raise PluginError(API_ERRORS[401])
         return GitHubClient(token=auth.tokens['access_token'])
 
 
@@ -358,6 +358,12 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
                 }
             )
         except Exception as e:
+            self.logger.exception('github.webhook.create-failure', extra={
+                'organization_id': organization.id,
+                'repository': data['name'],
+                'status_code': getattr(e, 'code', None),
+            })
+
             self.raise_error(e)
         else:
             return {
@@ -521,7 +527,7 @@ class GitHubAppsRepositoryProvider(GitHubRepositoryProvider):
 
     def get_installations(self, actor):
         if not actor.is_authenticated():
-            raise PluginError(ERR_UNAUTHORIZED)
+            raise PluginError(API_ERRORS[401])
 
         auth = UserSocialAuth.objects.filter(
             user=actor,
