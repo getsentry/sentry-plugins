@@ -1,7 +1,7 @@
 sentry-plugins
 ==============
 
-Extensions for Sentry. Includes GitHub, and HipChat.
+Extensions for Sentry. Includes Slack, GitHub, and HipChat.
 
 Install the package via ``pip``::
 
@@ -73,6 +73,14 @@ HipChat
 
 Go to your project's configuration page (Projects -> [Project]) and select the
 Hipchat tab. Enter the required credentials and click save changes.
+
+
+Slack
+-------
+
+Go to your project's configuration page (Projects -> [Project]) and select the
+Slack tab. Enter the required credentials and click save changes.
+
 
 Development
 ~~~~~~~~~~~
