@@ -32,6 +32,7 @@ install_requires = [
     'BeautifulSoup>=3.2.1',
     # sentry also requires this, so we're just enforcing that it needs to exist
     'boto3>=1.4.4,<1.5.0',
+    'cached-property',
     'python-dateutil',
     'PyJWT',
     'requests-oauthlib>=0.3.0',
@@ -114,6 +115,7 @@ setup(
             'sessionstack = sentry_plugins.sessionstack',
             'slack = sentry_plugins.slack',
             'victorops = sentry_plugins.victorops',
+            'vsts = sentry_plugins.vsts',
         ],
         'sentry.plugins': [
             'amazon_sqs = sentry_plugins.amazon_sqs.plugin:AmazonSQSPlugin',
@@ -132,6 +134,7 @@ setup(
             'sessionstack = sentry_plugins.sessionstack.plugin:SessionStackPlugin',
             'slack = sentry_plugins.slack.plugin:SlackPlugin',
             'victorops = sentry_plugins.victorops.plugin:VictorOpsPlugin',
+            'vsts = sentry_plugins.vsts.plugin:VstsPlugin',
         ],
     },
     classifiers=[

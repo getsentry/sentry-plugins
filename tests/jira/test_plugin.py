@@ -9,7 +9,7 @@ from django.test import RequestFactory
 from sentry.testutils import TestCase
 from sentry.utils import json
 
-from sentry_plugins.jira.client import JIRAResponse
+from sentry_plugins.client import MappingApiResponse
 from sentry_plugins.jira.plugin import JiraPlugin
 
 create_meta_response = {
@@ -300,14 +300,14 @@ class JiraPluginTest(TestCase):
         assert self.plugin.is_configured(None, self.project) is True
 
     @mock.patch(
-        'sentry_plugins.jira.client.JIRAClient.get_create_meta',
-        mock.Mock(return_value=JIRAResponse(json.dumps(create_meta_response), 200))
+        'sentry_plugins.jira.client.JiraClient.get_create_meta',
+        mock.Mock(return_value=MappingApiResponse(create_meta_response, status_code=200))
     )
     @mock.patch(
-        'sentry_plugins.jira.client.JIRAClient.create_issue',
-        mock.Mock(return_value=JIRAResponse(json.dumps({
+        'sentry_plugins.jira.client.JiraClient.create_issue',
+        mock.Mock(return_value=MappingApiResponse({
             'key': 'SEN-1'
-        }), 200))
+        }, status_code=200))
     )
     def test_create_issue(self):
         self.plugin.set_option('instance_url', 'https://getsentry.atlassian.net', self.project)
@@ -324,8 +324,8 @@ class JiraPluginTest(TestCase):
         assert self.plugin.create_issue(request, group, form_data) == 'SEN-1'
 
     @mock.patch(
-        'sentry_plugins.jira.client.JIRAClient.get_issue',
-        mock.Mock(return_value=JIRAResponse(json.dumps(issue_response), 200))
+        'sentry_plugins.jira.client.JiraClient.get_issue',
+        mock.Mock(return_value=MappingApiResponse(issue_response, status_code=200))
     )
     def test_link_issue(self):
         self.plugin.set_option('instance_url', 'https://getsentry.atlassian.net', self.project)

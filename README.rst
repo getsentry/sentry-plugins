@@ -82,6 +82,32 @@ Go to your project's configuration page (Projects -> [Project]) and select the
 Slack tab. Enter the required credentials and click save changes.
 
 
+Visual Studio (Team Services)
+-----------------------------
+
+You'll have to `create an application in Visual Studio <https://app.vsaex.visualstudio.com/app/register>`_ to get a client ID and secret.
+
+**Redirect URL:**
+
+::
+
+    <URL_TO_SENTRY>/account/settings/social/associate/complete/visualstudio/
+
+
+**Scopes:**
+
+- Projects and Teams (read) -- ``vso.project``
+- Work items (read and write) -- ``vso.work_write``
+
+Add the configured application credentials to your Sentry config:
+
+.. code-block:: python
+
+    VISUALSTUDIO_APP_ID = 'App ID'
+    VISUALSTUDIO_APP_SECRET = 'App Secret'
+    VISUALSTUDIO_CLIENT_SECRET = 'Client Secret'
+
+
 Development
 ~~~~~~~~~~~
 

@@ -17,7 +17,7 @@ from sentry.web.helpers import render_to_response
 
 from sentry_plugins.jira_ac.forms import JiraConfigForm
 from sentry_plugins.jira_ac.models import JiraTenant
-from sentry_plugins.jira_ac.utils import get_jira_auth_from_request, JIRAError
+from sentry_plugins.jira_ac.utils import get_jira_auth_from_request, ApiError
 
 JIRA_KEY = '%s.jira_ac' % (urlparse(absolute_uri()).hostname, )
 
@@ -55,7 +55,7 @@ class JiraUIWidgetView(BaseJiraWidgetView):
         try:
             # make sure this exists and is valid
             jira_auth = self.get_jira_auth()
-        except (JIRAError, JiraTenant.DoesNotExist):
+        except (ApiError, JiraTenant.DoesNotExist):
             return self.get_response('error.html')
 
         if request.user.is_anonymous():
@@ -94,7 +94,7 @@ class JiraConfigView(BaseJiraWidgetView):
     def get(self, request, *args, **kwargs):
         try:
             jira_auth = self.get_jira_auth()
-        except (JIRAError, JiraTenant.DoesNotExist):
+        except (ApiError, JiraTenant.DoesNotExist):
             return self.get_response('error.html')
 
         if request.user.is_anonymous():
@@ -114,7 +114,7 @@ class JiraConfigView(BaseJiraWidgetView):
     def post(self, request, *args, **kwargs):
         try:
             jira_auth = get_jira_auth_from_request(request)
-        except (JIRAError, JiraTenant.DoesNotExist):
+        except (ApiError, JiraTenant.DoesNotExist):
             self.get_response('error.html')
 
         if request.user.is_anonymous():

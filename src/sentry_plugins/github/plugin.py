@@ -10,21 +10,17 @@ from social_auth.models import UserSocialAuth
 
 from sentry import options
 from sentry.app import locks
-from sentry.exceptions import InvalidIdentity, PluginError
+from sentry.exceptions import PluginError
 from sentry.models import Integration, OrganizationOption, Repository
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
-from sentry_plugins.exceptions import ApiError, ApiUnauthorized
+from sentry_plugins.constants import ERR_UNAUTHORIZED, ERR_INTERNAL
+from sentry_plugins.exceptions import ApiError
 
 from .client import GitHubClient, GitHubAppsClient
-
-ERR_INTERNAL = (
-    'An internal error occurred with the integration and the Sentry team has'
-    ' been notified'
-)
 
 API_ERRORS = {
     404: 'GitHub returned a 404 Not Found error. If this repository exists, ensure'
@@ -34,12 +30,11 @@ API_ERRORS = {
          'already a webhook set up for Sentry for this repository. Please go to your '
          'repository settings, click on the Webhooks tab, and delete the existing webhook '
          'before adding the repository again.',
-    401: 'Unauthorized: either your access token was invalid or you do not have'
-         ' access',
+    401: ERR_UNAUTHORIZED,
 }
 
 
-class GitHubMixin(object):
+class GitHubMixin(CorePluginMixin):
     def message_from_error(self, exc):
         if isinstance(exc, ApiError):
             message = API_ERRORS.get(exc.code)
@@ -54,17 +49,6 @@ class GitHubMixin(object):
         else:
             return ERR_INTERNAL
 
-    def raise_error(self, exc):
-        if isinstance(exc, ApiUnauthorized):
-            raise InvalidIdentity(self.message_from_error(exc))
-        elif isinstance(exc, ApiError):
-            raise PluginError(self.message_from_error(exc))
-        elif isinstance(exc, PluginError):
-            raise
-        else:
-            self.logger.exception(six.text_type(exc))
-            raise PluginError(self.message_from_error(exc))
-
     def get_client(self, user):
         auth = self.get_auth(user=user)
         if auth is None:
@@ -75,7 +59,7 @@ class GitHubMixin(object):
 # TODO(dcramer): half of this plugin is for the issue tracking integration
 # (which is a singular entry) and the other half is generic GitHub. It'd be nice
 # if plugins were entirely generic, and simply registered the various hooks.
-class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
+class GitHubPlugin(GitHubMixin, IssuePlugin2):
     description = 'Integrate GitHub issues by linking a repository to a project.'
     slug = 'github'
     title = 'GitHub'

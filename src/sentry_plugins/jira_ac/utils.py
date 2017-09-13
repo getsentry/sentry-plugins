@@ -1,14 +1,11 @@
 from __future__ import absolute_import
 
 import hashlib
-
 import jwt
 
 from six.moves.urllib.parse import quote
 
-
-class JIRAError(Exception):
-    pass
+from sentry_plugins.exceptions import ApiError
 
 
 def percent_encode(val):
@@ -44,7 +41,7 @@ def get_jira_auth_from_request(request):
     # parameter or the authorization header.
     token = request.GET.get('jwt')
     if token is None:
-        raise JIRAError('No token parameter')
+        raise ApiError('No token parameter')
     # Decode the JWT token, without verification. This gives
     # you a header JSON object, a claims JSON object, and a signature.
     decoded = jwt.decode(token, verify=False)
@@ -67,6 +64,6 @@ def get_jira_auth_from_request(request):
     qsh = get_query_hash(request.path, 'GET', request.GET)
     # qsh = get_query_hash(request.path, request.method, request.GET)
     if qsh != decoded_verified['qsh']:
-        raise JIRAError('Query hash mismatch')
+        raise ApiError('Query hash mismatch')
 
     return jira_auth

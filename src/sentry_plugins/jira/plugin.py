@@ -14,7 +14,8 @@ from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, 
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
-from sentry_plugins.jira.client import JIRAClient, JIRAError, JIRAUnauthorized
+from sentry_plugins.exceptions import ApiError, ApiUnauthorized
+from sentry_plugins.jira.client import JiraClient
 from sentry_plugins.utils import get_secret_field_config
 
 # A list of common builtin custom field types for JIRA for easy reference.
@@ -150,7 +151,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         client = self.get_jira_client(group.project)
         try:
             meta = client.get_create_meta_for_project(jira_project_key)
-        except JIRAUnauthorized:
+        except ApiUnauthorized:
             raise PluginError(
                 'JIRA returned: Unauthorized. '
                 'Please check your username, password, '
@@ -284,7 +285,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             client = self.get_jira_client(group.project)
             try:
                 response = client.search_issues(project, query)
-            except JIRAError as e:
+            except ApiError as e:
                 return Response(
                     {
                         'error_type': 'validation',
@@ -299,7 +300,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                     {
                         'text': '(%s) %s' % (i['key'], i['fields']['summary']),
                         'id': i['key']
-                    } for i in response.json.get('issues', [])
+                    } for i in response.get('issues', [])
                 ]
                 return Response({field: issues})
 
@@ -324,8 +325,8 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 is_xml = True
                 jira_query['query'] = query.encode('utf8')
                 if jira_query.get('fieldName'):
-                    jira_query['fieldName'] = jira_query['fieldName'
-                                                         ][0]  # for some reason its a list.
+                    # for some reason its a list.
+                    jira_query['fieldName'] = jira_query['fieldName'][0]
 
             parsed[3] = urlencode(jira_query)
             final_url = urlunsplit(parsed)
@@ -342,7 +343,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         }
                     )
             else:
-                for user in autocomplete_response.json:
+                for user in autocomplete_response:
                     users.append(
                         {
                             'id':
@@ -362,7 +363,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                     autocomplete_response = jira_client.search_users_for_project(
                         jira_query.get('project'), jira_query.get('username')
                     )
-                except (JIRAUnauthorized, JIRAError) as e:
+                except (ApiUnauthorized, ApiError) as e:
                     return Response(
                         {
                             'error_type': 'validation',
@@ -373,7 +374,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         status=400
                     )
 
-                for user in autocomplete_response.json:
+                for user in autocomplete_response:
                     users.append(
                         {
                             'id':
@@ -387,9 +388,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             return Response({field: users})
 
     def message_from_error(self, exc):
-        if isinstance(exc, JIRAUnauthorized):
+        if isinstance(exc, ApiUnauthorized):
             return ERR_UNAUTHORIZED
-        elif isinstance(exc, JIRAError):
+        elif isinstance(exc, ApiError):
             message = ''
             if exc.json and exc.json.get('errorMessages'):
                 message = ' '.join(exc.json['errorMessages'])
@@ -405,9 +406,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             return ERR_INTERNAL
 
     def raise_error(self, exc):
-        # TODO(jess): switch this from JIRAError to the standard
+        # TODO(jess): switch this from ApiError to the standard
         # shared exeption classes
-        if not isinstance(exc, JIRAError):
+        if not isinstance(exc, ApiError):
             self.logger.exception(six.text_type(exc))
         raise PluginError(self.message_from_error(exc))
 
@@ -483,13 +484,13 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         except Exception as e:
             self.raise_error(e)
 
-        return response.json.get('key')
+        return response.get('key')
 
     def get_jira_client(self, project):
         instance = self.get_option('instance_url', project)
         username = self.get_option('username', project)
         pw = self.get_option('password', project)
-        return JIRAClient(instance, username, pw)
+        return JiraClient(instance, username, pw)
 
     def make_choices(self, x):
         return [(y['id'], y['name'] if 'name' in y else y['value']) for y in x] if x else []
@@ -509,10 +510,10 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         return config
         ```
         """
-        client = JIRAClient(config['instance_url'], config['username'], config['password'])
+        client = JiraClient(config['instance_url'], config['username'], config['password'])
         try:
             client.get_projects_list()
-        except JIRAError as e:
+        except ApiError as e:
             self.raise_error(e)
 
         return config
@@ -529,13 +530,12 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         priority_choices = []
         issue_type_choices = []
         if instance and username and pw:
-            client = JIRAClient(instance, username, pw)
+            client = JiraClient(instance, username, pw)
             try:
-                projects_response = client.get_projects_list()
-            except JIRAError:
-                projects_response = None
+                projects = client.get_projects_list()
+            except ApiError:
+                projects = None
             else:
-                projects = projects_response.json
                 if projects:
                     project_choices = [
                         (p.get('key'), '%s (%s)' % (p.get('name'), p.get('key'))) for p in projects
@@ -544,11 +544,10 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
             if jira_project:
                 try:
-                    priorities_response = client.get_priorities()
-                except JIRAError:
-                    priorities_response = None
+                    priorities = client.get_priorities()
+                except ApiError:
+                    priorities = None
                 else:
-                    priorities = priorities_response.json
                     if priorities:
                         priority_choices = [
                             (p.get('id'), '%s' % (p.get('name'))) for p in priorities
@@ -557,7 +556,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
                 try:
                     meta = client.get_create_meta_for_project(jira_project)
-                except JIRAError:
+                except ApiError:
                     meta = None
                 else:
                     if meta:
