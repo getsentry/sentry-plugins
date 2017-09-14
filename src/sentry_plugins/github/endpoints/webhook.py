@@ -14,8 +14,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils import timezone
 from simplejson import JSONDecodeError
+from sentry import options
 from sentry.models import (
-    Commit, CommitAuthor, CommitFileChange, Organization, OrganizationOption, Repository, User
+    Commit, CommitAuthor, CommitFileChange, Integration, Organization, OrganizationOption,
+    Repository, User
 )
 from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
@@ -35,13 +37,67 @@ def get_external_id(username):
 
 
 class Webhook(object):
-    def __call__(self, organization, event):
+    def __call__(self, event, organization=None):
         raise NotImplementedError
 
 
+class InstallationEventWebhook(Webhook):
+    # https://developer.github.com/v3/activity/events/types/#installationevent
+    def __call__(self, event, organization=None):
+        action = event['action']
+        installation = event['installation']
+        # TODO(jess): handle uninstalls
+        if action == 'created':
+            try:
+                with transaction.atomic():
+                    Integration.objects.create(
+                        provider='github_apps',
+                        external_id=installation['id'],
+                        name=installation['account']['login'],
+                    )
+            except IntegrityError:
+                pass
+
+
+class InstallationRepositoryEventWebhook(Webhook):
+    # https://developer.github.com/v3/activity/events/types/#installationrepositoriesevent
+    def __call__(self, event, organization=None):
+        installation = event['installation']
+
+        integration = Integration.objects.get(
+            external_id=installation['id'],
+            provider='github_apps',
+        )
+
+        repos_added = event['repositories_added']
+
+        if repos_added:
+            for org_id in integration.organizations.values_list('id', flat=True):
+                for r in repos_added:
+                    config = {
+                        'name': r['full_name'],
+                    }
+                    repo, created = Repository.objects.get_or_create(
+                        organization_id=org_id,
+                        name=r['full_name'],
+                        provider='github',
+                        external_id=r['id'],
+                        defaults={
+                            'url': 'https://github.com/%s' % (r['full_name'], ),
+                            'config': config,
+                            'integration_id': integration.id,
+                        }
+                    )
+                    if not created:
+                        repo.config.update(config)
+                        repo.integration_id = integration.id
+                        repo.save()
+        # TODO(jess): what do we want to do when they're removed?
+        # maybe signify that we've lost access but not deleted?
+
+
 class PushEventWebhook(Webhook):
-    # https://developer.github.com/v3/activity/events/types/#pushevent
-    def __call__(self, organization, event):
+    def _handle(self, event, organization, is_apps):
         authors = {}
 
         client = GitHubClient()
@@ -50,7 +106,7 @@ class PushEventWebhook(Webhook):
         try:
             repo = Repository.objects.get(
                 organization_id=organization.id,
-                provider='github',
+                provider='github_apps' if is_apps else 'github',
                 external_id=six.text_type(event['repository']['id']),
             )
         except Repository.DoesNotExist:
@@ -198,8 +254,26 @@ class PushEventWebhook(Webhook):
             except IntegrityError:
                 pass
 
+    # https://developer.github.com/v3/activity/events/types/#pushevent
+    def __call__(self, event, organization=None):
+        is_apps = 'installation' in event
+        if organization is None:
+            if 'installation' not in event:
+                return
 
-class GithubWebhookEndpoint(View):
+            integration = Integration.objects.get(
+                external_id=event['installation']['id'],
+                provider='github_apps',
+            )
+            organizations = list(integration.organizations.all())
+        else:
+            organizations = [organization]
+
+        for org in organizations:
+            self._handle(event, org, is_apps)
+
+
+class GithubWebhookBase(View):
     _handlers = {
         'push': PushEventWebhook,
     }
@@ -225,7 +299,86 @@ class GithubWebhookEndpoint(View):
         if request.method != 'POST':
             return HttpResponse(status=405)
 
-        return super(GithubWebhookEndpoint, self).dispatch(request, *args, **kwargs)
+        return super(GithubWebhookBase, self).dispatch(request, *args, **kwargs)
+
+    def get_logging_data(self, organization):
+        pass
+
+    def get_secret(self, organization):
+        raise NotImplementedError
+
+    def handle(self, request, organization=None):
+        secret = self.get_secret(organization)
+
+        if secret is None:
+            logger.error(
+                'github.webhook.missing-secret',
+                extra=self.get_logging_data(organization),
+            )
+            return HttpResponse(status=401)
+
+        body = six.binary_type(request.body)
+        if not body:
+            logger.error(
+                'github.webhook.missing-body',
+                extra=self.get_logging_data(organization),
+            )
+            return HttpResponse(status=400)
+
+        try:
+            handler = self.get_handler(request.META['HTTP_X_GITHUB_EVENT'])
+        except KeyError:
+            logger.error(
+                'github.webhook.missing-event',
+                extra=self.get_logging_data(organization),
+            )
+            return HttpResponse(status=400)
+
+        if not handler:
+            return HttpResponse(status=204)
+
+        try:
+            method, signature = request.META['HTTP_X_HUB_SIGNATURE'].split('=', 1)
+        except (KeyError, IndexError):
+            logger.error(
+                'github.webhook.missing-signature',
+                extra=self.get_logging_data(organization),
+            )
+            return HttpResponse(status=400)
+
+        if not self.is_valid_signature(method, body, self.get_secret(organization), signature):
+            logger.error(
+                'github.webhook.invalid-signature',
+                extra=self.get_logging_data(organization),
+            )
+            return HttpResponse(status=401)
+
+        try:
+            event = json.loads(body.decode('utf-8'))
+        except JSONDecodeError:
+            logger.error(
+                'github.webhook.invalid-json',
+                extra=self.get_logging_data(organization),
+                exc_info=True,
+            )
+            return HttpResponse(status=400)
+
+        handler()(event, organization=organization)
+        return HttpResponse(status=204)
+
+
+# non-integration version
+class GithubWebhookEndpoint(GithubWebhookBase):
+    def get_logging_data(self, organization):
+        return {
+            'organization_id': organization.id,
+        }
+
+    def get_secret(self, organization):
+        return OrganizationOption.objects.get_value(
+            organization=organization,
+            key='github:webhook_secret',
+        )
 
     def post(self, request, organization_id):
         try:
@@ -240,69 +393,25 @@ class GithubWebhookEndpoint(View):
             )
             return HttpResponse(status=400)
 
-        secret = OrganizationOption.objects.get_value(
-            organization=organization,
-            key='github:webhook_secret',
-        )
-        if secret is None:
-            logger.error(
-                'github.webhook.missing-secret', extra={
-                    'organization_id': organization.id,
-                }
-            )
-            return HttpResponse(status=401)
+        return self.handle(request, organization=organization)
 
-        body = six.binary_type(request.body)
-        if not body:
-            logger.error(
-                'github.webhook.missing-body', extra={
-                    'organization_id': organization.id,
-                }
-            )
-            return HttpResponse(status=400)
 
-        try:
-            handler = self.get_handler(request.META['HTTP_X_GITHUB_EVENT'])
-        except KeyError:
-            logger.error(
-                'github.webhook.missing-event', extra={
-                    'organization_id': organization.id,
-                }
-            )
-            return HttpResponse(status=400)
+class GithubIntegrationsWebhookEndpoint(GithubWebhookBase):
+    _handlers = {
+        'push': PushEventWebhook,
+        'installation': InstallationEventWebhook,
+        'installation_repositories': InstallationRepositoryEventWebhook,
+    }
 
-        if not handler:
-            return HttpResponse(status=204)
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        if request.method != 'POST':
+            return HttpResponse(status=405)
 
-        try:
-            method, signature = request.META['HTTP_X_HUB_SIGNATURE'].split('=', 1)
-        except (KeyError, IndexError):
-            logger.error(
-                'github.webhook.missing-signature', extra={
-                    'organization_id': organization.id,
-                }
-            )
-            return HttpResponse(status=400)
+        return super(GithubIntegrationsWebhookEndpoint, self).dispatch(request, *args, **kwargs)
 
-        if not self.is_valid_signature(method, body, secret, signature):
-            logger.error(
-                'github.webhook.invalid-signature', extra={
-                    'organization_id': organization.id,
-                }
-            )
-            return HttpResponse(status=401)
+    def get_secret(self, organization):
+        return options.get('github.integration-hook-secret')
 
-        try:
-            event = json.loads(body.decode('utf-8'))
-        except JSONDecodeError:
-            logger.error(
-                'github.webhook.invalid-json',
-                extra={
-                    'organization_id': organization.id,
-                },
-                exc_info=True
-            )
-            return HttpResponse(status=400)
-
-        handler()(organization, event)
-        return HttpResponse(status=204)
+    def post(self, request):
+        return self.handle(request)

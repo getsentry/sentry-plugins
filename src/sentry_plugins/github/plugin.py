@@ -6,9 +6,12 @@ import six
 from rest_framework.response import Response
 from uuid import uuid4
 
+from social_auth.models import UserSocialAuth
+
+from sentry import options
 from sentry.app import locks
 from sentry.exceptions import InvalidIdentity, PluginError
-from sentry.models import OrganizationOption
+from sentry.models import Integration, OrganizationOption, Repository
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
@@ -16,7 +19,7 @@ from sentry.utils.http import absolute_uri
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 
-from .client import GitHubClient
+from .client import GitHubClient, GitHubAppsClient
 
 ERR_INTERNAL = (
     'An internal error occurred with the integration and the Sentry team has'
@@ -262,8 +265,20 @@ class GitHubPlugin(CorePluginMixin, GitHubMixin, IssuePlugin2):
             }
         ]
 
+    def has_apps_configured(self):
+        return bool(
+            options.get('github.apps-install-url') and
+            options.get('github.integration-app-id') and
+            options.get('github.integration-hook-secret') and
+            options.get('github.integration-private-key')
+        )
+
     def setup(self, bindings):
         bindings.add('repository.provider', GitHubRepositoryProvider, id='github')
+        if self.has_apps_configured():
+            bindings.add('repository.provider', GitHubAppsRepositoryProvider, id='github_apps')
+        else:
+            self.logger.info('apps-not-configured')
 
 
 class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
@@ -381,8 +396,8 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
     def compare_commits(self, repo, start_sha, end_sha, actor=None):
         if actor is None:
             raise NotImplementedError('Cannot fetch commits anonymously')
-
         client = self.get_client(actor)
+
         # use config name because that is kept in sync via webhooks
         name = repo.config['name']
         if start_sha is None:
@@ -399,3 +414,141 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
                 self.raise_error(e)
             else:
                 return self._format_commits(repo, res['commits'])
+
+
+class GitHubAppsRepositoryProvider(GitHubRepositoryProvider):
+    name = 'GitHub Apps'
+    auth_provider = 'github_apps'
+    logger = logging.getLogger('sentry.plugins.github_apps')
+
+    def get_install_url(self):
+        return options.get('github.apps-install-url')
+
+    def get_available_auths(self, user, organization, integrations, social_auths, **kwargs):
+        allowed_gh_installations = set(self.get_installations(user))
+
+        linked_integrations = {i.id for i in integrations}
+
+        _integrations = list(
+            Integration.objects.filter(
+                external_id__in=allowed_gh_installations,
+            )
+        )
+
+        # add in integrations that might have been set up for org
+        # by users w diff permissions
+        _integrations.extend(
+            [i for i in integrations if i.external_id not in allowed_gh_installations]
+        )
+
+        return [
+            {
+                'defaultAuthId': None,
+                'user': None,
+                'externalId': i.external_id,
+                'integrationId': six.text_type(i.id),
+                'linked': i.id in linked_integrations,
+            } for i in _integrations
+        ]
+
+    def link_auth(self, user, organization, data):
+        integration_id = data['integration_id']
+
+        try:
+            integration = Integration.objects.get(
+                provider=self.auth_provider,
+                id=integration_id,
+            )
+        except Integration.DoesNotExist:
+            raise PluginError('Invalid integration id')
+
+        # check that user actually has access to add
+        allowed_gh_installations = set(self.get_installations(user))
+        if int(integration.external_id) not in allowed_gh_installations:
+            raise PluginError('You do not have access to that integration')
+
+        integration.add_organization(organization.id)
+
+        for repo in self.get_repositories(integration):
+            # TODO(jess): figure out way to migrate from github --> github apps
+            Repository.objects.create_or_update(
+                organization_id=organization.id,
+                name=repo['name'],
+                external_id=repo['external_id'],
+                provider='github_apps',
+                values={
+                    'integration_id': integration.id,
+                    'url': repo['url'],
+                    'config': repo['config'],
+                },
+            )
+
+    def delete_repository(self, repo, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot delete a repository anonymously')
+
+        # there isn't a webhook to delete for integrations
+        if not repo.config.get('webhook_id') and repo.integration_id is not None:
+            return
+
+        return super(GitHubAppsRepositoryProvider, self).delete_repository(repo, actor=actor)
+
+    def compare_commits(self, repo, start_sha, end_sha, actor=None):
+        integration_id = repo.integration_id
+        if integration_id is None:
+            raise NotImplementedError('GitHub apps requires an integration id to fetch commits')
+
+        client = GitHubAppsClient(
+            Integration.objects.get(id=integration_id),
+        )
+
+        # use config name because that is kept in sync via webhooks
+        name = repo.config['name']
+        if start_sha is None:
+            try:
+                res = client.get_last_commits(name, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return self._format_commits(repo, res[:10])
+        else:
+            try:
+                res = client.compare_commits(name, start_sha, end_sha)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return self._format_commits(repo, res['commits'])
+
+    def get_installations(self, actor):
+        if not actor.is_authenticated():
+            raise PluginError(ERR_UNAUTHORIZED)
+
+        auth = UserSocialAuth.objects.filter(
+            user=actor,
+            provider='github_apps',
+        ).first()
+
+        if not auth:
+            self.logger.warn('get_installations.no-linked-auth')
+            return []
+
+        client = GitHubClient(token=auth.tokens['access_token'])
+
+        res = client.get_installations()
+
+        return [install['id'] for install in res['installations']]
+
+    def get_repositories(self, integration):
+        client = GitHubAppsClient(integration)
+
+        res = client.get_repositories()
+        return [
+            {
+                'name': '%s/%s' % (r['owner']['login'], r['name']),
+                'external_id': r['id'],
+                'url': r['html_url'],
+                'config': {
+                    'name': '%s/%s' % (r['owner']['login'], r['name']),
+                },
+            } for r in res['repositories']
+        ]
