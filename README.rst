@@ -106,6 +106,7 @@ Add the configured application credentials to your Sentry config:
     VISUALSTUDIO_APP_ID = 'App ID'
     VISUALSTUDIO_APP_SECRET = 'App Secret'
     VISUALSTUDIO_CLIENT_SECRET = 'Client Secret'
+    VISUALSTUDIO_SCOPES = ['vso.project', 'vso.work_write']
 
 
 Development
