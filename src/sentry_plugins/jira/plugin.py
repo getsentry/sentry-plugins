@@ -1,13 +1,11 @@
 from __future__ import absolute_import
 
 import logging
-import six
-from six.moves.urllib.parse import parse_qs, quote_plus, unquote_plus, urlencode, urlsplit, urlunsplit
-
-from rest_framework.response import Response
 
 from django.conf import settings
 from django.conf.urls import url
+from rest_framework.response import Response
+from six.moves.urllib.parse import parse_qs, quote_plus, unquote_plus, urlencode, urlsplit, urlunsplit
 
 from sentry.models import GroupMeta
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint, PluginError
@@ -387,30 +385,15 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
             return Response({field: users})
 
-    def message_from_error(self, exc):
-        if isinstance(exc, ApiUnauthorized):
-            return ERR_UNAUTHORIZED
-        elif isinstance(exc, ApiError):
-            message = ''
-            if exc.json and exc.json.get('errorMessages'):
-                message = ' '.join(exc.json['errorMessages'])
-            if exc.json and exc.json.get('errors'):
-                if message:
-                    message += ' '
-                message += ' '.join(['%s: %s' % (k, v) for k, v in exc.json.get('errors').items()])
-            return (
-                'Error Communicating with Jira (HTTP %s): %s' %
-                (exc.status_code, message or 'unknown error', )
-            )
-        else:
-            return ERR_INTERNAL
-
-    def raise_error(self, exc):
-        # TODO(jess): switch this from ApiError to the standard
-        # shared exeption classes
-        if not isinstance(exc, ApiError):
-            self.logger.exception(six.text_type(exc))
-        raise PluginError(self.message_from_error(exc))
+    def error_message_from_json(self, data):
+        message = ''
+        if data.get('errorMessages'):
+            message = ' '.join(data['errorMessages'])
+        if data.get('errors'):
+            if message:
+                message += ' '
+            message += ' '.join(['%s: %s' % (k, v) for k, v in data.get('errors').items()])
+        return message
 
     def create_issue(self, request, group, form_data, **kwargs):
         cleaned_data = {}

@@ -25,17 +25,24 @@ class CorePluginMixin(object):
     # TODO(dcramer): The following is a possible "better implementation" of the
     # core issue implementation, though it would need a compat layer to push
     # it upstream
+    def error_message_from_json(self, data):
+        return data.get('message', 'unknown error')
+
     def message_from_error(self, exc):
         if isinstance(exc, ApiUnauthorized):
             return ERR_UNAUTHORIZED
         elif isinstance(exc, ApiHostError):
             return exc.text
         elif isinstance(exc, ApiError):
+            if exc.json:
+                msg = self.error_message_from_json(exc.json) or 'unknown error'
+            else:
+                msg = 'unknown error'
             return (
                 'Error Communicating with %s (HTTP %s): %s' % (
                     self.title,
-                    exc.code, exc.json.get('message', 'unknown error')
-                    if exc.json else 'unknown error',
+                    exc.code,
+                    msg
                 )
             )
         else:

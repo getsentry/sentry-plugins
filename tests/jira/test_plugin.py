@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import mock
+import responses
 
 from exam import fixture
 from django.contrib.auth.models import AnonymousUser
@@ -9,7 +9,6 @@ from django.test import RequestFactory
 from sentry.testutils import TestCase
 from sentry.utils import json
 
-from sentry_plugins.client import MappingApiResponse
 from sentry_plugins.jira.plugin import JiraPlugin
 
 create_meta_response = {
@@ -299,17 +298,15 @@ class JiraPluginTest(TestCase):
         self.plugin.set_option('default_project', 'SEN', self.project)
         assert self.plugin.is_configured(None, self.project) is True
 
-    @mock.patch(
-        'sentry_plugins.jira.client.JiraClient.get_create_meta',
-        mock.Mock(return_value=MappingApiResponse(create_meta_response, status_code=200))
-    )
-    @mock.patch(
-        'sentry_plugins.jira.client.JiraClient.create_issue',
-        mock.Mock(return_value=MappingApiResponse({
-            'key': 'SEN-1'
-        }, status_code=200))
-    )
+    @responses.activate
     def test_create_issue(self):
+        responses.add(
+            responses.GET,
+            'https://getsentry.atlassian.net/rest/api/2/issue/createmeta',
+            json=create_meta_response)
+        responses.add(responses.POST, 'https://getsentry.atlassian.net/rest/api/2/issue', json={
+            'key': 'SEN-1'
+        })
         self.plugin.set_option('instance_url', 'https://getsentry.atlassian.net', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
@@ -323,11 +320,12 @@ class JiraPluginTest(TestCase):
         }
         assert self.plugin.create_issue(request, group, form_data) == 'SEN-1'
 
-    @mock.patch(
-        'sentry_plugins.jira.client.JiraClient.get_issue',
-        mock.Mock(return_value=MappingApiResponse(issue_response, status_code=200))
-    )
+    @responses.activate
     def test_link_issue(self):
+        responses.add(
+            responses.GET,
+            'https://getsentry.atlassian.net/rest/api/2/issue/SEN-19',
+            json=issue_response)
         self.plugin.set_option('instance_url', 'https://getsentry.atlassian.net', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
