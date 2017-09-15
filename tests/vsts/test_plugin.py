@@ -101,7 +101,8 @@ class VstsPluginTest(PluginTestCase):
         responses.add(
             responses.PATCH,
             'https://fabrikam-fiber-inc.visualstudio.com/DefaultProject/_apis/wit/workitems/$Bug?api-version=3.0',
-            body=WORK_ITEM_RESPONSE
+            body=WORK_ITEM_RESPONSE,
+            content_type='application/json',
         )
 
         self.plugin.set_option('instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
@@ -163,6 +164,7 @@ class VstsPluginTest(PluginTestCase):
             responses.PATCH,
             'https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/wit/workitems/309?api-version=3.0',
             body=WORK_ITEM_RESPONSE,
+            content_type='application/json',
         )
 
         self.plugin.set_option('instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)

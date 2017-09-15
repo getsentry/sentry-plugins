@@ -8,19 +8,17 @@ from django.utils.html import format_html
 from rest_framework.response import Response
 
 from sentry.api.serializers.models.plugin import PluginSerializer
-from sentry.exceptions import PluginError
 from sentry.models import Activity, Event, GroupMeta
 from sentry.signals import issue_tracker_used
 from sentry.utils.http import absolute_uri
 
 from sentry.plugins.bases.issue2 import IssueTrackingPlugin2
-from sentry_plugins.base import CorePluginMixin
-from sentry_plugins.constants import ERR_UNAUTHORIZED
 
-from .client import VstsClient
+from .mixins import VisualStudioMixin
+from .repository_provider import VisualStudioRepositoryProvider
 
 
-class VstsPlugin(CorePluginMixin, IssueTrackingPlugin2):
+class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
     description = 'Integrate Visual Studio Team Services work items by linking a project.'
     slug = 'vsts'
     title = 'Visual Studio'
@@ -28,12 +26,6 @@ class VstsPlugin(CorePluginMixin, IssueTrackingPlugin2):
     auth_provider = 'visualstudio'
 
     issue_fields = frozenset(['id', 'title', 'url'])
-
-    def get_client(self, user):
-        auth = self.get_auth(user=user)
-        if auth is None:
-            raise PluginError(ERR_UNAUTHORIZED)
-        return VstsClient(auth=auth)
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
         # TODO(dcramer): Both Account and Project can query the API an access
@@ -324,3 +316,6 @@ class VstsPlugin(CorePluginMixin, IssueTrackingPlugin2):
         )
 
         return tag_list
+
+    def setup(self, bindings):
+        bindings.add('repository.provider', VisualStudioRepositoryProvider, id='visualstudio')

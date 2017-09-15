@@ -14,6 +14,7 @@ from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.base import ERR_INTERNAL, ERR_UNAUTHORIZED
 from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 
 from .client import BitbucketClient
@@ -28,16 +29,6 @@ PRIORITIES = (
     ('blocker', 'Blocker'),
 )
 
-ERR_INTERNAL = (
-    'An internal error occurred with the integration and '
-    'the Sentry team has been notified'
-)
-
-ERR_UNAUTHORIZED = (
-    'Unauthorized: either your access token was invalid or '
-    'you do not have access'
-)
-
 ERR_404 = (
     'Bitbucket returned a 404. Please make sure that '
     'the repo exists, you have access to it, and it has '
@@ -45,32 +36,8 @@ ERR_404 = (
 )
 
 
-class BitbucketMixin(object):
-    def message_from_error(self, exc):
-        if isinstance(exc, ApiUnauthorized):
-            return ERR_UNAUTHORIZED
-        elif isinstance(exc, ApiError):
-            if exc.code == 404:
-                return ERR_404
-            return (
-                'Error Communicating with Bitbucket (HTTP %s): %s' % (
-                    exc.code, exc.json.get('message', 'unknown error')
-                    if exc.json else 'unknown error',
-                )
-            )
-        else:
-            return ERR_INTERNAL
-
-    def raise_error(self, exc):
-        if isinstance(exc, ApiUnauthorized):
-            raise InvalidIdentity(self.message_from_error(exc))
-        elif isinstance(exc, ApiError):
-            raise PluginError(self.message_from_error(exc))
-        elif isinstance(exc, PluginError):
-            raise
-        else:
-            self.logger.exception(six.text_type(exc))
-            raise PluginError(self.message_from_error(exc))
+class BitbucketMixin(CorePluginMixin):
+    title = 'Bitbucket'
 
     def get_client(self, user):
         auth = self.get_auth(user=user)
@@ -79,11 +46,10 @@ class BitbucketMixin(object):
         return BitbucketClient(auth)
 
 
-class BitbucketPlugin(CorePluginMixin, BitbucketMixin, IssuePlugin2):
+class BitbucketPlugin(BitbucketMixin, IssuePlugin2):
     description = 'Integrate Bitbucket issues by linking a repository to a project.'
     slug = 'bitbucket'
-    title = 'Bitbucket'
-    conf_title = title
+    conf_title = BitbucketMixin.title
     conf_key = 'bitbucket'
     auth_provider = 'bitbucket'
 

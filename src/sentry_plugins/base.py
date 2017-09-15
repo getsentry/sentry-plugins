@@ -6,8 +6,8 @@ import six
 
 from sentry.exceptions import InvalidIdentity, PluginError
 
-from sentry_plugins.constants import ERR_INTERNAL, ERR_UNAUTHORIZED
-from sentry_plugins.exceptions import ApiError, ApiHostError, ApiUnauthorized
+from sentry_plugins.constants import ERR_INTERNAL, ERR_UNAUTHORIZED, ERR_UNSUPPORTED_RESPONSE_TYPE
+from sentry_plugins.exceptions import ApiError, ApiHostError, ApiUnauthorized, UnsupportedResponseType
 
 
 class CorePluginMixin(object):
@@ -33,6 +33,10 @@ class CorePluginMixin(object):
             return ERR_UNAUTHORIZED
         elif isinstance(exc, ApiHostError):
             return exc.text
+        elif isinstance(exc, UnsupportedResponseType):
+            return ERR_UNSUPPORTED_RESPONSE_TYPE.format(
+                content_type=exc.content_type,
+            )
         elif isinstance(exc, ApiError):
             if exc.json:
                 msg = self.error_message_from_json(exc.json) or 'unknown error'

@@ -48,7 +48,8 @@ class GitHubPluginTest(PluginTestCase):
         responses.add(
             responses.POST,
             'https://api.github.com/repos/getsentry/sentry/issues',
-            body='{"number": 1, "title": "Hello world"}'
+            body='{"number": 1, "title": "Hello world"}',
+            content_type='application/json',
         )
 
         self.plugin.set_option('repo', 'getsentry/sentry', self.project)
@@ -79,12 +80,14 @@ class GitHubPluginTest(PluginTestCase):
         responses.add(
             responses.GET,
             'https://api.github.com/repos/getsentry/sentry/issues/1',
-            body='{"number": 1, "title": "Hello world"}'
+            body='{"number": 1, "title": "Hello world"}',
+            content_type='application/json',
         )
         responses.add(
             responses.POST,
             'https://api.github.com/repos/getsentry/sentry/issues/1/comments',
-            body='{"body": "Hello"}'
+            body='{"body": "Hello"}',
+            content_type='application/json',
         )
 
         self.plugin.set_option('repo', 'getsentry/sentry', self.project)

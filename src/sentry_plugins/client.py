@@ -11,7 +11,7 @@ from requests.exceptions import ConnectionError, HTTPError
 
 from sentry.http import build_session
 
-from .exceptions import ApiHostError, ApiError, ApiUnauthorized
+from .exceptions import ApiHostError, ApiError, ApiUnauthorized, UnsupportedResponseType
 
 
 class BaseApiResponse(object):
@@ -52,6 +52,9 @@ class BaseApiResponse(object):
                 ))
             return TextApiResponse(response.text, response.headers, response.status_code)
         # if its not JSON we hard error
+        if 'application/json' not in response.headers['Content-Type']:
+            raise UnsupportedResponseType(response.headers['Content-Type'], response.status_code)
+
         data = json.loads(response.text, object_pairs_hook=SortedDict)
         if isinstance(data, dict):
             return MappingApiResponse(data, response.headers, response.status_code)
@@ -166,6 +169,9 @@ class AuthApiClient(ApiClient):
     def has_auth(self):
         return self.auth and 'access_token' in self.auth.tokens
 
+    def exception_means_unauthorized(self, exc):
+        return isinstance(exc, ApiUnauthorized)
+
     def _request(self, method, path, headers=None, *args, **kwargs):
         if headers is None:
             headers = {}
@@ -181,7 +187,9 @@ class AuthApiClient(ApiClient):
         try:
             return ApiClient._request(self, method, path, headers=headers,
                                       *args, **kwargs)
-        except ApiUnauthorized:
+        except Exception as exc:
+            if not self.exception_means_unauthorized(exc):
+                raise
             if not self.auth:
                 raise
 

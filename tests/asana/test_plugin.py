@@ -48,13 +48,13 @@ class AsanaPluginTest(PluginTestCase):
         responses.add(
             responses.POST,
             'https://app.asana.com/api/1.0/tasks',
-            body=json.dumps({
+            json={
                 'data': {
                     'name': 'Hello world!',
                     'notes': 'Fix this.',
                     'id': 1
                 }
-            })
+            }
         )
 
         self.plugin.set_option('workspace', 12345678, self.project)
@@ -85,22 +85,22 @@ class AsanaPluginTest(PluginTestCase):
         responses.add(
             responses.GET,
             'https://app.asana.com/api/1.0/tasks/1',
-            body=json.dumps({
+            json={
                 'data': {
                     'id': 1,
                     'name': 'Hello',
                     'notes': 'Fix this.'
                 }
-            })
+            }
         )
         responses.add(
             responses.POST,
             'https://app.asana.com/api/1.0/tasks/1/stories/',
-            body=json.dumps({
+            json={
                 'data': {
                     'text': 'hello'
                 }
-            })
+            }
         )
 
         self.plugin.set_option('workspace', 12345678, self.project)

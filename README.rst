@@ -96,8 +96,10 @@ You'll have to `create an application in Visual Studio <https://app.vsaex.visual
 
 **Scopes:**
 
-- Projects and Teams (read) -- ``vso.project``
+- Code (read) -- ``vso.code``
 - Work items (read and write) -- ``vso.work_write``
+- Project and Team (read) -- ``vso.project``
+- Releases (read) -- ``vso.release``
 
 Add the configured application credentials to your Sentry config:
 

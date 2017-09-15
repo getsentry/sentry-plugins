@@ -55,3 +55,9 @@ class ApiHostError(ApiError):
 
 class ApiUnauthorized(ApiError):
     code = 401
+
+
+class UnsupportedResponseType(ApiError):
+    @property
+    def content_type(self):
+        return self.text
