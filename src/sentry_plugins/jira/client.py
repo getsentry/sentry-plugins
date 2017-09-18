@@ -37,6 +37,14 @@ class JiraClient(ApiClient):
         self.base_url = instance_uri.rstrip('/')
         self.username = username
         self.password = password
+        super(JiraClient, self).__init__(verify_ssl=False)
+
+    def request(self, method, path, data=None, params=None):
+        if self.username and self.password:
+            auth = self.username.encode('utf8'), self.password.encode('utf8')
+        else:
+            auth = None
+        return self._request(method, path, data=data, params=params, auth=auth)
 
     def get_projects_list(self):
         return self.get_cached(self.PROJECT_URL)
@@ -48,9 +56,7 @@ class JiraClient(ApiClient):
         )
 
     def get_create_meta_for_project(self, project):
-        response = self.get_create_meta(project)
-        metas = response.json
-
+        metas = self.get_create_meta(project)
         # We saw an empty JSON response come back from the API :(
         if not metas:
             return None

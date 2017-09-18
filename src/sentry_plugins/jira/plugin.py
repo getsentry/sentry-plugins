@@ -225,10 +225,10 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             if field['name'] == 'priority':
                 # whenever priorities are available, put the available ones in the list.
                 # allowedValues for some reason doesn't pass enough info.
-                field['choices'] = self.make_choices(client.get_priorities().json)
+                field['choices'] = self.make_choices(client.get_priorities())
                 field['default'] = self.get_option('default_priority', group.project) or ''
             elif field['name'] == 'fixVersions':
-                field['choices'] = self.make_choices(client.get_versions(jira_project_key).json)
+                field['choices'] = self.make_choices(client.get_versions(jira_project_key))
 
         return fields
 
@@ -254,7 +254,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
     def link_issue(self, request, group, form_data, **kwargs):
         client = self.get_jira_client(group.project)
         try:
-            issue = client.get_issue(form_data['issue_id']).json
+            issue = client.get_issue(form_data['issue_id'])
         except Exception as e:
             self.raise_error(e)
 
@@ -384,6 +384,11 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                     )
 
             return Response({field: users})
+
+    def message_from_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            return 'Unauthorized: either your username and password were invalid or you do not have access'
+        return super(JiraPlugin, self).message_from_error(exc)
 
     def error_message_from_json(self, data):
         message = ''

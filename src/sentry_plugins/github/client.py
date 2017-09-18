@@ -43,6 +43,7 @@ class GitHubClient(GitHubClientBase):
         if url is not None:
             self.base_url = url.rstrip('/')
         self.token = token
+        super(GitHubClient, self).__init__()
 
     def request(self, method, path, data=None, params=None):
         headers = {
@@ -123,6 +124,7 @@ class GitHubAppsClient(GitHubClientBase):
         self.integration = integration
         self.token = None
         self.expires_at = None
+        super(GitHubAppsClient, self).__init__()
 
     def get_token(self):
         if not self.token or self.expires_at < datetime.datetime.utcnow():

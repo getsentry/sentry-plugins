@@ -21,6 +21,13 @@ class BaseApiResponse(object):
         self.headers = headers
         self.status_code = status_code
 
+    def __repr__(self):
+        return u'<%s: code=%s, content_type=%s>' % (
+            type(self).__name__,
+            self.status_code,
+            self.headers.get('Content-Type', '') if self.headers else '',
+        )
+
     @cached_property
     def rel(self):
         if not self.headers:
@@ -31,12 +38,18 @@ class BaseApiResponse(object):
         return {item['rel']: item['url'] for item in requests.utils.parse_header_links(link_header)}
 
     @classmethod
-    def from_response(self, response):
+    def from_response(self, response, allow_text=False):
         # XXX(dcramer): this doesnt handle leading spaces, but they're not common
         # paths so its ok
         if response.text.startswith(u'<?xml'):
             return XmlApiResponse(response.text, response.headers, response.status_code)
         elif response.text.startswith('<'):
+            if not allow_text:
+                raise ValueError('Not a valid response type: {}'.format(response.text[:128]))
+            elif response.status_code < 200 or response.status_code >= 300:
+                raise ValueError('Received unexpected plaintext response for code {}'.format(
+                    response.status_code,
+                ))
             return TextApiResponse(response.text, response.headers, response.status_code)
         # if its not JSON we hard error
         data = json.loads(response.text, object_pairs_hook=SortedDict)
@@ -84,7 +97,11 @@ class ApiClient(object):
     base_url = None
     logger = logging.getLogger('sentry.plugins')
 
-    def _request(self, method, path, headers=None, data=None, params=None):
+    def __init__(self, verify_ssl=True):
+        self.verify_ssl = verify_ssl
+
+    def _request(self, method, path, headers=None, data=None, params=None,
+                 auth=None):
         if path.startswith('/'):
             if not self.base_url:
                 raise ValueError('Invalid URL: {}'.format(path))
@@ -98,6 +115,8 @@ class ApiClient(object):
                 headers=headers,
                 json=data,
                 params=params,
+                auth=auth,
+                verify=self.verify_ssl,
                 allow_redirects=True,
             )
             resp.raise_for_status()
@@ -140,13 +159,14 @@ class ApiClient(object):
 class AuthApiClient(ApiClient):
     auth = None
 
-    def __init__(self, auth=None):
+    def __init__(self, auth=None, *args, **kwargs):
         self.auth = auth
+        super(AuthApiClient, self).__init__(*args, **kwargs)
 
     def has_auth(self):
         return self.auth and 'access_token' in self.auth.tokens
 
-    def _request(self, method, path, headers=None, data=None, params=None):
+    def _request(self, method, path, headers=None, *args, **kwargs):
         if headers is None:
             headers = {}
 
@@ -159,7 +179,8 @@ class AuthApiClient(ApiClient):
             headers['Authorization'] = 'Bearer {}'.format(token)
 
         try:
-            return ApiClient._request(self, method, path, headers=headers, data=data, params=params)
+            return ApiClient._request(self, method, path, headers=headers,
+                                      *args, **kwargs)
         except ApiUnauthorized:
             if not self.auth:
                 raise
@@ -172,4 +193,5 @@ class AuthApiClient(ApiClient):
         self.auth.refresh_token()
         token = self.auth.tokens['access_token']
         headers['Authorization'] = 'Bearer {}'.format(token)
-        return ApiClient._request(self, method, path, headers=headers, data=data, params=params)
+        return ApiClient._request(self, method, path, headers=headers,
+                                  *args, **kwargs)
