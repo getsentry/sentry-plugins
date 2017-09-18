@@ -52,7 +52,7 @@ class JiraClient(ApiClient):
     def get_create_meta(self, project):
         return self.get(
             self.META_URL,
-            {'projectKeys': project, 'expand': 'projects.issuetypes.fields'},
+            params={'projectKeys': project, 'expand': 'projects.issuetypes.fields'},
         )
 
     def get_create_meta_for_project(self, project):
@@ -77,10 +77,10 @@ class JiraClient(ApiClient):
         return self.get_cached(self.PRIORITIES_URL)
 
     def get_users_for_project(self, project):
-        return self.get(self.USERS_URL, {'project': project})
+        return self.get(self.USERS_URL, params={'project': project})
 
     def search_users_for_project(self, project, username):
-        return self.get(self.USERS_URL, {'project': project, 'username': username})
+        return self.get(self.USERS_URL, params={'project': project, 'username': username})
 
     def create_issue(self, raw_form_data):
         data = {'fields': raw_form_data}
@@ -90,7 +90,7 @@ class JiraClient(ApiClient):
         return self.get(self.ISSUE_URL % key)
 
     def create_comment(self, issue_key, comment):
-        return self.post(self.COMMENT_URL % issue_key, {'body': comment})
+        return self.post(self.COMMENT_URL % issue_key, data={'body': comment})
 
     def search_issues(self, project, query):
         # check if it looks like an issue id
@@ -99,7 +99,7 @@ class JiraClient(ApiClient):
         else:
             jql = 'text ~ "%s"' % query.replace('"', '\\"')
         jql = 'project="%s" AND %s' % (project, jql)
-        return self.get(self.SEARCH_URL, {'jql': jql})
+        return self.get(self.SEARCH_URL, params={'jql': jql})
 
     def get_cached(self, full_url):
         """
