@@ -73,9 +73,9 @@ class SessionStackClient(object):
         return add_query_params(player_url, query_params)
 
     def _get_access_token(self, session_id):
-        access_token = self._get_existing_access_token(session_id)
+        access_token = self._create_access_token(session_id)
         if not access_token:
-            access_token = self._create_access_token(session_id)
+            access_token = self._get_existing_access_token(session_id)
 
         return access_token
 
