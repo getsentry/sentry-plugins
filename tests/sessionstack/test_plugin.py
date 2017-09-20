@@ -4,7 +4,6 @@ import responses
 
 from exam import fixture
 from sentry.testutils import PluginTestCase
-from sentry.utils import json
 
 from sentry_plugins.sessionstack.plugin import SessionStackPlugin
 
@@ -48,12 +47,22 @@ class SessionStackPluginTest(PluginTestCase):
         responses.add(
             responses.GET,
             ACCESS_TOKENS_URL,
-            body=json.dumps({
+            json={
                 'data': [{
                     'name': 'Sentry',
                     'access_token': 'example-access-token'
                 }]
-            })
+            }
+        )
+        responses.add(
+            responses.POST,
+            ACCESS_TOKENS_URL,
+            json={
+                'data': [{
+                    'name': 'Sentry',
+                    'access_token': 'example-access-token'
+                }]
+            }
         )
 
         self.plugin.enable(self.project)
