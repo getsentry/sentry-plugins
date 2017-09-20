@@ -55,7 +55,7 @@ class VstsPlugin(CorePluginMixin, IssueTrackingPlugin2):
                 'required': False,
                 'help': (
                     'Enter the Visual Studio Team Services project name that you wish '
-                    'to use as a defaul to for new work items'
+                    'to use as a default for new work items'
                 ),
             },
         ]
