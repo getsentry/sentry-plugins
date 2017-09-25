@@ -20,7 +20,7 @@ class VstsClient(AuthApiClient):
     def request(self, method, path, data=None, params=None):
         headers = {
             'Accept': 'application/json; api-version={}'.format(self.api_version),
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json-patch+json',
             'X-HTTP-Method-Override': method,
         }
         return self._request(method, path, headers=headers, data=data, params=params)
@@ -132,4 +132,14 @@ class VstsClient(AuthApiClient):
                     'version': end_sha
                 }
             }
+        )
+
+    def get_projects(self, instance):
+        # TODO(dcramer): VSTS doesn't provide a way to search, so we're
+        # making the assumption that a user has 100 or less projects today.
+        return self.get(
+            'https://{}/DefaultCollection/_apis/projects'.format(
+                instance,
+            ),
+            params={'stateFilter': 'WellFormed'}
         )

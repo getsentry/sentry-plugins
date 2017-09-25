@@ -73,12 +73,15 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
 
     def get_new_issue_fields(self, request, group, event, **kwargs):
         fields = super(VstsPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
+        client = self.get_client(request.user)
+        instance = self.get_option('instance', group.project)
         return [
             {
                 'name': 'project',
                 'label': 'Project',
                 'default': self.get_option('default_project', group.project),
                 'type': 'text',
+                'choices': [i['name'] for i in client.get_projects(instance)['value']],
                 'required': True,
             }
         ] + fields
@@ -108,7 +111,10 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         Creates the issue on the remote service and returns an issue ID.
         """
         instance = self.get_option('instance', group.project)
-        project = self.get_option('default_project', group.project)
+        project = (
+            form_data.get('project') or
+            self.get_option('default_project', group.project)
+        )
 
         client = self.get_client(request.user)
 
