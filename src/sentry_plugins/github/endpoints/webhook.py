@@ -200,8 +200,8 @@ class PushEventWebhook(Webhook):
 
                 update_kwargs = {}
 
-                if author.name != commit['author']['name']:
-                    update_kwargs['name'] = commit['author']['name']
+                if author.name != commit['author']['name'][:128]:
+                    update_kwargs['name'] = commit['author']['name'][:128]
 
                 gh_username = commit['author'].get('username')
                 if gh_username:
