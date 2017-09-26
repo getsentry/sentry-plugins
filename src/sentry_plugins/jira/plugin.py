@@ -274,6 +274,17 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         instance = self.get_option('instance_url', group.project)
         return "%s/browse/%s" % (instance, issue_id)
 
+    def _get_formatted_user(self, user):
+        display = '%s %s(%s)' % (
+            user.get('displayName', user['name']),
+            '- %s ' % user.get('emailAddress') if user.get('emailAddress') else '',
+            user['name'],
+        )
+        return {
+            'id': user['name'],
+            'text': display,
+        }
+
     def view_autocomplete(self, request, group, **kwargs):
         query = request.GET.get('autocomplete_query')
         field = request.GET.get('autocomplete_field')
@@ -342,17 +353,8 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                     )
             else:
                 for user in autocomplete_response:
-                    users.append(
-                        {
-                            'id':
-                            user['name'],
-                            'text':
-                            '%s %s(%s)' % (
-                                user['displayName'], '- %s ' % user.get('emailAddress')
-                                if user.get('emailAddress') else '', user['name']
-                            )
-                        }
-                    )
+                    if user.get('name'):
+                        users.append(self._get_formatted_user(user))
 
             # if JIRA user doesn't have proper permission for user api,
             # try the assignee api instead
@@ -373,15 +375,8 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                     )
 
                 for user in autocomplete_response:
-                    users.append(
-                        {
-                            'id':
-                            user['name'],
-                            'text':
-                            '%s - %s (%s)' %
-                            (user['displayName'], user['emailAddress'], user['name'])
-                        }
-                    )
+                    if user.get('name'):
+                        users.append(self._get_formatted_user(user))
 
             return Response({field: users})
 

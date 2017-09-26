@@ -356,3 +356,26 @@ class JiraPluginTest(TestCase):
         assert password_config.get('value') is None
         assert password_config.get('has_saved_value') is True
         assert password_config.get('prefix') == ''
+
+    def test_get_formatted_user(self):
+        assert self.plugin._get_formatted_user({
+            'displayName': 'Foo Bar',
+            'emailAddress': 'foo@sentry.io',
+            'name': 'foobar',
+        }) == {
+            'text': 'Foo Bar - foo@sentry.io (foobar)',
+            'id': 'foobar',
+        }
+
+        # test weird addon users that don't have email addresses
+        assert self.plugin._get_formatted_user({
+            'name': 'robot',
+            'avatarUrls': {
+                '16x16': 'https://avatar-cdn.atlassian.com/someid',
+                '24x24': 'https://avatar-cdn.atlassian.com/someotherid'
+            },
+            'self': 'https://something.atlassian.net/rest/api/2/user?username=someaddon'
+        }) == {
+            'id': 'robot',
+            'text': 'robot (robot)'
+        }
