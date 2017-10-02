@@ -1,10 +1,6 @@
 from __future__ import absolute_import
 
-import six
-import sys
-
 from sentry_plugins.client import AuthApiClient
-from sentry_plugins.exceptions import ApiUnauthorized, UnsupportedResponseType
 
 
 class VstsClient(AuthApiClient):
@@ -16,21 +12,7 @@ class VstsClient(AuthApiClient):
             'Content-Type': 'application/json-patch+json',
             'X-HTTP-Method-Override': method,
         }
-        try:
-            return self._request(method, path, headers=headers, data=data, params=params)
-        except UnsupportedResponseType as exc:
-            # XXX(dcramer): I'm not entirely convinced this is an authentication
-            # error, but we've seen in the past that refreshing the token would
-            # resolve this response, and unfortunately there's not much detail
-            # online about it.
-            # https://github.com/getsentry/sentry/issues/5263
-            if exc.code == 203:
-                six.reraise(
-                    ApiUnauthorized,
-                    ApiUnauthorized('Received an HTTP %s %s response from the API.', exc.code),
-                    sys.exc_info()[2],
-                )
-            raise
+        return self._request(method, path, headers=headers, data=data, params=params)
 
     def create_work_item(self, instance, project, title, description, link):
         data = [
