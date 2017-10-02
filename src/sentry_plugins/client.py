@@ -103,20 +103,23 @@ class ApiClient(object):
     def __init__(self, verify_ssl=True):
         self.verify_ssl = verify_ssl
 
-    def _request(self, method, path, headers=None, data=None, params=None,
-                 auth=None):
+    def build_url(self, path):
         if path.startswith('/'):
             if not self.base_url:
                 raise ValueError('Invalid URL: {}'.format(path))
-            full_url = '{}{}'.format(self.base_url, path)
-        else:
-            full_url = path
+            return '{}{}'.format(self.base_url, path)
+        return path
+
+    def _request(self, method, path, headers=None, data=None, params=None,
+                 auth=None, json=True):
+        full_url = self.build_url(path)
         session = build_session()
         try:
             resp = getattr(session, method.lower())(
                 url=full_url,
                 headers=headers,
-                json=data,
+                json=data if json else None,
+                data=data if not json else None,
                 params=params,
                 auth=auth,
                 verify=self.verify_ssl,
@@ -180,7 +183,7 @@ class AuthApiClient(ApiClient):
 
         # TODO(dcramer): we could proactively refresh the token if we knew
         # about expires
-        if 'Authorization' not in headers and self.has_auth():
+        if 'Authorization' not in headers and self.has_auth() and 'auth' not in kwargs:
             token = self.auth.tokens['access_token']
             headers['Authorization'] = 'Bearer {}'.format(token)
 
