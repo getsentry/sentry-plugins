@@ -50,7 +50,7 @@ class BitbucketPluginTest(PluginTestCase):
         responses.add(
             responses.POST,
             'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues',
-            body='{"local_id": 1, "title": "Hello world"}'
+            json={"local_id": 1, "title": "Hello world"}
         )
 
         self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)
@@ -88,12 +88,12 @@ class BitbucketPluginTest(PluginTestCase):
         responses.add(
             responses.GET,
             'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1',
-            body='{"local_id": 1, "title": "Hello world"}'
+            json={"local_id": 1, "title": "Hello world"}
         )
         responses.add(
             responses.POST,
             'https://api.bitbucket.org/1.0/repositories/maxbittker/newsdiffs/issues/1/comments',
-            body='{"body": "Hello"}'
+            json={"body": "Hello"}
         )
 
         self.plugin.set_option('repo', 'maxbittker/newsdiffs', self.project)

@@ -8,14 +8,11 @@ import time
 from django.conf import settings
 from sentry import options
 
-from sentry_plugins.client import ApiClient
+from sentry_plugins.client import ApiClient, AuthApiClient
 
 
-class GitHubClientBase(ApiClient):
+class GitHubClientMixin(AuthApiClient):
     base_url = 'https://api.github.com'
-
-    def request(self, method, path, data=None, params=None):
-        raise NotImplementedError
 
     def get_last_commits(self, repo, end_sha):
         # return api request that fetches last ~30 commits
@@ -38,19 +35,12 @@ class GitHubClientBase(ApiClient):
         ))
 
 
-class GitHubClient(GitHubClientBase):
-    def __init__(self, url=None, token=None):
+class GitHubClient(GitHubClientMixin, AuthApiClient):
+    def __init__(self, url=None, auth=None):
         if url is not None:
             self.base_url = url.rstrip('/')
-        self.token = token
+        self.auth = auth
         super(GitHubClient, self).__init__()
-
-    def request(self, method, path, data=None, params=None):
-        headers = {
-            'Authorization': 'token %s' % self.token,
-        }
-
-        return self._request(method, path, headers=headers, data=data, params=params)
 
     def request_no_auth(self, method, path, data=None, params=None):
         if params is None:
@@ -63,7 +53,7 @@ class GitHubClient(GitHubClientBase):
             }
         )
 
-        return self._request(method, path, data=data, params=params)
+        return self._request(method, path, auth=None, data=data, params=params)
 
     def get_repo(self, repo):
         return self.get('/repos/{}'.format(repo))
@@ -113,13 +103,13 @@ class GitHubClient(GitHubClientBase):
         }
 
         params = {
-            'access_token': self.token,
+            'access_token': self.auth.tokens['access_token'],
         }
 
         return self._request('GET', '/user/installations', headers=headers, params=params)
 
 
-class GitHubAppsClient(GitHubClientBase):
+class GitHubAppsClient(GitHubClientMixin, ApiClient):
     def __init__(self, integration):
         self.integration = integration
         self.token = None

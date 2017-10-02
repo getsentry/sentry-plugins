@@ -52,9 +52,9 @@ class CorePluginMixin(object):
         else:
             return ERR_INTERNAL
 
-    def raise_error(self, exc):
+    def raise_error(self, exc, identity=None):
         if isinstance(exc, ApiUnauthorized):
-            raise InvalidIdentity(self.message_from_error(exc))
+            raise InvalidIdentity(self.message_from_error(exc), identity=identity)
         elif isinstance(exc, ApiError):
             raise PluginError(self.message_from_error(exc))
         elif isinstance(exc, PluginError):
