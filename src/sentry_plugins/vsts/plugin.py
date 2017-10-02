@@ -21,7 +21,6 @@ from .repository_provider import VisualStudioRepositoryProvider
 class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
     description = 'Integrate Visual Studio Team Services work items by linking a project.'
     slug = 'vsts'
-    title = 'Visual Studio'
     conf_key = slug
     auth_provider = 'visualstudio'
 
