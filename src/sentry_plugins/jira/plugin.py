@@ -24,6 +24,16 @@ JIRA_CUSTOM_FIELD_TYPES = {
     'tempo_account': 'com.tempoplugin.tempo-accounts:accounts.customfield'
 }
 
+ERR_UNAUTHORIZED = (
+    'Unauthorized: either your username and password were '
+    'invalid or you do not have access'
+)
+
+ERR_INTERNAL = (
+    'An internal error occurred with the integration and the '
+    'Sentry team has been notified'
+)
+
 
 class JiraPlugin(CorePluginMixin, IssuePlugin2):
     description = 'Integrate JIRA issues by linking a project.'

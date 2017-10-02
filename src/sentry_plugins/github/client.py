@@ -8,11 +8,14 @@ import time
 from django.conf import settings
 from sentry import options
 
-from sentry_plugins.client import ApiClient, AuthApiClient
+from sentry_plugins.client import ApiClient
 
 
-class GitHubClientMixin(AuthApiClient):
+class GitHubClientBase(ApiClient):
     base_url = 'https://api.github.com'
+
+    def request(self, method, path, data=None, params=None):
+        raise NotImplementedError
 
     def get_last_commits(self, repo, end_sha):
         # return api request that fetches last ~30 commits
@@ -35,12 +38,19 @@ class GitHubClientMixin(AuthApiClient):
         ))
 
 
-class GitHubClient(GitHubClientMixin, AuthApiClient):
-    def __init__(self, url=None, auth=None):
+class GitHubClient(GitHubClientBase):
+    def __init__(self, url=None, token=None):
         if url is not None:
             self.base_url = url.rstrip('/')
-        self.auth = auth
+        self.token = token
         super(GitHubClient, self).__init__()
+
+    def request(self, method, path, data=None, params=None):
+        headers = {
+            'Authorization': 'token %s' % self.token,
+        }
+
+        return self._request(method, path, headers=headers, data=data, params=params)
 
     def request_no_auth(self, method, path, data=None, params=None):
         if params is None:
@@ -53,7 +63,7 @@ class GitHubClient(GitHubClientMixin, AuthApiClient):
             }
         )
 
-        return self._request(method, path, auth=None, data=data, params=params)
+        return self._request(method, path, data=data, params=params)
 
     def get_repo(self, repo):
         return self.get('/repos/{}'.format(repo))
@@ -103,13 +113,13 @@ class GitHubClient(GitHubClientMixin, AuthApiClient):
         }
 
         params = {
-            'access_token': self.auth.tokens['access_token'],
+            'access_token': self.token,
         }
 
         return self._request('GET', '/user/installations', headers=headers, params=params)
 
 
-class GitHubAppsClient(GitHubClientMixin, ApiClient):
+class GitHubAppsClient(GitHubClientBase):
     def __init__(self, integration):
         self.integration = integration
         self.token = None

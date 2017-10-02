@@ -53,7 +53,7 @@ class GitHubMixin(CorePluginMixin):
         auth = self.get_auth(user=user)
         if auth is None:
             raise PluginError(API_ERRORS[401])
-        return GitHubClient(auth=auth)
+        return GitHubClient(token=auth.tokens['access_token'])
 
 
 # TODO(dcramer): half of this plugin is for the issue tracking integration
@@ -522,7 +522,7 @@ class GitHubAppsRepositoryProvider(GitHubRepositoryProvider):
             self.logger.warn('get_installations.no-linked-auth')
             return []
 
-        client = GitHubClient(auth=auth)
+        client = GitHubClient(token=auth.tokens['access_token'])
 
         res = client.get_installations()
 

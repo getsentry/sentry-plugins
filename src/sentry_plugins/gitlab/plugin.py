@@ -1,13 +1,21 @@
 from __future__ import absolute_import
 
+import six
+
+from sentry.exceptions import PluginError
 from sentry.plugins.bases.issue2 import IssuePlugin2
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
-from sentry_plugins.exceptions import ApiError
+from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 from sentry_plugins.utils import get_secret_field_config
 
 from .client import GitLabClient
+
+# TODO(dcramer): Move these to shared constants and reuse with other plugins
+ERR_INTERNAL = 'An internal error occurred with the integration and the Sentry team has been notified'
+
+ERR_UNAUTHORIZED = 'Unauthorized: either your access token was invalid or you do not have access'
 
 
 class GitLabPlugin(CorePluginMixin, IssuePlugin2):
@@ -134,6 +142,22 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
                 self.raise_error(e)
 
         return {'title': issue['title']}
+
+    def raise_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            raise PluginError(ERR_UNAUTHORIZED)
+        elif isinstance(exc, ApiError):
+            raise PluginError(
+                'Error Communicating with GitLab (HTTP %s): %s' % (
+                    exc.code, exc.json.get('message', 'unknown error')
+                    if exc.json else 'unknown error',
+                )
+            )
+        elif isinstance(exc, PluginError):
+            raise
+        else:
+            self.logger.exception(six.text_type(exc))
+            raise PluginError(ERR_INTERNAL)
 
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GL-{}'.format(issue_id)

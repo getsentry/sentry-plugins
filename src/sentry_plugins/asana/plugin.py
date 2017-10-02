@@ -4,17 +4,25 @@ import six
 
 from rest_framework.response import Response
 
-from sentry.exceptions import PluginError, PluginIdentityRequired
+from sentry.exceptions import InvalidIdentity, PluginError, PluginIdentityRequired
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 from .client import AsanaClient
 
-
-ERR_AUTH_NOT_CONFIGURED = (
-    'You still need to associate an Asana identity with this account.'
+ERR_INTERNAL = (
+    'An internal error occurred with the integration and '
+    'the Sentry team has been notified'
 )
+
+ERR_UNAUTHORIZED = (
+    'Unauthorized: either your access token was invalid or '
+    'you do not have access'
+)
+
+ERR_AUTH_NOT_CONFIGURED = ('You still need to associate an Asana identity with this account.')
 
 
 class AsanaPlugin(CorePluginMixin, IssuePlugin2):
@@ -116,11 +124,28 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
             raise PluginIdentityRequired(ERR_AUTH_NOT_CONFIGURED)
         return AsanaClient(auth=auth)
 
-    def error_message_from_json(self, data):
-        errors = data.get('errors')
-        if errors:
-            return ' '.join([e['message'] for e in errors])
-        return 'unknown error'
+    def message_from_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            return ERR_UNAUTHORIZED
+        elif isinstance(exc, ApiError):
+            message = 'unknown error'
+            errors = exc.json and exc.json.get('errors')
+            if errors:
+                message = ' '.join([e['message'] for e in errors])
+            return ('Error Communicating with Asana (HTTP %s): %s' % (exc.code, message))
+        else:
+            return ERR_INTERNAL
+
+    def raise_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            raise InvalidIdentity(self.message_from_error(exc))
+        elif isinstance(exc, ApiError):
+            raise PluginError(self.message_from_error(exc))
+        elif isinstance(exc, PluginError):
+            raise
+        else:
+            self.logger.exception(six.text_type(exc))
+            raise PluginError(self.message_from_error(exc))
 
     def create_issue(self, request, group, form_data, **kwargs):
         client = self.get_client(request.user)
@@ -130,7 +155,7 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
                 workspace=self.get_option('workspace', group.project), data=form_data
             )
         except Exception as e:
-            self.raise_error(e, identity=client.auth)
+            self.raise_error(e)
 
         return response['data']['id']
 
@@ -141,14 +166,14 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
                 issue_id=form_data['issue_id'],
             )['data']
         except Exception as e:
-            self.raise_error(e, identity=client.auth)
+            self.raise_error(e)
 
         comment = form_data.get('comment')
         if comment:
             try:
                 client.create_comment(issue['id'], {'text': comment})
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
 
         return {'title': issue['name']}
 

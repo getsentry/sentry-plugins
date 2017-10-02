@@ -136,7 +136,6 @@ class VstsPluginTest(PluginTestCase):
             'title': 'Hello',
         }
         request = responses.calls[-1].request
-        assert request.headers['Content-Type'] == 'application/json-patch+json'
         payload = json.loads(request.body)
         assert payload == [
             {
@@ -197,7 +196,6 @@ class VstsPluginTest(PluginTestCase):
             'url': 'https://fabrikam-fiber-inc.visualstudio.com/web/wi.aspx?pcguid=d81542e4-cdfa-4333-b082-1ae2d6c3ad16&id=309',
         }
         request = responses.calls[-1].request
-        assert request.headers['Content-Type'] == 'application/json-patch+json'
         payload = json.loads(request.body)
         assert payload == [
             {

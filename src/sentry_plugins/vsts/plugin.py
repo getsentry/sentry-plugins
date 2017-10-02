@@ -139,7 +139,7 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
                 comment=form_data.get('comment'),
             )
         except Exception as e:
-            self.raise_error(e, identity=client.auth)
+            self.raise_error(e)
 
         return {
             'id': work_item['id'],

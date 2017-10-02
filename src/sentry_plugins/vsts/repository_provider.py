@@ -43,7 +43,7 @@ class VisualStudioRepositoryProvider(VisualStudioMixin, providers.RepositoryProv
             try:
                 repo = client.get_repo(instance, name, project)
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
             config.update({
                 'instance': instance,
                 'project': project,
@@ -81,14 +81,14 @@ class VisualStudioRepositoryProvider(VisualStudioMixin, providers.RepositoryProv
             try:
                 res = client.get_commits(instance, repo.external_id, commit=end_sha, limit=10)
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
             else:
                 return self._format_commits(repo, res['value'])
         else:
             try:
                 res = client.get_commit_range(instance, repo.external_id, start_sha, end_sha)
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
             else:
                 return self._format_commits(repo, res)
 

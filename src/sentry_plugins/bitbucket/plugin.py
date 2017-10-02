@@ -7,14 +7,15 @@ from rest_framework.response import Response
 from uuid import uuid4
 
 from sentry.app import locks
-from sentry.exceptions import PluginError
+from sentry.exceptions import InvalidIdentity, PluginError
 from sentry.models import OrganizationOption
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
 
 from sentry_plugins.base import CorePluginMixin
-from sentry_plugins.exceptions import ApiError
+from sentry_plugins.base import ERR_INTERNAL, ERR_UNAUTHORIZED
+from sentry_plugins.exceptions import ApiError, ApiUnauthorized
 
 from .client import BitbucketClient
 from .endpoints.webhook import parse_raw_user_email, parse_raw_user_name
@@ -121,9 +122,30 @@ class BitbucketPlugin(BitbucketMixin, IssuePlugin2):
         return BitbucketClient(auth)
 
     def message_from_error(self, exc):
-        if isinstance(exc, ApiError) and exc.code == 404:
-            return ERR_404
-        return super(BitbucketPlugin, self).message_from_error(exc)
+        if isinstance(exc, ApiUnauthorized):
+            return ERR_UNAUTHORIZED
+        elif isinstance(exc, ApiError):
+            if exc.code == 404:
+                return ERR_404
+            return (
+                'Error Communicating with Bitbucket (HTTP %s): %s' % (
+                    exc.code, exc.json.get('message', 'unknown error')
+                    if exc.json else 'unknown error',
+                )
+            )
+        else:
+            return ERR_INTERNAL
+
+    def raise_error(self, exc):
+        if isinstance(exc, ApiUnauthorized):
+            raise InvalidIdentity(self.message_from_error(exc))
+        elif isinstance(exc, ApiError):
+            raise PluginError(self.message_from_error(exc))
+        elif isinstance(exc, PluginError):
+            raise
+        else:
+            self.logger.exception(six.text_type(exc))
+            raise PluginError(self.message_from_error(exc))
 
     def create_issue(self, request, group, form_data, **kwargs):
         client = self.get_client(request.user)
@@ -133,7 +155,7 @@ class BitbucketPlugin(BitbucketMixin, IssuePlugin2):
                 repo=self.get_option('repo', group.project), data=form_data
             )
         except Exception as e:
-            self.raise_error(e, identity=client.auth)
+            self.raise_error(e)
 
         return response['local_id']
 
@@ -146,14 +168,14 @@ class BitbucketPlugin(BitbucketMixin, IssuePlugin2):
                 issue_id=form_data['issue_id'],
             )
         except Exception as e:
-            self.raise_error(e, identity=client.auth)
+            self.raise_error(e)
 
         comment = form_data.get('comment')
         if comment:
             try:
                 client.create_comment(repo, issue['local_id'], {'content': comment})
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
 
         return {'title': issue['title']}
 
@@ -241,7 +263,7 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
             try:
                 repo = client.get_repo(config['name'])
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
             else:
                 config['external_id'] = six.text_type(repo['uuid'])
         return config
@@ -282,7 +304,7 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
                 }
             )
         except Exception as e:
-            self.raise_error(e, identity=client.auth)
+            self.raise_error(e)
         else:
             return {
                 'name': data['name'],
@@ -329,13 +351,13 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
             try:
                 res = client.get_last_commits(name, end_sha)
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
             else:
                 return self._format_commits(repo, res[:10])
         else:
             try:
                 res = client.compare_commits(name, start_sha, end_sha)
             except Exception as e:
-                self.raise_error(e, identity=client.auth)
+                self.raise_error(e)
             else:
                 return self._format_commits(repo, res)
