@@ -74,13 +74,19 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         fields = super(VstsPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
         client = self.get_client(request.user)
         instance = self.get_option('instance', group.project)
+
+        try:
+            projects = client.get_projects(instance)
+        except Exception as e:
+            self.raise_error(e, identity=client.auth)
+
         return [
             {
                 'name': 'project',
                 'label': 'Project',
                 'default': self.get_option('default_project', group.project),
                 'type': 'text',
-                'choices': [i['name'] for i in client.get_projects(instance)['value']],
+                'choices': [i['name'] for i in projects['value']],
                 'required': True,
             }
         ] + fields
@@ -120,7 +126,11 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         title = form_data['title']
         description = form_data['description']
         link = absolute_uri(group.get_absolute_url())
-        created_item = client.create_work_item(instance, project, title, description, link)
+        try:
+            created_item = client.create_work_item(instance, project, title, description, link)
+        except Exception as e:
+            self.raise_error(e, identity=client.auth)
+
         return {
             'id': created_item['id'],
             'url': created_item['_links']['html']['href'],
