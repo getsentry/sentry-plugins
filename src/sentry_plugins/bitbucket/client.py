@@ -19,15 +19,15 @@ class BitbucketClient(AuthApiClient):
             and 'oauth_token_secret' in self.auth.tokens
         )
 
-    def _request(self, *args, **kwargs):
-        oauth = OAuth1(
+    def bind_auth(self, **kwargs):
+        kwargs['auth'] = OAuth1(
             six.text_type(settings.BITBUCKET_CONSUMER_KEY),
             six.text_type(settings.BITBUCKET_CONSUMER_SECRET),
             self.auth.tokens['oauth_token'],
             self.auth.tokens['oauth_token_secret'],
             signature_type='auth_header'
         )
-        return super(BitbucketClient, self)._request(auth=oauth, *args, **kwargs)
+        return kwargs
 
     def get_issue(self, repo, issue_id):
         return self.get(

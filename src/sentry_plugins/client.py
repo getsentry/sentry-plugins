@@ -180,21 +180,27 @@ class AuthApiClient(ApiClient):
     def exception_means_unauthorized(self, exc):
         return isinstance(exc, ApiUnauthorized)
 
-    def _request(self, method, path, headers=None, *args, **kwargs):
-        if headers is None:
-            headers = {}
+    def ensure_auth(self, **kwargs):
+        headers = kwargs['headers']
+        if 'Authorization' not in headers and self.has_auth() and 'auth' not in kwargs:
+            self.bind_auth(**kwargs)
+        return kwargs
 
+    def bind_auth(self, **kwargs):
+        token = self.auth.tokens['access_token']
+        kwargs['headers']['Authorization'] = 'Bearer {}'.format(token)
+        return kwargs
+
+    def _request(self, method, path, **kwargs):
+        headers = kwargs.setdefault('headers', {})
         headers.setdefault('Accept', 'application/json, application/xml')
 
         # TODO(dcramer): we could proactively refresh the token if we knew
         # about expires
-        if 'Authorization' not in headers and self.has_auth() and 'auth' not in kwargs:
-            token = self.auth.tokens['access_token']
-            headers['Authorization'] = 'Bearer {}'.format(token)
+        kwargs = self.ensure_auth(**kwargs)
 
         try:
-            return ApiClient._request(self, method, path, headers=headers,
-                                      *args, **kwargs)
+            return ApiClient._request(self, method, path, **kwargs)
         except Exception as exc:
             if not self.exception_means_unauthorized(exc):
                 raise
@@ -207,7 +213,5 @@ class AuthApiClient(ApiClient):
             'provider': self.auth.provider,
         })
         self.auth.refresh_token()
-        token = self.auth.tokens['access_token']
-        headers['Authorization'] = 'Bearer {}'.format(token)
-        return ApiClient._request(self, method, path, headers=headers,
-                                  *args, **kwargs)
+        kwargs = self.bind_auth(**kwargs)
+        return ApiClient._request(self, method, path, **kwargs)
