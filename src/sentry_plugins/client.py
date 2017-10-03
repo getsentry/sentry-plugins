@@ -51,9 +51,14 @@ class BaseApiResponse(object):
                     response.status_code,
                 ))
             return TextApiResponse(response.text, response.headers, response.status_code)
-        # if its not JSON we hard error
+        # Some APIs will return JSON with an invalid content-type, so we try
+        # to decode it anyways
         if 'application/json' not in response.headers['Content-Type']:
-            raise UnsupportedResponseType(response.headers['Content-Type'], response.status_code)
+            try:
+                data = json.loads(response.text, object_pairs_hook=SortedDict)
+            except (TypeError, ValueError):
+                raise UnsupportedResponseType(
+                    response.headers['Content-Type'], response.status_code)
 
         data = json.loads(response.text, object_pairs_hook=SortedDict)
         if isinstance(data, dict):
