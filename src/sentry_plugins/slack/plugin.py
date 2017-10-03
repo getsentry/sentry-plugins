@@ -4,7 +4,7 @@ import operator
 
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from sentry import http
+from sentry import http, tagstore
 from sentry.models import TagKey, TagValue
 from sentry.plugins.bases import notify
 from sentry.utils import json
@@ -217,7 +217,7 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
             excluded_tags = set(self.get_tag_list('excluded_tag_keys', project) or [])
             for tag_key, tag_value in self._get_tags(event):
                 key = tag_key.lower()
-                std_key = TagKey.get_standardized_key(key)
+                std_key = tagstore.get_standardized_key(key)
                 if included_tags and key not in included_tags and std_key not in included_tags:
                     continue
                 if excluded_tags and (key in excluded_tags or std_key in excluded_tags):
