@@ -123,7 +123,6 @@ class ApiClient(object):
                  auth=None, json=True, allow_text=False):
         full_url = self.build_url(path)
         session = build_session()
-        print(full_url, headers)
         try:
             resp = getattr(session, method.lower())(
                 url=full_url,
