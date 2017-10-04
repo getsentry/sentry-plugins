@@ -51,16 +51,20 @@ class BaseApiResponse(object):
                     response.status_code,
                 ))
             return TextApiResponse(response.text, response.headers, response.status_code)
+
         # Some APIs will return JSON with an invalid content-type, so we try
         # to decode it anyways
         if 'application/json' not in response.headers['Content-Type']:
             try:
                 data = json.loads(response.text, object_pairs_hook=SortedDict)
             except (TypeError, ValueError):
+                if allow_text:
+                    return TextApiResponse(response.text, response.headers, response.status_code)
                 raise UnsupportedResponseType(
                     response.headers['Content-Type'], response.status_code)
+        else:
+            data = json.loads(response.text, object_pairs_hook=SortedDict)
 
-        data = json.loads(response.text, object_pairs_hook=SortedDict)
         if isinstance(data, dict):
             return MappingApiResponse(data, response.headers, response.status_code)
         elif isinstance(data, (list, tuple)):
@@ -116,9 +120,10 @@ class ApiClient(object):
         return path
 
     def _request(self, method, path, headers=None, data=None, params=None,
-                 auth=None, json=True):
+                 auth=None, json=True, allow_text=False):
         full_url = self.build_url(path)
         session = build_session()
+        print(full_url, headers)
         try:
             resp = getattr(session, method.lower())(
                 url=full_url,
@@ -145,7 +150,7 @@ class ApiClient(object):
         if resp.status_code == 204:
             return {}
 
-        return BaseApiResponse.from_response(resp)
+        return BaseApiResponse.from_response(resp, allow_text=allow_text)
 
     # subclasses should override ``request``
     def request(self, *args, **kwargs):

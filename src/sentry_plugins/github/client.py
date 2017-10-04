@@ -39,8 +39,7 @@ class GitHubClient(GitHubClientMixin, AuthApiClient):
     def __init__(self, url=None, auth=None):
         if url is not None:
             self.base_url = url.rstrip('/')
-        self.auth = auth
-        super(GitHubClient, self).__init__()
+        super(GitHubClient, self).__init__(auth=auth)
 
     def request_no_auth(self, method, path, data=None, params=None):
         if params is None:

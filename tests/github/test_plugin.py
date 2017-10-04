@@ -48,8 +48,7 @@ class GitHubPluginTest(PluginTestCase):
         responses.add(
             responses.POST,
             'https://api.github.com/repos/getsentry/sentry/issues',
-            body='{"number": 1, "title": "Hello world"}',
-            content_type='application/json',
+            json={"number": 1, "title": "Hello world"},
         )
 
         self.plugin.set_option('repo', 'getsentry/sentry', self.project)
@@ -67,11 +66,14 @@ class GitHubPluginTest(PluginTestCase):
         request.user = self.user
         self.login_as(self.user)
         UserSocialAuth.objects.create(
-            user=self.user, provider=self.plugin.auth_provider, extra_data={'access_token': 'foo'}
+            user=self.user,
+            provider=self.plugin.auth_provider,
+            extra_data={'access_token': 'foo'}
         )
 
         assert self.plugin.create_issue(request, group, form_data) == 1
         request = responses.calls[0].request
+        assert request.headers['Authorization'] == 'Bearer foo'
         payload = json.loads(request.body)
         assert payload == {'title': 'Hello', 'body': 'Fix this.', 'assignee': None}
 
@@ -80,14 +82,12 @@ class GitHubPluginTest(PluginTestCase):
         responses.add(
             responses.GET,
             'https://api.github.com/repos/getsentry/sentry/issues/1',
-            body='{"number": 1, "title": "Hello world"}',
-            content_type='application/json',
+            json={"number": 1, "title": "Hello world"},
         )
         responses.add(
             responses.POST,
             'https://api.github.com/repos/getsentry/sentry/issues/1/comments',
-            body='{"body": "Hello"}',
-            content_type='application/json',
+            json={"body": "Hello"},
         )
 
         self.plugin.set_option('repo', 'getsentry/sentry', self.project)
@@ -114,6 +114,7 @@ class GitHubPluginTest(PluginTestCase):
             'title': 'Hello world',
         }
         request = responses.calls[-1].request
+        assert request.headers['Authorization'] == 'Bearer foo'
         payload = json.loads(request.body)
         assert payload == {
             'body': 'Hello',

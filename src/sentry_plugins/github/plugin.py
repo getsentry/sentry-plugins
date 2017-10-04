@@ -108,24 +108,18 @@ class GitHubPlugin(GitHubMixin, IssuePlugin2):
     def get_link_existing_issue_fields(self, request, group, event, **kwargs):
         return [
             {
-                'name':
-                'issue_id',
-                'label':
-                'Issue',
-                'default':
-                '',
-                'type':
-                'select',
-                'has_autocomplete':
-                True,
+                'name': 'issue_id',
+                'label': 'Issue',
+                'default': '',
+                'type': 'select',
+                'has_autocomplete': True,
                 'help': (
                     'You can use any syntax supported by GitHub\'s '
                     '<a href="https://help.github.com/articles/searching-issues/" '
                     'target="_blank">issue search.</a>'
                 )
             }, {
-                'name': 'comment',
-                'label': 'Comment',
+                'name': 'comment', 'label': 'Comment',
                 'default': absolute_uri(group.get_absolute_url()),
                 'type': 'textarea',
                 'help': ('Leave blank if you don\'t want to '
@@ -228,24 +222,18 @@ class GitHubPlugin(GitHubMixin, IssuePlugin2):
     def get_configure_plugin_fields(self, request, project, **kwargs):
         return [
             {
-                'name':
-                'repo',
-                'label':
-                'Repository Name',
-                'default':
-                self.get_option('repo', project),
-                'type':
-                'text',
-                'placeholder':
-                'e.g. getsentry/sentry',
+                'name': 'repo',
+                'label': 'Repository Name',
+                'default': self.get_option('repo', project),
+                'type': 'text',
+                'placeholder': 'e.g. getsentry/sentry',
                 'help': (
                     'Enter your repository name, including the owner. '
                     '<p><b>Looking to integrate commit data with releases?</b> You\'ll need to configure this through our'
                     '<a href="/organizations/{}/repos/" '
                     '> repos page</a>.</p>'
                 ).format(project.organization.slug),
-                'required':
-                True,
+                'required': True,
             }
         ]
 
