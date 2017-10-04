@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import pkg_resources
 import sentry_plugins
 import six
+import sys
 
 from sentry.exceptions import InvalidIdentity, PluginError
 
@@ -54,14 +55,26 @@ class CorePluginMixin(object):
 
     def raise_error(self, exc, identity=None):
         if isinstance(exc, ApiUnauthorized):
-            raise InvalidIdentity(self.message_from_error(exc), identity=identity)
+            six.reraise(
+                InvalidIdentity,
+                InvalidIdentity(self.message_from_error(exc), identity=identity),
+                sys.exc_info()[2]
+            )
         elif isinstance(exc, ApiError):
-            raise PluginError(self.message_from_error(exc))
+            six.reraise(
+                PluginError,
+                PluginError(self.message_from_error(exc)),
+                sys.exc_info()[2]
+            )
         elif isinstance(exc, PluginError):
             raise
         else:
             self.logger.exception(six.text_type(exc))
-            raise PluginError(self.message_from_error(exc))
+            six.reraise(
+                PluginError,
+                PluginError(self.message_from_error(exc)),
+                sys.exc_info()[2]
+            )
 
 
 def assert_package_not_installed(name):
