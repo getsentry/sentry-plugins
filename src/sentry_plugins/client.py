@@ -187,7 +187,7 @@ class AuthApiClient(ApiClient):
     def ensure_auth(self, **kwargs):
         headers = kwargs['headers']
         if 'Authorization' not in headers and self.has_auth() and 'auth' not in kwargs:
-            self.bind_auth(**kwargs)
+            kwargs = self.bind_auth(**kwargs)
         return kwargs
 
     def bind_auth(self, **kwargs):
