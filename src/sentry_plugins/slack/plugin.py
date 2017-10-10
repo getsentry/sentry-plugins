@@ -1,11 +1,7 @@
 from __future__ import absolute_import
 
-import operator
-
 from django.core.urlresolvers import reverse
-from django.db.models import Q
 from sentry import http, tagstore
-from sentry.models import TagKey, TagValue
 from sentry.plugins.bases import notify
 from sentry.utils import json
 from sentry.utils.http import absolute_uri
@@ -125,26 +121,12 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
         return '#' + LEVEL_TO_COLOR.get(event.get_tag('level'), 'error')
 
     def _get_tags(self, event):
-        # TODO(dcramer): we want this behavior to be more accessible in sentry
         tag_list = event.get_tags()
         if not tag_list:
             return ()
 
-        key_labels = {
-            o.key: o.get_label()
-            for o in TagKey.objects.filter(
-                project_id=event.project_id,
-                key__in=[t[0] for t in tag_list],
-            )
-        }
-        value_labels = {
-            (o.key, o.value): o.get_label()
-            for o in TagValue.objects.filter(
-                reduce(operator.or_, (Q(key=k, value=v) for k, v in tag_list)),
-                project_id=event.project_id,
-            )
-        }
-        return ((key_labels.get(k, k), value_labels.get((k, v), v)) for k, v in tag_list)
+        return ((tagstore.get_tag_key_label(k), tagstore.get_tag_value_label(k, v))
+                for k, v in tag_list)
 
     def get_tag_list(self, name, project):
         option = self.get_option(name, project)
