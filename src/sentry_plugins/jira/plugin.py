@@ -164,6 +164,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             issue_type = self.get_option('default_issue_type', group.project)
 
         issue_type_meta = self.get_issue_type_meta(issue_type, meta)
+
         issue_type_choices = self.make_choices(meta['issuetypes'])
 
         # make sure default issue type is actually
@@ -313,6 +314,8 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
             is_user_api = '/rest/api/latest/user/' in jira_url
 
+            is_user_picker = '/rest/api/1.0/users/picker' in jira_url
+
             if is_user_api:  # its the JSON version of the autocompleter
                 is_xml = False
                 jira_query['username'] = query.encode('utf8')
@@ -320,6 +323,13 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                     'issueKey', False
                 )  # some reason JIRA complains if this key is in the URL.
                 jira_query['project'] = project.encode('utf8')
+            elif is_user_picker:
+                is_xml = False
+                # for whatever reason, the create meta api returns an
+                # invalid path, so let's just use the correct, documented one here:
+                # https://docs.atlassian.com/jira/REST/cloud/#api/2/user
+                parsed[2] = '/rest/api/2/user/picker'
+                jira_query['query'] = query.encode('utf8')
             else:  # its the stupid XML version of the API.
                 is_xml = True
                 jira_query['query'] = query.encode('utf8')
@@ -331,6 +341,10 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             final_url = urlunsplit(parsed)
 
             autocomplete_response = jira_client.get_cached(final_url)
+
+            if is_user_picker:
+                autocomplete_response = autocomplete_response['users']
+
             users = []
 
             if is_xml:
