@@ -12,6 +12,8 @@ from sentry_plugins.client import ApiClient, AuthApiClient
 
 
 class GitHubClientMixin(AuthApiClient):
+    allow_redirects = True
+
     base_url = 'https://api.github.com'
 
     def get_last_commits(self, repo, end_sha):

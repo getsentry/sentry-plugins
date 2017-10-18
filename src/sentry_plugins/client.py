@@ -107,6 +107,11 @@ class SequenceApiResponse(list, BaseApiResponse):
 
 class ApiClient(object):
     base_url = None
+
+    allow_text = False
+
+    allow_redirects = None
+
     logger = logging.getLogger('sentry.plugins')
 
     def __init__(self, verify_ssl=True):
@@ -120,7 +125,17 @@ class ApiClient(object):
         return path
 
     def _request(self, method, path, headers=None, data=None, params=None,
-                 auth=None, json=True, allow_text=False):
+                 auth=None, json=True, allow_text=None, allow_redirects=None):
+
+        if allow_text is None:
+            allow_text = self.allow_text
+
+        if allow_redirects is None:
+            allow_redirects = self.allow_redirects
+
+        if allow_redirects is None:  # is still None
+            allow_redirects = method.upper() == 'GET'
+
         full_url = self.build_url(path)
         session = build_session()
         try:
@@ -132,7 +147,7 @@ class ApiClient(object):
                 params=params,
                 auth=auth,
                 verify=self.verify_ssl,
-                allow_redirects=True,
+                allow_redirects=allow_redirects,
             )
             resp.raise_for_status()
         except ConnectionError as e:
