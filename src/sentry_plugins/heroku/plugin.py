@@ -1,11 +1,15 @@
 from __future__ import absolute_import
 
+import logging
+
 from sentry.api import client
 
 from sentry.models import ApiKey, User, ProjectOption, Repository
 from sentry.plugins import ReleaseHook, ReleaseTrackingPlugin
 from sentry_plugins.base import CorePluginMixin
 from sentry.plugins.base.configuration import react_plugin_config
+
+logger = logging.getLogger('sentry.plugins.heroku')
 
 
 class HerokuReleaseHook(ReleaseHook):
@@ -42,7 +46,14 @@ class HerokuReleaseHook(ReleaseHook):
                         organization_id=self.project.organization_id, name=repo_project_option
                     )
                 except Repository.DoesNotExist:
-                    pass
+                    logger.info(
+                        'repository.missing',
+                        extra={
+                            'organization_id': self.project.organization_id,
+                            'project_id': self.project.id,
+                            'repository': repo_project_option,
+                        }
+                    )
                 else:
                     release.set_refs(
                         refs=[{
@@ -65,6 +76,14 @@ class HerokuReleaseHook(ReleaseHook):
                 endpoint,
                 data={'environment': deploy_project_option},
                 auth=auth,
+            )
+        else:
+            logger.info(
+                'owner.missing',
+                extra={
+                    'organization_id': self.project.organization_id,
+                    'project_id': self.project.id,
+                }
             )
 
 
