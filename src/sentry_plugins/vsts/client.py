@@ -11,6 +11,7 @@ class VstsClient(AuthApiClient):
             'Accept': 'application/json; api-version={}'.format(self.api_version),
             'Content-Type': 'application/json-patch+json',
             'X-HTTP-Method-Override': method,
+            'X-TFS-FedAuthRedirect': 'Suppress',
         }
         return self._request(method, path, headers=headers, data=data, params=params)
 
