@@ -328,6 +328,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 # for whatever reason, the create meta api returns an
                 # invalid path, so let's just use the correct, documented one here:
                 # https://docs.atlassian.com/jira/REST/cloud/#api/2/user
+                # also, only pass path so saved instance url will be used
+                parsed[0] = ''
+                parsed[1] = ''
                 parsed[2] = '/rest/api/2/user/picker'
                 jira_query['query'] = query.encode('utf8')
             else:  # its the stupid XML version of the API.
