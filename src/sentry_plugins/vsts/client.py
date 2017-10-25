@@ -2,6 +2,15 @@ from __future__ import absolute_import
 
 from sentry_plugins.client import AuthApiClient
 
+UNSET = object()
+
+FIELD_MAP = {
+    'title': '/fields/System.Title',
+    'description': '/fields/System.Description',
+    'comment': '/fields/System.History',
+    'link': '/relations/-',
+}
+
 
 class VstsClient(AuthApiClient):
     api_version = '3.0'
@@ -15,27 +24,37 @@ class VstsClient(AuthApiClient):
         }
         return self._request(method, path, headers=headers, data=data, params=params)
 
-    def create_work_item(self, instance, project, title, description, link):
-        data = [
-            {
+    def create_work_item(self, instance, project, title=None,
+                         description=None, comment=None, link=None):
+        data = []
+        if title:
+            data.append({
                 'op': 'add',
-                'path': '/fields/System.Title',
+                'path': FIELD_MAP['title'],
                 'value': title,
-            },
-            {
+            })
+        if description:
+            data.append({
                 'op': 'add',
-                'path': '/fields/System.Description',
+                'path': FIELD_MAP['description'],
                 'value': description
-            },
-            {
+            })
+        if comment:
+            data.append({
                 'op': 'add',
-                'path': '/relations/-',
-                'value': {
-                    'rel': 'Hyperlink',
-                    'url': link,
-                }
-            }
-        ]
+                'path': FIELD_MAP['comment'],
+                'value': comment,
+            })
+        # XXX: Link is not yet used, as we can't explicitly bind it to Sentry.
+        # if link:
+        #     data.append({
+        #         'op': 'add',
+        #         'path': FIELD_MAP['link'],
+        #         'value': {
+        #             'rel': 'Hyperlink',
+        #             'url': link,
+        #         }
+        #     })
 
         return self.patch(
             'https://{}/{}/_apis/wit/workitems/$Bug'.format(
@@ -45,35 +64,34 @@ class VstsClient(AuthApiClient):
             data=data,
         )
 
-    def update_work_item(self, instance, id, title=None, description=None, link=None,
-                         comment=None):
+    def update_work_item(self, instance, id, title=UNSET, description=UNSET, link=UNSET,
+                         comment=UNSET):
         data = []
-        if title:
-            data.append({
-                'op': 'replace',
-                'path': '/fields/System.Title',
-                'value': title,
-            })
-        if description:
-            data.append({
-                'op': 'replace',
-                'path': '/fields/System.Description',
-                'value': description
-            })
-        # TODO(dcramer): this breaks if you unlink + relink on the same issue
-        if link:
+
+        for f_name, f_value in (('title', title), ('description', description), ('link', link)):
+            if f_name == 'link':
+                # XXX: Link is not yet used, as we can't explicitly bind it to Sentry.
+                continue
+            elif f_value is None:
+                data.append({
+                    'op': 'remove',
+                    'path': FIELD_MAP[f_name],
+                })
+            elif f_value is not UNSET:
+                data.append({
+                    # TODO(dcramer): this is problematic when the link already exists
+                    'op': 'replace' if f_name != 'link' else 'add',
+                    'path': FIELD_MAP[f_name],
+                    'value': {
+                        'rel': 'Hyperlink',
+                        'url': f_value,
+                    } if f_name == 'link' else f_value,
+                })
+
+        if comment is not UNSET and comment:
             data.append({
                 'op': 'add',
-                'path': '/relations/-',
-                'value': {
-                    'rel': 'Hyperlink',
-                    'url': link,
-                }
-            })
-        if comment:
-            data.append({
-                'op': 'add',
-                'path': '/fields/System.History',
+                'path': FIELD_MAP['comment'],
                 'value': comment,
             })
 
@@ -83,6 +101,14 @@ class VstsClient(AuthApiClient):
                 id,
             ),
             data=data,
+        )
+
+    def get_work_item(self, instance, id):
+        return self.get(
+            'https://{}/DefaultCollection/_apis/wit/workitems/{}'.format(
+                instance,
+                id,
+            ),
         )
 
     def get_repo(self, instance, name_or_id, project=None):

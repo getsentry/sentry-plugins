@@ -6,6 +6,7 @@ from exam import fixture
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from sentry.exceptions import PluginError
+from sentry.models import GroupMeta
 from sentry.testutils import PluginTestCase
 from sentry.utils import json
 from social_auth.models import UserSocialAuth
@@ -81,7 +82,8 @@ class VstsPluginTest(PluginTestCase):
         }) == 'Bug 309'
 
     def test_get_issue_url(self):
-        self.plugin.set_option('instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
+        self.plugin.set_option(
+            'instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
         assert self.plugin.get_issue_url(
             group,
@@ -93,7 +95,8 @@ class VstsPluginTest(PluginTestCase):
 
     def test_is_configured(self):
         assert self.plugin.is_configured(None, self.project) is False
-        self.plugin.set_option('instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
+        self.plugin.set_option(
+            'instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
         assert self.plugin.is_configured(None, self.project) is True
 
     @responses.activate
@@ -105,8 +108,10 @@ class VstsPluginTest(PluginTestCase):
             content_type='application/json',
         )
 
-        self.plugin.set_option('instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
-        self.plugin.set_option('default_project', 'DefaultProject', self.project)
+        self.plugin.set_option(
+            'instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
+        self.plugin.set_option(
+            'default_project', 'DefaultProject', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
         request = self.request.get('/')
@@ -146,29 +151,30 @@ class VstsPluginTest(PluginTestCase):
             },
             {
                 'op': 'add',
-                'path': '/fields/System.Description',
-                'value': 'Fix this.',
+                'path': '/fields/System.History',
+                'value': '<p>Fix this.</p>\n',
             },
-            {
-                "op": "add",
-                "path": "/relations/-",
-                "value": {
-                    "rel": "Hyperlink",
-                    "url": 'http://testserver/baz/bar/issues/1/',
-                }
-            }
+            # {
+            #     "op": "add",
+            #     "path": "/relations/-",
+            #     "value": {
+            #         "rel": "Hyperlink",
+            #         "url": 'http://testserver/baz/bar/issues/1/',
+            #     }
+            # }
         ]
 
     @responses.activate
-    def test_link_issue(self):
+    def test_link_issue_without_comment(self):
         responses.add(
-            responses.PATCH,
+            responses.GET,
             'https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/wit/workitems/309?api-version=3.0',
             body=WORK_ITEM_RESPONSE,
             content_type='application/json',
         )
 
-        self.plugin.set_option('instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
+        self.plugin.set_option(
+            'instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
 
         request = self.request.get('/')
@@ -196,16 +202,88 @@ class VstsPluginTest(PluginTestCase):
             'title': 'Customer can sign in using their Microsoft Account',
             'url': 'https://fabrikam-fiber-inc.visualstudio.com/web/wi.aspx?pcguid=d81542e4-cdfa-4333-b082-1ae2d6c3ad16&id=309',
         }
+
+    @responses.activate
+    def test_link_issue_with_comment(self):
+        responses.add(
+            responses.PATCH,
+            'https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/wit/workitems/309?api-version=3.0',
+            body=WORK_ITEM_RESPONSE,
+            content_type='application/json',
+        )
+
+        self.plugin.set_option(
+            'instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
+        group = self.create_group(message='Hello world', culprit='foo.bar')
+
+        request = self.request.get('/')
+        request.user = AnonymousUser()
+        form_data = {
+            'item_id': '309',
+            'comment': 'Fix this.',
+        }
+        with self.assertRaises(PluginError):
+            self.plugin.link_issue(request, group, form_data)
+
+        request.user = self.user
+        self.login_as(self.user)
+        UserSocialAuth.objects.create(
+            user=self.user,
+            provider=self.plugin.auth_provider,
+            uid='a89e7204-9ca0-4680-ba7a-cfcf6b3c7445',
+            extra_data={
+                'access_token': 'foo',
+                'refresh_token': 'bar',
+            }
+        )
+
+        assert self.plugin.link_issue(request, group, form_data) == {
+            'id': 309,
+            'title': 'Customer can sign in using their Microsoft Account',
+            'url': 'https://fabrikam-fiber-inc.visualstudio.com/web/wi.aspx?pcguid=d81542e4-cdfa-4333-b082-1ae2d6c3ad16&id=309',
+        }
         request = responses.calls[-1].request
         assert request.headers['Content-Type'] == 'application/json-patch+json'
         payload = json.loads(request.body)
         assert payload == [
             {
-                "op": "add",
-                "path": "/relations/-",
-                "value": {
-                    "rel": "Hyperlink",
-                    "url": 'http://testserver/baz/bar/issues/1/',
-                }
-            }
+                'op': 'add',
+                'path': '/fields/System.History',
+                'value': '<p>Fix this.</p>\n',
+            },
+            # {
+            #     "op": "add",
+            #     "path": "/relations/-",
+            #     "value": {
+            #         "rel": "Hyperlink",
+            #         "url": 'http://testserver/baz/bar/issues/1/',
+            #     }
+            # }
         ]
+
+    @responses.activate
+    def test_unlink_issue(self):
+        self.plugin.set_option(
+            'instance', 'fabrikam-fiber-inc.visualstudio.com', self.project)
+        group = self.create_group(message='Hello world', culprit='foo.bar')
+        GroupMeta.objects.create(group=group, key='vsts:issue_id', value='309')
+
+        request = self.request.get('/')
+        request.user = self.user
+
+        self.login_as(self.user)
+        UserSocialAuth.objects.create(
+            user=self.user,
+            provider=self.plugin.auth_provider,
+            uid='a89e7204-9ca0-4680-ba7a-cfcf6b3c7445',
+            extra_data={
+                'access_token': 'foo',
+                'refresh_token': 'bar',
+            }
+        )
+
+        assert self.plugin.unlink_issue(request, group, {
+            'id': 309,
+            'title': 'Customer can sign in using their Microsoft Account',
+            'url': 'https://fabrikam-fiber-inc.visualstudio.com/web/wi.aspx?pcguid=d81542e4-cdfa-4333-b082-1ae2d6c3ad16&id=309',
+        })

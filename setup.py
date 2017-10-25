@@ -33,6 +33,7 @@ install_requires = [
     # sentry also requires this, so we're just enforcing that it needs to exist
     'boto3>=1.4.4,<1.5.0',
     'cached-property',
+    'mistune',
     'python-dateutil',
     'PyJWT',
     'requests-oauthlib>=0.3.0',

@@ -5,6 +5,7 @@ easily out of issues detected from Sentry.io """
 from __future__ import absolute_import
 
 from django.utils.html import format_html
+from mistune import markdown
 from rest_framework.response import Response
 
 from sentry.api.serializers.models.plugin import PluginSerializer
@@ -57,9 +58,6 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
                 return False
         return True
 
-    def get_group_description(self, request, group, event):
-        return self.get_group_body(request, group, event)
-
     def get_issue_label(self, group, issue, **kwargs):
         return 'Bug {}'.format(issue['id'])
 
@@ -71,7 +69,8 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         return issue['url']
 
     def get_new_issue_fields(self, request, group, event, **kwargs):
-        fields = super(VstsPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
+        fields = super(VstsPlugin, self).get_new_issue_fields(
+            request, group, event, **kwargs)
         client = self.get_client(request.user)
         instance = self.get_option('instance', group.project)
 
@@ -106,7 +105,7 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
                     absolute_uri(group.get_absolute_url()),
                 ),
                 'type': 'textarea',
-                'help': ('Leave blank if you don\'t want to add a comment'),
+                'help': ('Markdown is supported. Leave blank if you don\'t want to add a comment.'),
                 'required': False
             }
         ]
@@ -127,7 +126,13 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         description = form_data['description']
         link = absolute_uri(group.get_absolute_url())
         try:
-            created_item = client.create_work_item(instance, project, title, description, link)
+            created_item = client.create_work_item(
+                instance=instance,
+                project=project,
+                title=title,
+                comment=markdown(description),
+                link=link,
+            )
         except Exception as e:
             self.raise_error(e, identity=client.auth)
 
@@ -140,15 +145,25 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
     def link_issue(self, request, group, form_data, **kwargs):
         client = self.get_client(request.user)
         instance = self.get_option('instance', group.project)
-        try:
-            work_item = client.update_work_item(
-                instance=instance,
-                id=form_data['item_id'],
-                link=absolute_uri(group.get_absolute_url()),
-                comment=form_data.get('comment'),
-            )
-        except Exception as e:
-            self.raise_error(e, identity=client.auth)
+        if form_data.get('comment'):
+            try:
+                work_item = client.update_work_item(
+                    instance=instance,
+                    id=form_data['item_id'],
+                    link=absolute_uri(group.get_absolute_url()),
+                    comment=markdown(form_data['comment']) if form_data.get(
+                        'comment') else None,
+                )
+            except Exception as e:
+                self.raise_error(e, identity=client.auth)
+        else:
+            try:
+                work_item = client.get_work_item(
+                    instance=instance,
+                    id=form_data['item_id'],
+                )
+            except Exception as e:
+                self.raise_error(e, identity=client.auth)
 
         return {
             'id': work_item['id'],
@@ -175,7 +190,8 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         conf_key = self.get_conf_key()
         # TODO(dcramer): these shouldn't be hardcoded here
         for key in self.issue_fields:
-            GroupMeta.objects.unset_value(group, '{}:issue_{}'.format(conf_key, key))
+            GroupMeta.objects.unset_value(
+                group, '{}:issue_{}'.format(conf_key, key))
         return self.redirect(group.get_absolute_url())
 
     def view_create(self, request, group, **kwargs):
@@ -241,7 +257,8 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         Event.objects.bind_nodes([event], 'data')
 
         try:
-            fields = self.get_link_existing_issue_fields(request, group, event, **kwargs)
+            fields = self.get_link_existing_issue_fields(
+                request, group, event, **kwargs)
         except Exception as e:
             return self.handle_api_error(e)
         if request.method == 'GET':
@@ -309,7 +326,8 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
                 'label': self.get_issue_label(group=group, issue=issue),
             }
 
-        item.update(PluginSerializer(group.project).serialize(self, None, request.user))
+        item.update(PluginSerializer(group.project).serialize(
+            self, None, request.user))
         plugin_issues.append(item)
         return plugin_issues
 
@@ -333,4 +351,5 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
         return tag_list
 
     def setup(self, bindings):
-        bindings.add('repository.provider', VisualStudioRepositoryProvider, id='visualstudio')
+        bindings.add('repository.provider',
+                     VisualStudioRepositoryProvider, id='visualstudio')
