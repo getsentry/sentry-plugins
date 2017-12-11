@@ -18,6 +18,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-4.8
+  chrome: stable
 env:
   global:
     - PIP_DISABLE_PIP_VERSION_CHECK=on
@@ -25,7 +26,7 @@ env:
     - CXX=g++-4.8
     - TRAVIS_NODE_VERSION=4
 install:
-  # we want to test against sentry master
+  - 'export PATH=$PATH:~/.bin'
   - rvm install 2.2.5
   - rvm use 2.2.5
   - nvm install $TRAVIS_NODE_VERSION
