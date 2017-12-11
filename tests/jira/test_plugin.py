@@ -354,7 +354,7 @@ class JiraPluginTest(TestCase):
         password_config = [item for item in config if item['name'] == 'password'][0]
         assert password_config.get('type') == 'secret'
         assert password_config.get('value') is None
-        assert password_config.get('has_saved_value') is True
+        assert password_config.get('hasSavedValue') is True
         assert password_config.get('prefix') == ''
 
     def test_get_formatted_user(self):

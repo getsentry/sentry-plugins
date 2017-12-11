@@ -137,5 +137,5 @@ class GitLabPluginTest(PluginTestCase):
         token_config = [item for item in config if item['name'] == 'gitlab_token'][0]
         assert token_config.get('type') == 'secret'
         assert token_config.get('value') is None
-        assert token_config.get('has_saved_value') is True
+        assert token_config.get('hasSavedValue') is True
         assert token_config.get('prefix') == 'abcd'

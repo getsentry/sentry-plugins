@@ -117,5 +117,5 @@ class PagerDutyPluginTest(PluginTestCase):
         key_config = [item for item in config if item['name'] == 'service_key'][0]
         assert key_config.get('type') == 'secret'
         assert key_config.get('value') is None
-        assert key_config.get('has_saved_value') is True
+        assert key_config.get('hasSavedValue') is True
         assert key_config.get('prefix') == 'abcd'
