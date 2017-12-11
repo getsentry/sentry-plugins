@@ -32,12 +32,12 @@ lint: lint-js lint-python
 
 lint-python:
 	@echo "--> Linting python"
-	${SENTRY_PATH}/bin/lint --python .
+	${SENTRY_PATH}/bin/lint --python --parseable . | tee flake8.pycodestyle.log
 	@echo ""
 
 lint-js:
 	@echo "--> Linting javascript"
-	${SENTRY_PATH}/bin/lint --js static/getsentry/
+	${SENTRY_PATH}/bin/lint --js --parseable . | tee eslint.codestyle.xml
 	@echo ""
 
 test: install-tests

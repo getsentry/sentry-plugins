@@ -1,17 +1,17 @@
 sudo: false
 language: python
 services:
-- memcached
-- postgresql
-- redis-server
+  - memcached
+  - postgresql
+  - redis-server
 python:
-- '2.7'
+  - '2.7'
 cache:
   yarn: true
   directories:
-  - node_modules
-  - $HOME/.cache/pip/wheels
-  - $HOME/virtualenv/python2.7/src
+    - node_modules
+    - $HOME/.cache/pip/wheels
+    - $HOME/virtualenv/python2.7/src
 addons:
   apt:
     sources:
@@ -20,23 +20,45 @@ addons:
       - g++-4.8
 env:
   global:
-  - PIP_DISABLE_PIP_VERSION_CHECK=on
-  - SENTRY_SKIP_BACKEND_VALIDATION=1
-  - CXX=g++-4.8
-  - TRAVIS_NODE_VERSION=4
+    - PIP_DISABLE_PIP_VERSION_CHECK=on
+    - SENTRY_SKIP_BACKEND_VALIDATION=1
+    - CXX=g++-4.8
+    - TRAVIS_NODE_VERSION=4
 install:
-# we want to test against sentry master
-- rvm install 2.2.5
-- rvm use 2.2.5
-- nvm install $TRAVIS_NODE_VERSION
-- npm install -g yarn@0.27.5
-- bundle install
-- make install-tests
-- python -m pip install codecov
-- pip freeze
+  # we want to test against sentry master
+  - rvm install 2.2.5
+  - rvm use 2.2.5
+  - nvm install $TRAVIS_NODE_VERSION
+  - npm install -g yarn@0.27.5
+  - bundle install
+  - make install-tests
+  - python -m pip install codecov
+  - pip freeze
 script:
-- bundle exec danger
-- make lint
-- coverage run --source=src -m py.test
+  - bundle exec danger
+  - make lint
+  - py.test --cov . --cov-report="xml:coverage.xml" --junit-xml="junit.xml" || exit 1
 after_success:
-- codecov -e TEST_SUITE
+  - codecov -e TEST_SUITE
+  - npm install -g @zeus-ci/cli
+  - zeus upload -t "text/xml+xunit" junit.xml
+  - zeus upload -t "text/xml+coverage" coverage.xml
+  - zeus upload -t "text/html+pytest" pytest.html
+  - zeus upload -t "text/plain+pycodestyle" flake8.pycodestyle.log
+  - zeus upload -t "text/xml+checkstyle" eslint.checkstyle.xml
+after_failure:
+  - npm install -g @zeus-ci/cli
+  - zeus upload -t "text/xml+xunit" junit.xml
+  - zeus upload -t "text/xml+coverage" coverage.xml
+  - zeus upload -t "text/html+pytest" pytest.html
+  - zeus upload -t "text/plain+pycodestyle" flake8.pycodestyle.log
+  - zeus upload -t "text/xml+checkstyle" eslint.checkstyle.xml
+notifications:
+  webhooks:
+    urls:
+      - https://zeus.ci/hooks/3b18261a-deb8-11e7-867b-0a580a281404/public/provider/travis/webhook
+    on_success: always
+    on_failure: always
+    on_start: always
+    on_cancel: always
+    on_error: always

@@ -24,7 +24,7 @@ tests_require = [
     'flake8>=2.0,<2.1',
     'responses',
     'sentry>=8.9.0',
-    'pytest-cov>=1.8.0,<1.9.0',
+    'pytest-cov>=2.5.1,<2.6.0',
     'pyjwt>=0.3.2',
 ]
 
