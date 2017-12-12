@@ -41,6 +41,7 @@ def pytest_configure(config):
     from sentry_plugins.slack.plugin import SlackPlugin
     from sentry_plugins.splunk.plugin import SplunkPlugin
     from sentry_plugins.victorops.plugin import VictorOpsPlugin
+    from sentry_plugins.vsts.plugin import VstsPlugin
     plugins.register(AmazonSQSPlugin)
     plugins.register(AsanaPlugin)
     plugins.register(BitbucketPlugin)
@@ -57,6 +58,7 @@ def pytest_configure(config):
     plugins.register(SlackPlugin)
     plugins.register(SplunkPlugin)
     plugins.register(VictorOpsPlugin)
+    plugins.register(VstsPlugin)
 
     settings.ASANA_CLIENT_ID = 'abc'
     settings.ASANA_CLIENT_SECRET = '123'
