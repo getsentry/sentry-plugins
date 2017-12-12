@@ -38,7 +38,7 @@ install:
 script:
   - bundle exec danger
   - make lint
-  - py.test --cov . --cov-report="xml:coverage.xml" --junit-xml="junit.xml" || exit 1
+  - py.test --cov . --cov-report="xml:coverage.xml" --junit-xml="junit.xml" --html="pytest.html" || exit 1
 after_success:
   - codecov -e TEST_SUITE
   - npm install -g @zeus-ci/cli
