@@ -1,5 +1,6 @@
 .DS_Store
 ghostdriver.log
+*.log
 *.pyc
 *.egg-info/
 /dist
@@ -8,3 +9,6 @@ ghostdriver.log
 /src/sentry_plugins/*/static/*/dist
 /src/sentry_plugins/assets.json
 .cache/
+coverage.xml
+junit.xml
+*.codestyle.xml
