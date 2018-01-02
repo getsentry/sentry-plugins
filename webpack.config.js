@@ -26,6 +26,7 @@ function getConfig(app) {
       'reflux': 'Reflux',
       'moment': 'moment',
       'sentry': 'Sentry',
+      'prop-types': 'PropTypes',	      
     },
     name: app,
     entry: pyName,

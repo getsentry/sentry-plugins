@@ -24,7 +24,8 @@ env:
     - PIP_DISABLE_PIP_VERSION_CHECK=on
     - SENTRY_SKIP_BACKEND_VALIDATION=1
     - CXX=g++-4.8
-    - TRAVIS_NODE_VERSION=4
+    - TRAVIS_NODE_VERSION=8.9.1
+
 install:
   - 'export PATH=$PATH:~/.bin'
   - rvm install 2.2.5

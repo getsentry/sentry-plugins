@@ -1,29 +1,33 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 
 const ASPECT_RATIO = 16 / 9;
 
-const SessionStackContextType = React.createClass({
-  propTypes: {
-    alias: React.PropTypes.string.isRequired,
-    data: React.PropTypes.object.isRequired
-  },
-
-  getInitialState() {
+class SessionStackContextType extends React.Component {
+  static propTypes() {
     return {
+      alias: PropTypes.string.isRequired,
+      data: PropTypes.object.isRequired
+    };
+  }
+
+  constructor(props) {
+    super(props);
+    this.state = {
       showIframe: false
     };
-  },
+  }
 
   componentDidMount() {
     this.parentNode = ReactDOM.findDOMNode(this).parentNode;
     window.addEventListener('resize', this.setIframeSize, false);
     this.setIframeSize();
-  },
+  }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.setIframeSize, false);
-  },
+  }
 
   setIframeSize() {
     if (!this.showIframe) {
@@ -34,7 +38,7 @@ const SessionStackContextType = React.createClass({
         height: parentWidth / ASPECT_RATIO
       });
     }
-  },
+  }
 
   playSession() {
     this.setState({
@@ -42,31 +46,31 @@ const SessionStackContextType = React.createClass({
     });
 
     this.setIframeSize();
-  },
+  }
 
   render() {
-    let { session_url } = this.props.data;
+    let {session_url} = this.props.data;
 
     if (!session_url) {
-      return (
-        <h4>Session not found.</h4>
-      );
+      return <h4>Session not found.</h4>;
     }
 
     return (
       <div className="panel-group">
-        {this.state.showIframe ?
-          <iframe src={session_url}
-                  sandbox="allow-scripts allow-same-origin"
-                  width={this.state.width}
-                  height={this.state.height}
-          /> :
-          <button className="btn btn-default" type="button" onClick={this.playSession}>Play session</button>
-        }
+        {this.state.showIframe
+          ? <iframe
+              src={session_url}
+              sandbox="allow-scripts allow-same-origin"
+              width={this.state.width}
+              height={this.state.height}
+            />
+          : <button className="btn btn-default" type="button" onClick={this.playSession}>
+              Play session
+            </button>}
       </div>
     );
   }
-});
+}
 
 SessionStackContextType.getTitle = function(value) {
   return 'SessionStack';
