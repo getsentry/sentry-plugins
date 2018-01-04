@@ -584,7 +584,7 @@ def assign_event(request, context):
                         sentry_orgmember_set__organization=project.organization,
                         sentry_orgmember_set__id__in=OrganizationMember.objects.filter(
                             organizationmemberteam__is_active=True,
-                            organizationmemberteam__team=project.team,
+                            organizationmemberteam__team__in=project.teams.all(),
                         ).values('id')
                     ).distinct()[:1000]
                 ),

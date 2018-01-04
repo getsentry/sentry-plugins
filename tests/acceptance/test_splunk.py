@@ -17,7 +17,7 @@ class SplunkTest(AcceptanceTestCase):
         )
         self.project = self.create_project(
             organization=self.org,
-            team=self.team,
+            teams=[self.team],
             name='Bengal',
         )
         self.create_member(
