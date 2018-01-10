@@ -158,9 +158,6 @@ class SessionStackPlugin(CorePluginMixin, Plugin2):
         return configurations
 
     def get_event_preprocessors(self, data, **kwargs):
-        if data.get('platform') != 'javascript':
-            return []
-
         context = SessionStackContextType.primary_value_for_data(data)
         if not context:
             return []
