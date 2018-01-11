@@ -316,7 +316,7 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
                 data['name'], {
                     'name': 'web',
                     'active': True,
-                    'events': ['push'],
+                    'events': ['push', 'pull_request'],
                     'config': {
                         'url':
                         absolute_uri(
@@ -392,6 +392,21 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
                 self.raise_error(e)
             else:
                 return self._format_commits(repo, res['commits'])
+
+        def get_pr_commits(self, repo, number, actor=None):
+            # (not currently used by sentry)
+            if actor is None:
+                raise NotImplementedError('Cannot fetch commits anonymously')
+            client = self.get_client(actor)
+
+            # use config name because that is kept in sync via webhooks
+            name = repo.config['name']
+            try:
+                res = client.get_pr_commits(name, number)
+            except Exception as e:
+                self.raise_error(e)
+            else:
+                return self._format_commits(repo, res)
 
 
 class GitHubAppsRepositoryProvider(GitHubRepositoryProvider):

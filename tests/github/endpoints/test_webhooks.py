@@ -5,13 +5,20 @@ import six
 
 from datetime import datetime
 from django.utils import timezone
-from sentry.models import (Commit, CommitAuthor, Integration, OrganizationOption, Repository)
+from sentry.models import (
+    Commit,
+    CommitAuthor,
+    Integration,
+    OrganizationOption,
+    PullRequest,
+    Repository)
 from sentry.testutils import APITestCase
 from uuid import uuid4
 
 from sentry_plugins.github.testutils import (
     INSTALLATION_EVENT_EXAMPLE, INSTALLATION_REPO_EVENT, PUSH_EVENT_EXAMPLE,
-    PUSH_EVENT_EXAMPLE_INSTALLATION
+    PUSH_EVENT_EXAMPLE_INSTALLATION, PULL_REQUEST_OPENED_EVENT_EXAMPLE,
+    PULL_REQUEST_EDITED_EVENT_EXAMPLE
 )
 
 
@@ -353,3 +360,108 @@ class InstallationRepoInstallEventWebhookTest(APITestCase):
         repo = Repository.objects.get(id=repo.id)
         assert repo.integration_id == integration.id
         assert repo.config['name'] == repo.name
+
+
+class PullRequestEventWebhook(APITestCase):
+    def test_opened(self):
+        project = self.project  # force creation
+
+        url = '/plugins/github/organizations/{}/webhook/'.format(
+            project.organization.id,
+        )
+
+        secret = 'b3002c3e321d4b7880360d397db2ccfd'
+
+        OrganizationOption.objects.set_value(
+            organization=project.organization,
+            key='github:webhook_secret',
+            value=secret,
+        )
+
+        repo = Repository.objects.create(
+            organization_id=project.organization.id,
+            external_id='35129377',
+            provider='github_apps',
+            name='baxterthehacker/public-repo',
+        )
+
+        response = self.client.post(
+            path=url,
+            data=PULL_REQUEST_OPENED_EVENT_EXAMPLE,
+            content_type='application/json',
+            HTTP_X_GITHUB_EVENT='pull_request',
+            HTTP_X_HUB_SIGNATURE='sha1=aa5b11bc52b9fac082cb59f9ee8667cb222c3aff',
+            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+        )
+
+        assert response.status_code == 204
+
+        prs = PullRequest.objects.filter(
+            repository_id=repo.id,
+            organization_id=project.organization.id,
+        )
+
+        assert len(prs) == 1
+
+        pr = prs[0]
+
+        assert pr.key == '1'
+        assert pr.message == u'This is a pretty simple change that we need to pull into master.'
+        assert pr.title == u'Update the README with new information'
+        assert pr.author.name == u'baxterthehacker'
+
+    def test_edited(self):
+        project = self.project  # force creation
+
+        url = '/plugins/github/organizations/{}/webhook/'.format(
+            project.organization.id,
+        )
+
+        secret = 'b3002c3e321d4b7880360d397db2ccfd'
+
+        OrganizationOption.objects.set_value(
+            organization=project.organization,
+            key='github:webhook_secret',
+            value=secret,
+        )
+
+        repo = Repository.objects.create(
+            organization_id=project.organization.id,
+            external_id='35129377',
+            provider='github_apps',
+            name='baxterthehacker/public-repo',
+        )
+
+        self.client.post(
+            path=url,
+            data=PULL_REQUEST_OPENED_EVENT_EXAMPLE,
+            content_type='application/json',
+            HTTP_X_GITHUB_EVENT='pull_request',
+            HTTP_X_HUB_SIGNATURE='sha1=aa5b11bc52b9fac082cb59f9ee8667cb222c3aff',
+            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+        )
+
+        response = self.client.post(
+            path=url,
+            data=PULL_REQUEST_EDITED_EVENT_EXAMPLE,
+            content_type='application/json',
+            HTTP_X_GITHUB_EVENT='pull_request',
+            HTTP_X_HUB_SIGNATURE='sha1=b50a13afd33b514e8e62e603827ea62530f0690e',
+            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+        )
+
+        assert response.status_code == 204
+
+        prs = PullRequest.objects.filter(
+            repository_id=repo.id,
+            organization_id=project.organization.id,
+        )
+
+        assert len(prs) == 1
+
+        pr = prs[0]
+
+        assert pr.key == '1'
+        assert pr.message == u'new edited body'
+        assert pr.title == u'new edited title'
+        assert pr.author.name == u'baxterthehacker'

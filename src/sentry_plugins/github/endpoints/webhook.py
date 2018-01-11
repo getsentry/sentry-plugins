@@ -17,7 +17,7 @@ from simplejson import JSONDecodeError
 from sentry import options
 from sentry.models import (
     Commit, CommitAuthor, CommitFileChange, Integration, Organization, OrganizationOption,
-    Repository, User
+    Repository, User, PullRequest
 )
 from sentry.plugins.providers import RepositoryProvider
 from sentry.utils import json
@@ -273,9 +273,89 @@ class PushEventWebhook(Webhook):
             self._handle(event, org, is_apps)
 
 
+class PullRequestEventWebhook(Webhook):
+    # https://developer.github.com/v3/activity/events/types/#pullrequestevent
+    def __call__(self, event, organization):
+        action = event['action']
+        # TODO(maxbittker) handle is_apps correctly
+        is_apps = 'installation' in event
+        try:
+            repo = Repository.objects.get(
+                organization_id=organization.id,
+                provider='github_apps' if is_apps else 'github',
+                external_id=six.text_type(event['repository']['id']),
+            )
+
+        except Repository.DoesNotExist:
+            raise Http404()
+
+        # We need to track GitHub's "full_name" which is the repository slug.
+        # This is needed to access the API since `external_id` isn't sufficient.
+        if repo.config.get('name') != event['repository']['full_name']:
+            repo.config['name'] = event['repository']['full_name']
+            repo.save()
+
+        if action == 'opened':
+            self._handle_created(event, organization, repo, is_apps)
+        if action == 'edited' or action == 'closed':
+            self._handle_updated(event, organization, repo)
+
+    def _handle_created(self, event, organization, repo, is_apps):
+        """PR was created"""
+
+        pull_request = event['pull_request']
+        number = pull_request['number']
+        title = pull_request['title']
+        body = pull_request['body']
+        user = pull_request['user']
+        merge_commit_sha = pull_request['merge_commit_sha']
+
+        # get author TODO(Maxbittker): do we need to use the more complicated
+        # logic from the commit webhook?
+        author = author = CommitAuthor.objects.get_or_create(
+            organization_id=organization.id,
+            external_id=user['id'],
+            defaults={
+                'name': user['login'][:128]
+            }
+        )[0]
+
+        try:
+            PullRequest.objects.create(
+                repository_id=repo.id,
+                organization_id=organization.id,
+                key=number,
+                title=title,
+                message=body,
+                author=author,
+                merge_commit_sha=merge_commit_sha,
+            )
+        except IntegrityError:
+            pass
+
+    def _handle_updated(self, event, organization, repo):
+        """PR title or description was edited, or PR was closed"""
+
+        pull_request = event['pull_request']
+        number = pull_request['number']
+        title = pull_request['title']
+        body = pull_request['body']
+        merge_commit_sha = pull_request['merge_commit_sha']
+
+        PullRequest.objects.filter(
+            repository_id=repo.id,
+            key=number,
+        ).update(
+            title=title,
+            message=body,
+            merge_commit_sha=merge_commit_sha,
+        )
+
+
 class GithubWebhookBase(View):
     _handlers = {
         'push': PushEventWebhook,
+        'pull_request': PullRequestEventWebhook,
     }
 
     # https://developer.github.com/webhooks/

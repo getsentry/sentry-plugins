@@ -36,6 +36,14 @@ class GitHubClientMixin(AuthApiClient):
             end_sha,
         ))
 
+    def get_pr_commits(self, repo, num):
+        # see https://developer.github.com/v3/pulls/#list-commits-on-a-pull-request
+        # Max: 250 Commits
+        return self.get('/repos/{}/pulls/{}/commits'.format(
+            repo,
+            num
+        ))
+
 
 class GitHubClient(GitHubClientMixin, AuthApiClient):
     def __init__(self, url=None, auth=None):
