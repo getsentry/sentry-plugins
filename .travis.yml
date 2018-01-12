@@ -1,5 +1,7 @@
 sudo: false
 language: python
+group: deprecated-2017Q4
+sudo: required
 services:
   - memcached
   - postgresql
