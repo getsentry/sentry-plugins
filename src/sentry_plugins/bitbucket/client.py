@@ -112,7 +112,8 @@ class BitbucketClient(AuthApiClient):
 
     def zip_commit_data(self, repo, commit_list):
         for commit in commit_list:
-            commit.update({'patch_set': self.get_commit_filechanges(repo, commit['hash'])})
+            commit.update(
+                {'patch_set': self.get_commit_filechanges(repo, commit['hash'])})
         return commit_list
 
     def get_last_commits(self, repo, end_sha):
@@ -127,16 +128,24 @@ class BitbucketClient(AuthApiClient):
         return self.zip_commit_data(repo, data['values'])
 
     def compare_commits(self, repo, start_sha, end_sha):
-        # where start sha is oldest and end is most recent
+        # where start_sha is oldest and end_sha is most recent
         # see
         # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/commits/%7Brevision%7D
-        data = self.get('/2.0/repositories/{}/commits/{}'.format(repo, end_sha))
         commits = []
-        for commit in data['values']:
-            # TODO(maxbittker) fetch extra pages (up to a max) when this is paginated
-            # (more than 30 commits)
-            if commit['hash'] == start_sha:
-                break
-            commits.append(commit)
+        done = False
+
+        url = '/2.0/repositories/{}/commits/{}'.format(repo, end_sha)
+
+        while not done and len(commits) < 90:
+            data = self.get(url)
+
+            for commit in data['values']:
+                if commit['hash'] == start_sha:
+                    done = True
+                    break
+                commits.append(commit)
+
+            # move page forward
+            url = data['next']
 
         return self.zip_commit_data(repo, commits)
