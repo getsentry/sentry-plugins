@@ -310,10 +310,28 @@ class PullRequestEventWebhook(Webhook):
         user = pull_request['user']
         merge_commit_sha = pull_request['merge_commit_sha']
 
-        # get author TODO(Maxbittker): do we need to use the more complicated
-        # logic from the commit webhook?
-        author = author = CommitAuthor.objects.get_or_create(
+        author_email = u'{}@localhost'.format(user['login'][:65])
+        try:
+            commit_author = CommitAuthor.objects.get(
+                external_id=get_external_id(user['login']),
+                organization_id=organization.id,
+            )
+            author_email = commit_author.email
+        except CommitAuthor.DoesNotExist:
+            try:
+                user_model = User.objects.filter(
+                    social_auth__provider='github',
+                    social_auth__uid=user['id'],
+                    org_memberships=organization,
+                )[0]
+            except IndexError:
+                pass
+            else:
+                author_email = user_model.email
+
+        author = CommitAuthor.objects.get_or_create(
             organization_id=organization.id,
+            email=author_email,
             external_id=user['id'],
             defaults={
                 'name': user['login'][:128]
