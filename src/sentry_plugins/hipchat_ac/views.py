@@ -65,7 +65,7 @@ def get_addon_key():
 class InstallRedirectView(ProjectView):
     required_scope = REQUIRED_SCOPE
 
-    def handle(self, request, organization, team, project):
+    def handle(self, request, organization, project):
         # store project and org in session
         # redirect user to hipchat page
         request.session[HIPCHAT_ORG_PREFERENCE] = organization.id
