@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-from django.core.urlresolvers import reverse
 from sentry import http, tagstore
 from sentry.plugins.bases import notify
 from sentry.utils import json
@@ -176,10 +175,9 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
         if self.get_option('include_rules', project):
             rules = []
             for rule in notification.rules:
-                rule_link = reverse(
-                    'sentry-edit-project-rule',
-                    args=[group.organization.slug, project.slug, rule.id]
-                )
+                rule_link = '/%s/%s/settings/alerts/rules/%s/' % (
+                    group.organization.slug, project.slug, rule.id)
+
                 # Make sure it's an absolute uri since we're sending this
                 # outside of Sentry into Slack
                 rule_link = absolute_uri(rule_link)
