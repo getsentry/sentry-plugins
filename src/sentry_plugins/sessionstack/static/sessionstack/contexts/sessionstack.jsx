@@ -1,6 +1,6 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
+import React from "react";
+import ReactDOM from "react-dom";
+import PropTypes from "prop-types";
 
 const ASPECT_RATIO = 16 / 9;
 
@@ -21,12 +21,12 @@ class SessionStackContextType extends React.Component {
 
   componentDidMount() {
     this.parentNode = ReactDOM.findDOMNode(this).parentNode;
-    window.addEventListener('resize', this.setIframeSize, false);
+    window.addEventListener("resize", this.setIframeSize, false);
     this.setIframeSize();
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.setIframeSize, false);
+    window.removeEventListener("resize", this.setIframeSize, false);
   }
 
   setIframeSize() {
@@ -49,7 +49,7 @@ class SessionStackContextType extends React.Component {
   }
 
   render() {
-    let {session_url} = this.props.data;
+    let { session_url } = this.props.data;
 
     if (!session_url) {
       return <h4>Session not found.</h4>;
@@ -57,23 +57,29 @@ class SessionStackContextType extends React.Component {
 
     return (
       <div className="panel-group">
-        {this.state.showIframe
-          ? <iframe
-              src={session_url}
-              sandbox="allow-scripts allow-same-origin"
-              width={this.state.width}
-              height={this.state.height}
-            />
-          : <button className="btn btn-default" type="button" onClick={this.playSession}>
-              Play session
-            </button>}
+        {this.state.showIframe ? (
+          <iframe
+            src={session_url}
+            sandbox="allow-scripts allow-same-origin"
+            width={this.state.width}
+            height={this.state.height}
+          />
+        ) : (
+          <button
+            className="btn btn-default"
+            type="button"
+            onClick={() => this.playSession()}
+          >
+            Play session
+          </button>
+        )}
       </div>
     );
   }
 }
 
 SessionStackContextType.getTitle = function(value) {
-  return 'SessionStack';
+  return "SessionStack";
 };
 
 export default SessionStackContextType;
