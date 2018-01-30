@@ -146,6 +146,9 @@ class BitbucketClient(AuthApiClient):
                 commits.append(commit)
 
             # move page forward
-            url = data['next']
+            try:
+                url = data['next']
+            except KeyError:
+                break
 
         return self.zip_commit_data(repo, commits)
