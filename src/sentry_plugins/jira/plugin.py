@@ -555,7 +555,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                             default_issue_type = default_issue_type or issue_type_choices[0][0]
 
         secret_field = get_secret_field_config(pw, '')
-        secret_field.update({'name': 'password', 'label': 'Password'})
+        secret_field.update({'name': 'password', 'label': 'Password/API Token'})
 
         return [
             {
@@ -567,7 +567,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                 'help': 'It must be visible to the Sentry server'
             }, {
                 'name': 'username',
-                'label': 'Username',
+                'label': 'Username/Email',
                 'default': username,
                 'type': 'text',
                 'help': 'Ensure the JIRA user has admin permissions on the project'
