@@ -21,12 +21,12 @@ class SessionStackContextType extends React.Component {
 
   componentDidMount() {
     this.parentNode = ReactDOM.findDOMNode(this).parentNode;
-    window.addEventListener("resize", this.setIframeSize, false);
+    window.addEventListener("resize", () => this.setIframeSize(), false);
     this.setIframeSize();
   }
 
   componentWillUnmount() {
-    window.removeEventListener("resize", this.setIframeSize, false);
+    window.removeEventListener("resize", () => this.setIframeSize(), false);
   }
 
   setIframeSize() {
