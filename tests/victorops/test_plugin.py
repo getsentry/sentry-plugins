@@ -16,6 +16,18 @@ SUCCESS = """{
 }"""
 
 
+class UnicodeTestInterface(object):
+    def __init__(self, title, body):
+        self.title = title
+        self.body = body
+
+    def to_string(self, event):
+        return self.body
+
+    def get_title(self):
+        return self.title
+
+
 class VictorOpsPluginTest(PluginTestCase):
     @fixture
     def plugin(self):
@@ -69,3 +81,14 @@ class VictorOpsPluginTest(PluginTestCase):
             'timestamp':
             int(event.datetime.strftime('%s')),
         } == payload
+
+    def test_build_description_unicode(self):
+        group = self.create_group(message=u'Message', culprit=u'foo.bar')
+        event = self.create_event(group=group, message=u'Messages', tags={u'level': u'error'})
+        event.interfaces = {
+            u'Message': UnicodeTestInterface(
+                u'abcd\xde\xb4',
+                u'\xdc\xea\x80\x80abcd\xde\xb4')}
+
+        description = self.plugin.build_description(event)
+        assert description == u'abcd\xde\xb4\n-----------\n\n\xdc\xea\x80\x80abcd\xde\xb4'
