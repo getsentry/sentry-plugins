@@ -34,12 +34,10 @@ install:
   - rvm use 2.2.5
   - nvm install $TRAVIS_NODE_VERSION
   - npm install -g yarn@0.27.5
-  - bundle install
   - make install-tests
   - python -m pip install codecov
   - pip freeze
 script:
-  - bundle exec danger
   - make lint
   - py.test --cov . --cov-report="xml:coverage.xml" --junit-xml="junit.xml" --html="pytest.html" || exit 1
 after_success:
