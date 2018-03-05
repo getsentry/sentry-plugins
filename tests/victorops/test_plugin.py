@@ -68,18 +68,12 @@ class VictorOpsPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(request.body)
         assert {
-            'message_type':
-            'WARNING',
-            'entity_id':
-            group.id,
-            'entity_display_name':
-            'Hello world',
-            'monitoring_tool':
-            'sentry',
-            'state_message':
-            'Stacktrace\n-----------\n\nStacktrace (most recent call last):\n\n  File "raven/base.py", line 29, in build_msg\n    string_max_length=self.string_max_length)\n\nMessage\n-----------\n\nHello world',
-            'timestamp':
-            int(event.datetime.strftime('%s')),
+            'message_type': 'WARNING',
+            'entity_id': group.id,
+            'entity_display_name': 'Hello world',
+            'monitoring_tool': 'sentry',
+            'state_message': 'Stacktrace\n-----------\n\nStacktrace (most recent call last):\n\n  File "sentry/models/foo.py", line 29, in build_msg\n    string_max_length=self.string_max_length)\n\nMessage\n-----------\n\nHello world',
+            'timestamp': int(event.datetime.strftime('%s')),
         } == payload
 
     def test_build_description_unicode(self):
