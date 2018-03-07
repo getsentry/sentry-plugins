@@ -1,4 +1,5 @@
 SENTRY_PATH := `python -c 'import sentry; print sentry.__file__.rsplit("/", 3)[0]'`
+UNAME_S := $(shell uname -s)
 
 develop: setup-git install-yarn
 	pip install "pip>=9,<10"
@@ -29,12 +30,16 @@ clean:
 	@echo ""
 
 install-chromedriver:
+ifeq ($(UNAME_S), Darwin)
+	@echo "NOTE: Install chromedriver via Homebrew, with: brew install chromedriver"
+else
 	wget -N http://chromedriver.storage.googleapis.com/2.33/chromedriver_linux64.zip -P ~/
 	unzip ~/chromedriver_linux64.zip -d ~/
 	rm ~/chromedriver_linux64.zip
 	chmod +x ~/chromedriver
 	mkdir -p ~/.bin
 	mv ~/chromedriver ~/.bin/
+endif
 
 lint: lint-js lint-python
 
