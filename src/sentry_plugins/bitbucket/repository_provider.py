@@ -73,14 +73,11 @@ class BitbucketRepositoryProvider(BitbucketMixin, providers.RepositoryProvider):
         try:
             resp = client.create_hook(
                 data['name'], {
-                    'description':
-                    'sentry-bitbucket-repo-hook',
-                    'url':
-                    absolute_uri(
+                    'description': 'sentry-bitbucket-repo-hook',
+                    'url': absolute_uri(
                         '/plugins/bitbucket/organizations/{}/webhook/'.format(organization.id)
                     ),
-                    'active':
-                    True,
+                    'active': True,
                     'events': ['repo:push'],
                 }
             )

@@ -102,6 +102,15 @@ class GitHubClient(GitHubClientMixin, AuthApiClient):
             data=data,
         )
 
+    def update_hook(self, repo, hook_id, data):
+        return self.patch(
+            '/repos/{}/hooks/{}'.format(
+                repo,
+                hook_id,
+            ),
+            data=data,
+        )
+
     def delete_hook(self, repo, id):
         return self.delete('/repos/{}/hooks/{}'.format(repo, id))
 

@@ -11,7 +11,7 @@ from social_auth.models import UserSocialAuth
 from sentry import options
 from sentry.app import locks
 from sentry.exceptions import PluginError
-from sentry.models import Integration, OrganizationOption, Repository
+from sentry.models import Integration, Organization, OrganizationOption, Repository
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.plugins import providers
 from sentry.utils.http import absolute_uri
@@ -32,6 +32,8 @@ API_ERRORS = {
          'before adding the repository again.',
     401: ERR_UNAUTHORIZED,
 }
+
+WEBHOOK_EVENTS = ['push', 'pull_request']
 
 
 class GitHubMixin(CorePluginMixin):
@@ -305,6 +307,30 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
                 )
         return secret
 
+    def _build_webhook_config(self, organization):
+        return {
+            'name': 'web',
+            'active': True,
+            'events': WEBHOOK_EVENTS,
+            'config': {
+                'url': absolute_uri(
+                    '/plugins/github/organizations/{}/webhook/'.format(organization.id)
+                ),
+                'content_type': 'json',
+                'secret': self.get_webhook_secret(organization),
+            },
+        }
+
+    def _create_webhook(self, client, organization, repo_name):
+        return client.create_hook(
+            repo_name, self._build_webhook_config(organization)
+        )
+
+    def _update_webhook(self, client, organization, repo_name, webhook_id):
+        return client.update_hook(
+            repo_name, webhook_id, self._build_webhook_config(organization)
+        )
+
     def create_repository(self, organization, data, actor=None):
         if actor is None:
             raise NotImplementedError('Cannot create a repository anonymously')
@@ -312,23 +338,7 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
         client = self.get_client(actor)
 
         try:
-            resp = client.create_hook(
-                data['name'], {
-                    'name': 'web',
-                    'active': True,
-                    'events': ['push', 'pull_request'],
-                    'config': {
-                        'url':
-                        absolute_uri(
-                            '/plugins/github/organizations/{}/webhook/'.format(organization.id)
-                        ),
-                        'content_type':
-                        'json',
-                        'secret':
-                        self.get_webhook_secret(organization),
-                    },
-                }
-            )
+            resp = self._create_webhook(client, organization, data['name'])
         except Exception as e:
             self.logger.exception('github.webhook.create-failure', extra={
                 'organization_id': organization.id,
@@ -345,20 +355,45 @@ class GitHubRepositoryProvider(GitHubMixin, providers.RepositoryProvider):
                 'config': {
                     'name': data['name'],
                     'webhook_id': resp['id'],
+                    'webhook_events': resp['events'],
                 }
             }
+
+    # TODO(dcramer): let's make this core functionality and move the actual database
+    # updates into Sentry core
+    def update_repository(self, repo, actor=None):
+        if actor is None:
+            raise NotImplementedError('Cannot update a repository anonymously')
+
+        client = self.get_client(actor)
+        org = Organization.objects.get(id=repo.organization_id)
+        webhook_id = repo.config.get('webhook_id')
+        if not webhook_id:
+            resp = self._create_webhook(client, org, repo.config['name'])
+        else:
+            resp = self._update_webhook(
+                client,
+                org,
+                repo.config['name'],
+                repo.config['webhook_id'])
+        repo.config.update({
+            'webhook_id': resp['id'],
+            'webhook_events': resp['events'],
+        })
+        repo.update(config=repo.config)
 
     def delete_repository(self, repo, actor=None):
         if actor is None:
             raise NotImplementedError('Cannot delete a repository anonymously')
 
-        client = self.get_client(actor)
-        try:
-            client.delete_hook(repo.config['name'], repo.config['webhook_id'])
-        except ApiError as exc:
-            if exc.code == 404:
-                return
-            raise
+        if 'webhook_id' in repo.config:
+            client = self.get_client(actor)
+            try:
+                client.delete_hook(repo.config['name'], repo.config['webhook_id'])
+            except ApiError as exc:
+                if exc.code == 404:
+                    return
+                raise
 
     def _format_commits(self, repo, commit_list):
         return [
