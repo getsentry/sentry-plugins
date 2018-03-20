@@ -18,7 +18,7 @@ from uuid import uuid4
 from sentry_plugins.github.testutils import (
     INSTALLATION_EVENT_EXAMPLE, INSTALLATION_REPO_EVENT, PUSH_EVENT_EXAMPLE,
     PUSH_EVENT_EXAMPLE_INSTALLATION, PULL_REQUEST_OPENED_EVENT_EXAMPLE,
-    PULL_REQUEST_EDITED_EVENT_EXAMPLE
+    PULL_REQUEST_EDITED_EVENT_EXAMPLE, PULL_REQUEST_CLOSED_EVENT_EXAMPLE
 )
 
 
@@ -432,13 +432,10 @@ class PullRequestEventWebhook(APITestCase):
             name='baxterthehacker/public-repo',
         )
 
-        self.client.post(
-            path=url,
-            data=PULL_REQUEST_OPENED_EVENT_EXAMPLE,
-            content_type='application/json',
-            HTTP_X_GITHUB_EVENT='pull_request',
-            HTTP_X_HUB_SIGNATURE='sha1=aa5b11bc52b9fac082cb59f9ee8667cb222c3aff',
-            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+        pr = PullRequest.objects.create(
+            key='1',
+            repository_id=repo.id,
+            organization_id=project.organization.id,
         )
 
         response = self.client.post(
@@ -447,6 +444,46 @@ class PullRequestEventWebhook(APITestCase):
             content_type='application/json',
             HTTP_X_GITHUB_EVENT='pull_request',
             HTTP_X_HUB_SIGNATURE='sha1=b50a13afd33b514e8e62e603827ea62530f0690e',
+            HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
+        )
+
+        assert response.status_code == 204
+
+        pr = PullRequest.objects.get(id=pr.id)
+
+        assert pr.key == '1'
+        assert pr.message == u'new edited body'
+        assert pr.title == u'new edited title'
+        assert pr.author.name == u'baxterthehacker'
+
+    def test_closed(self):
+        project = self.project  # force creation
+
+        url = '/plugins/github/organizations/{}/webhook/'.format(
+            project.organization.id,
+        )
+
+        secret = 'b3002c3e321d4b7880360d397db2ccfd'
+
+        OrganizationOption.objects.set_value(
+            organization=project.organization,
+            key='github:webhook_secret',
+            value=secret,
+        )
+
+        repo = Repository.objects.create(
+            organization_id=project.organization.id,
+            external_id='35129377',
+            provider='github_apps',
+            name='baxterthehacker/public-repo',
+        )
+
+        response = self.client.post(
+            path=url,
+            data=PULL_REQUEST_CLOSED_EVENT_EXAMPLE,
+            content_type='application/json',
+            HTTP_X_GITHUB_EVENT='pull_request',
+            HTTP_X_HUB_SIGNATURE='sha1=dff1c803cf1e48c1b9aefe4a17952ea132758806',
             HTTP_X_GITHUB_DELIVERY=six.text_type(uuid4())
         )
 
@@ -462,6 +499,7 @@ class PullRequestEventWebhook(APITestCase):
         pr = prs[0]
 
         assert pr.key == '1'
-        assert pr.message == u'new edited body'
-        assert pr.title == u'new edited title'
+        assert pr.message == u'new closed body'
+        assert pr.title == u'new closed title'
         assert pr.author.name == u'baxterthehacker'
+        assert pr.merge_commit_sha == '0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c'

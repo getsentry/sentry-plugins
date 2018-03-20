@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 import dateutil.parser
@@ -276,8 +277,7 @@ class PushEventWebhook(Webhook):
 class PullRequestEventWebhook(Webhook):
     # https://developer.github.com/v3/activity/events/types/#pullrequestevent
     def __call__(self, event, organization):
-        action = event['action']
-        # TODO(maxbittker) handle is_apps correctly
+        # TODO(maxbittker) handle is_apps correctly (What does this comment mean?)
         is_apps = 'installation' in event
         try:
             repo = Repository.objects.get(
@@ -295,20 +295,17 @@ class PullRequestEventWebhook(Webhook):
             repo.config['name'] = event['repository']['full_name']
             repo.save()
 
-        if action == 'opened':
-            self._handle_created(event, organization, repo, is_apps)
-        if action == 'edited' or action == 'closed':
-            self._handle_updated(event, organization, repo)
-
-    def _handle_created(self, event, organization, repo, is_apps):
-        """PR was created"""
-
         pull_request = event['pull_request']
         number = pull_request['number']
         title = pull_request['title']
         body = pull_request['body']
         user = pull_request['user']
-        merge_commit_sha = pull_request['merge_commit_sha']
+        # The value of the merge_commit_sha attribute changes depending on the state of the pull request. Before a pull request is merged, the merge_commit_sha attribute holds the SHA of the test merge commit. After a pull request is merged, the attribute changes depending on how the pull request was merged:
+        # - If the pull request was merged as a merge commit, the attribute represents the SHA of the merge commit.
+        # - If the pull request was merged via a squash, the attribute represents the SHA of the squashed commit on the base branch.
+        # - If the pull request was rebased, the attribute represents the commit that the base branch was updated to.
+        # https://developer.github.com/v3/pulls/#get-a-single-pull-request
+        merge_commit_sha = pull_request['merge_commit_sha'] if pull_request['merged'] else None
 
         author_email = u'{}@localhost'.format(user['login'][:65])
         try:
@@ -349,35 +346,19 @@ class PullRequestEventWebhook(Webhook):
                 )
 
         try:
-            PullRequest.objects.create(
+            PullRequest.objects.create_or_update(
                 repository_id=repo.id,
-                organization_id=organization.id,
                 key=number,
-                title=title,
-                message=body,
-                author=author,
-                merge_commit_sha=merge_commit_sha,
+                values={
+                    'organization_id': organization.id,
+                    'title': title,
+                    'author': author,
+                    'message': body,
+                    'merge_commit_sha': merge_commit_sha,
+                },
             )
         except IntegrityError:
             pass
-
-    def _handle_updated(self, event, organization, repo):
-        """PR title or description was edited, or PR was closed"""
-
-        pull_request = event['pull_request']
-        number = pull_request['number']
-        title = pull_request['title']
-        body = pull_request['body']
-        merge_commit_sha = pull_request['merge_commit_sha']
-
-        PullRequest.objects.filter(
-            repository_id=repo.id,
-            key=number,
-        ).update(
-            title=title,
-            message=body,
-            merge_commit_sha=merge_commit_sha,
-        )
 
 
 class GithubWebhookBase(View):
