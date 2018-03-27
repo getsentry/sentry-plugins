@@ -10,7 +10,8 @@ from sentry_plugins.bitbucket.endpoints.webhook import parse_raw_user_email, par
 from sentry_plugins.bitbucket.testutils import PUSH_EVENT_EXAMPLE
 
 BAD_IP = '109.111.111.10'
-BITBUCKET_IP = '104.192.143.10'
+BITBUCKET_IP_IN_RANGE = '104.192.143.10'
+BITBUCKET_IP = '34.198.178.64'
 
 
 class UtilityFunctionTest(TestCase):
@@ -47,6 +48,16 @@ class WebhookTest(APITestCase):
             content_type='application/json',
             HTTP_X_EVENT_KEY='UnregisteredEvent',
             REMOTE_ADDR=BITBUCKET_IP,
+        )
+
+        assert response.status_code == 204
+
+        response = self.client.post(
+            path=url,
+            data=PUSH_EVENT_EXAMPLE,
+            content_type='application/json',
+            HTTP_X_EVENT_KEY='UnregisteredEvent',
+            REMOTE_ADDR=BITBUCKET_IP_IN_RANGE,
         )
 
         assert response.status_code == 204
