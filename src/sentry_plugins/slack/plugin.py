@@ -187,7 +187,7 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 fields.append(
                     {
                         'title': 'Triggered By',
-                        'value': ', '.join('<%s | %s>' % r for r in rules),
+                        'value': u', '.join(u'<{} | {}>'.format(*r) for r in rules),
                         'short': False,
                     }
                 )
