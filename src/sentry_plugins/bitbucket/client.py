@@ -100,13 +100,15 @@ class BitbucketClient(AuthApiClient):
     def get_commit_filechanges(self, repo, sha):
         # returns unidiff file
 
-        diff_file = self.get(
+        resp = self.get(
             '/2.0/repositories/{}/diff/{}'.format(
                 repo,
                 sha,
             ),
             allow_text=True,
         )
+
+        diff_file = resp.text
         ps = PatchSet.from_string(diff_file)
         return self.transform_patchset(ps)
 

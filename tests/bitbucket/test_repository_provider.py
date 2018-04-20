@@ -8,7 +8,7 @@ from sentry.testutils import PluginTestCase
 from social_auth.models import UserSocialAuth
 
 from sentry_plugins.bitbucket.plugin import BitbucketRepositoryProvider
-from sentry_plugins.bitbucket.testutils import COMPARE_COMMITS_EXAMPLE
+from sentry_plugins.bitbucket.testutils import COMPARE_COMMITS_EXAMPLE, COMMIT_DIFF_PATCH
 
 
 class BitbucketPluginTest(PluginTestCase):
@@ -26,7 +26,7 @@ class BitbucketPluginTest(PluginTestCase):
         responses.add(
             responses.GET,
             'https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/diff/e18e4e72de0d824edfbe0d73efe34cbd0d01d301',
-            body='',
+            body=COMMIT_DIFF_PATCH,
         )
         repo = Repository.objects.create(
             provider='bitbucket',
@@ -59,6 +59,6 @@ class BitbucketPluginTest(PluginTestCase):
                 'message': 'README.md edited online with Bitbucket',
                 'id': 'e18e4e72de0d824edfbe0d73efe34cbd0d01d301',
                 'repository': 'maxbittker/newsdiffs',
-                'patch_set': []
+                'patch_set': [{'path': u'README.md', 'type': 'M'}]
             }
         ]

@@ -262,3 +262,13 @@ GET_LAST_COMMITS_EXAMPLE = b"""{
   "next": "https://api.bitbucket.org/2.0/repositories/maxbittker/newsdiffs/commits/e18e4e72de0d824edfbe0d73efe34cbd0d01d301?page=2"
 }
 """
+
+COMMIT_DIFF_PATCH = b"""diff --git a/README.md b/README.md
+index 89821ce..9e09a8a 100644
+--- a/README.md
++++ b/README.md
+@@ -1 +1 @@
+-A twitter bot to when words are said by the NYT for the first time.
+\ No newline at end of file
++A twitter bot to when words are said by the NYT for the first time.sdfsdf
+\ No newline at end of file"""
