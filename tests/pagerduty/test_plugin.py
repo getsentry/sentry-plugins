@@ -84,7 +84,7 @@ class PagerDutyPluginTest(PluginTestCase):
                 'release': None,
                 'url': 'http://example.com/baz/bar/issues/1/',
                 'culprit': group.culprit,
-                'platform': None,
+                'platform': 'python',
                 'event_id': event.event_id,
                 'tags': {
                     'level': 'warning',
