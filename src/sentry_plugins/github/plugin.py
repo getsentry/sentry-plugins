@@ -122,7 +122,10 @@ class GitHubPlugin(GitHubMixin, IssuePlugin2):
                 )
             }, {
                 'name': 'comment', 'label': 'Comment',
-                'default': absolute_uri(group.get_absolute_url()),
+                'default': u'Sentry issue: [{issue_id}]({url})'.format(
+                    url=absolute_uri(group.get_absolute_url()),
+                    issue_id=group.qualified_short_id
+                ),
                 'type': 'textarea',
                 'help': ('Leave blank if you don\'t want to '
                          'add a comment to the GitHub issue.'),
