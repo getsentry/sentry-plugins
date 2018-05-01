@@ -7,6 +7,8 @@ from six.moves.urllib.parse import urlparse
 
 from .mixins import VisualStudioMixin
 
+MAX_COMMIT_DATA_REQUESTS = 90
+
 
 class VisualStudioRepositoryProvider(VisualStudioMixin, providers.RepositoryProvider):
     name = 'Visual Studio'
@@ -71,26 +73,58 @@ class VisualStudioRepositoryProvider(VisualStudioMixin, providers.RepositoryProv
     def delete_repository(self, repo, actor=None):
         pass
 
+    def transform_changes(self, patch_set):
+        type_mapping = {
+            'add': 'A',
+            'delete': 'D',
+            'edit': 'M',
+        }
+        file_changes = []
+        # https://docs.microsoft.com/en-us/rest/api/vsts/git/commits/get%20changes#versioncontrolchangetype
+        for change in patch_set:
+            change_type = type_mapping.get(change['changeType'])
+
+            if change_type and change.get('item') and change['item']['gitObjectType'] == 'blob':
+                file_changes.append({
+                    'path': change['item']['path'],
+                    'type': change_type
+                })
+
+        return file_changes
+
+    def zip_commit_data(self, repo, commit_list, actor):
+        client = self.get_client(actor)
+        n = 0
+        for commit in commit_list:
+            commit.update(
+                {'patch_set': self.transform_changes(
+                    client.get_commit_filechanges(
+                        repo.config['instance'], repo.external_id, commit['commitId'])
+                )})
+
+            n += 1
+            if n > MAX_COMMIT_DATA_REQUESTS:
+                break
+
+        return commit_list
+
     def compare_commits(self, repo, start_sha, end_sha, actor=None):
         if actor is None:
             raise NotImplementedError('Cannot fetch commits anonymously')
 
         client = self.get_client(actor)
         instance = repo.config['instance']
-        if start_sha is None:
-            try:
+
+        try:
+            if start_sha is None:
                 res = client.get_commits(instance, repo.external_id, commit=end_sha, limit=10)
-            except Exception as e:
-                self.raise_error(e, identity=client.auth)
             else:
-                return self._format_commits(repo, res['value'])
-        else:
-            try:
                 res = client.get_commit_range(instance, repo.external_id, start_sha, end_sha)
-            except Exception as e:
-                self.raise_error(e, identity=client.auth)
-            else:
-                return self._format_commits(repo, res)
+        except Exception as e:
+            self.raise_error(e, identity=client.auth)
+
+        commits = self.zip_commit_data(repo, res['value'], actor)
+        return self._format_commits(repo, commits)
 
     def _format_commits(self, repo, commit_list):
         return [
@@ -100,5 +134,6 @@ class VisualStudioRepositoryProvider(VisualStudioMixin, providers.RepositoryProv
                 'author_email': c['author']['email'],
                 'author_name': c['author']['name'],
                 'message': c['comment'],
+                'patch_set': c.get('patch_set'),
             } for c in commit_list
         ]

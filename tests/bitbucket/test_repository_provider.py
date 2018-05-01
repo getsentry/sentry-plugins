@@ -50,8 +50,6 @@ class BitbucketPluginTest(PluginTestCase):
         res = self.provider.compare_commits(
             repo, None, 'e18e4e72de0d824edfbe0d73efe34cbd0d01d301', actor=user)
 
-        # res = self.provider._format_commits(repo, json.loads(COMPARE_COMMITS_EXAMPLE)['values'])
-
         assert res == [
             {
                 'author_email': 'max@getsentry.com',

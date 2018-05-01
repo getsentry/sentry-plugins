@@ -13,12 +13,12 @@ FIELD_MAP = {
 
 
 class VstsClient(AuthApiClient):
-    api_version = '3.0'
+    api_version = '4.1'
 
     def request(self, method, path, data=None, params=None):
         headers = {
             'Accept': 'application/json; api-version={}'.format(self.api_version),
-            'Content-Type': 'application/json-patch+json',
+            'Content-Type': 'application/json-patch+json' if method == 'PATCH' else 'application/json',
             'X-HTTP-Method-Override': method,
             'X-TFS-FedAuthRedirect': 'Suppress',
         }
@@ -131,6 +131,18 @@ class VstsClient(AuthApiClient):
                 '$top': limit,
             },
         )
+
+    def get_commit_filechanges(self, instance, repo_id, commit):
+
+        resp = self.get(
+            'https://{}/DefaultCollection/_apis/git/repositories/{}/commits/{}/changes'.format(
+                instance,
+                repo_id,
+                commit,
+            )
+        )
+        changes = resp['changes']
+        return changes
 
     def get_commit_range(self, instance, repo_id, start_sha, end_sha):
         return self.post(
