@@ -56,12 +56,12 @@ class SlackPluginTest(PluginTestCase):
                         },
                         {
                             'short': True,
-                            'value': 'foo Bar',
+                            'value': 'bar',
                             'title': 'Project'
                         },
                     ],
                     'fallback':
-                    '[foo Bar] Hello world',
+                    '[bar] Hello world',
                     'title':
                     'Hello world',
                     'title_link':
@@ -97,11 +97,11 @@ class SlackPluginTest(PluginTestCase):
                     'fields': [
                         {
                             'short': True,
-                            'value': 'foo Bar',
+                            'value': 'bar',
                             'title': 'Project'
                         },
                     ],
-                    'fallback': '[foo Bar] Hello world',
+                    'fallback': '[bar] Hello world',
                     'title': 'Hello world',
                     'title_link': 'http://example.com/baz/bar/issues/1/?referrer=slack',
                 },
@@ -139,7 +139,7 @@ class SlackPluginTest(PluginTestCase):
                             'title': 'Culprit',
                         },
                     ],
-                    'fallback': '[foo Bar] Hello world',
+                    'fallback': '[bar] Hello world',
                     'title': 'Hello world',
                     'title_link': 'http://example.com/baz/bar/issues/1/?referrer=slack',
                 },
