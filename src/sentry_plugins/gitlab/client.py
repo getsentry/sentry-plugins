@@ -19,7 +19,7 @@ class GitLabClient(object):
         session = build_session()
         try:
             resp = getattr(session, method.lower())(
-                url='{}/api/v3/{}'.format(self.url, path.lstrip('/')),
+                url='{}/api/v4/{}'.format(self.url, path.lstrip('/')),
                 headers=headers,
                 json=data,
                 params=params,
@@ -40,14 +40,11 @@ class GitLabClient(object):
         try:
             return self.request(
                 'GET',
-                '/projects/{}/issues'.format(
+                '/projects/{}/issues/{}'.format(
                     quote(repo, safe=''),
-                ),
-                params={
-                    # XXX(dcramer): this is an undocumented API
-                    'iid': issue_id,
-                }
-            )[0]
+                    issue_id
+                )
+            )
         except IndexError:
             raise ApiError('Issue not found with ID', 404)
 
@@ -58,12 +55,12 @@ class GitLabClient(object):
             data=data,
         )
 
-    def create_note(self, repo, global_issue_id, data):
+    def create_note(self, repo, issue_iid, data):
         return self.request(
             'POST',
             '/projects/{}/issues/{}/notes'.format(
                 quote(repo, safe=''),
-                global_issue_id,
+                issue_iid,
             ),
             data=data,
         )

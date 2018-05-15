@@ -50,7 +50,7 @@ class GitLabPluginTest(PluginTestCase):
     def test_create_issue(self):
         responses.add(
             responses.POST,
-            'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues',
+            'https://gitlab.com/api/v4/projects/getsentry%2Fsentry/issues',
             body='{"iid": 1, "id": "10"}'
         )
 
@@ -82,13 +82,13 @@ class GitLabPluginTest(PluginTestCase):
     def test_link_issue(self):
         responses.add(
             responses.GET,
-            'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues?iid=1',
-            body='[{"iid": 1, "id": "10", "title": "Hello world"}]',
+            'https://gitlab.com/api/v4/projects/getsentry%2Fsentry/issues/1',
+            body='{"iid": 1, "id": "10", "title": "Hello world"}',
             match_querystring=True
         )
         responses.add(
             responses.POST,
-            'https://gitlab.com/api/v3/projects/getsentry%2Fsentry/issues/10/notes',
+            'https://gitlab.com/api/v4/projects/getsentry%2Fsentry/issues/1/notes',
             body='{"body": "Hello"}'
         )
 

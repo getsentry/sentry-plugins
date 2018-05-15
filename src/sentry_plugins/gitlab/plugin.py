@@ -125,7 +125,7 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
             try:
                 client.create_note(
                     repo=repo,
-                    global_issue_id=issue['id'],
+                    issue_iid=issue['iid'],
                     data={
                         'body': comment,
                     },
@@ -138,11 +138,11 @@ class GitLabPlugin(CorePluginMixin, IssuePlugin2):
     def get_issue_label(self, group, issue_id, **kwargs):
         return 'GL-{}'.format(issue_id)
 
-    def get_issue_url(self, group, issue_id, **kwargs):
+    def get_issue_url(self, group, issue_iid, **kwargs):
         url = self.get_option('gitlab_url', group.project).rstrip('/')
         repo = self.get_option('gitlab_repo', group.project)
 
-        return '{}/{}/issues/{}'.format(url, repo, issue_id)
+        return '{}/{}/issues/{}'.format(url, repo, issue_iid)
 
     def get_configure_plugin_fields(self, request, project, **kwargs):
         gitlab_token = self.get_option('gitlab_token', project)
