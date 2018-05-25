@@ -11,7 +11,7 @@ MAX_COMMIT_DATA_REQUESTS = 90
 
 
 class VisualStudioRepositoryProvider(VisualStudioMixin, providers.RepositoryProvider):
-    name = 'Visual Studio'
+    name = 'Visual Studio Team Services'
     auth_provider = 'visualstudio'
 
     def get_config(self):
