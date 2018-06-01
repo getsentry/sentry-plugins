@@ -142,7 +142,7 @@ class BitbucketClient(AuthApiClient):
             data = self.get(url)
 
             for commit in data['values']:
-                if commit['hash'] == start_sha:
+                if commit['hash'].startswith(start_sha):
                     done = True
                     break
                 commits.append(commit)
