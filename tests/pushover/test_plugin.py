@@ -64,6 +64,45 @@ class PushoverPluginTest(PluginTestCase):
             'priority': ['0'],
             'user': ['abcdef'],
             'token': ['ghijkl'],
+            'expire': ['90'],
+            'retry': ['30'],
+        }
+
+    @responses.activate
+    def test_emergency_notification(self):
+        responses.add('POST', 'https://api.pushover.net/1/messages.json', body=SUCCESS)
+        self.plugin.set_option('userkey', 'abcdef', self.project)
+        self.plugin.set_option('apikey', 'ghijkl', self.project)
+        self.plugin.set_option('priority', '2', self.project)
+        self.plugin.set_option('expire', 90, self.project)
+        self.plugin.set_option('retry', 30, self.project)
+
+        group = self.create_group(message='Hello world', culprit='foo.bar')
+        event = self.create_event(
+            group=group,
+            message='Hello world',
+            tags={'level': 'warning'},
+        )
+
+        rule = Rule.objects.create(project=self.project, label='my rule')
+
+        notification = Notification(event=event, rule=rule)
+
+        with self.options({'system.url-prefix': 'http://example.com'}):
+            self.plugin.notify(notification)
+
+        request = responses.calls[0].request
+        payload = parse_qs(request.body)
+        assert payload == {
+            'message': ['{}\n\nTags: level=warning'.format(event.get_legacy_message())],
+            'title': ['Bar: Hello world'],
+            'url': ['http://example.com/baz/bar/issues/{}/'.format(group.id)],
+            'url_title': ['Issue Details'],
+            'priority': ['2'],
+            'user': ['abcdef'],
+            'token': ['ghijkl'],
+            'expire': ['90'],
+            'retry': ['30'],
         }
 
     def test_no_secrets(self):
