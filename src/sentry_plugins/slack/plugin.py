@@ -70,6 +70,13 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 'required': False,
                 'help': 'Optional #channel name or @user',
             }, {
+                'name': 'custom_message',
+                'label': 'Custom message',
+                'type': 'string',
+                'placeholder': 'e.g. Hey <!everyone> there is something wrong',
+                'required': False,
+                'help': 'Optional e.g. <!channel> for send notification to everyone in channel',
+            }, {
                 'name': 'include_tags',
                 'label': 'Include Tags',
                 'type': 'bool',
@@ -170,6 +177,13 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 'title': 'Project',
                 'value': project_name,
                 'short': True,
+            })
+
+        if self.get_option('custom_message', project):
+            fields.append({
+                'title': 'Custom message',
+                'value': self.get_option('custom_message', project),
+                'short': False,
             })
 
         if self.get_option('include_rules', project):
