@@ -15,7 +15,7 @@ class AsanaClient(AuthApiClient):
     def create_issue(self, workspace, data):
         asana_data = {'name': data['title'], 'notes': data['description'], 'workspace': workspace}
         if data.get('project'):
-            asana_data['projects'] = data['project']
+            asana_data['projects'] = [data['project']]
 
         if data.get('assignee'):
             asana_data['assignee'] = data['assignee']
