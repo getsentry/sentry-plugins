@@ -5,7 +5,7 @@ sentry-plugins
 
 All of the plugins for Sentry (https://github.com/getsentry/sentry)
 
-:copyright: 2016 by the Sentry Team, see AUTHORS for more details.
+:copyright: 2018 by the Sentry Team
 :license: Apache, see LICENSE for more details.
 """
 from __future__ import absolute_import
@@ -21,7 +21,7 @@ VERSION = '9.1.0.dev0'
 
 tests_require = [
     'exam',
-    'flake8>=2.0,<2.1',
+    'flake8>=3.5.0<3.6.0',
     'responses',
     'sentry>=8.9.0',
     'pytest-cov>=2.5.1,<2.6.0',
