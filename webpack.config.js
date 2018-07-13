@@ -25,7 +25,7 @@ function getConfig(app) {
       'react-router': 'Router',
       'reflux': 'Reflux',
       'moment': 'moment',
-      'sentry': 'Sentry',
+      'sentry': 'SentryApp',
       'prop-types': 'PropTypes',	      
     },
     name: app,
