@@ -3,9 +3,9 @@ from __future__ import absolute_import
 from sentry.testutils import AcceptanceTestCase
 
 
-class PagerDutyTest(AcceptanceTestCase):
+class PhabricatorTest(AcceptanceTestCase):
     def setUp(self):
-        super(PagerDutyTest, self).setUp()
+        super(PhabricatorTest, self).setUp()
         self.user = self.create_user('foo@example.com')
         self.org = self.create_organization(
             name='Rowdy Tiger',
@@ -24,10 +24,10 @@ class PagerDutyTest(AcceptanceTestCase):
             teams=[self.team],
         )
         self.login_as(self.user)
-        self.path = '/{}/{}/settings/plugins/pagerduty/'.format(self.org.slug, self.project.slug)
+        self.path = '/{}/{}/settings/plugins/phabricator/'.format(self.org.slug, self.project.slug)
 
     def test_simple(self):
         self.browser.get(self.path)
         self.browser.wait_until_not('.loading-indicator')
-        self.browser.snapshot('pagerduty settings')
-        assert self.browser.element_exists('.ref-plugin-config-pagerduty')
+        self.browser.snapshot('phabricator settings')
+        assert self.browser.element_exists('.ref-plugin-config-phabricator')

@@ -35,13 +35,6 @@ class ClubhousePluginTest(PluginTestCase):
 
     @responses.activate
     def test_get_issue_url(self):
-        responses.add(
-            responses.GET,
-            'https://api.clubhouse.io/api/v2/stories/1',
-            json={'id': 1, 'app_url': 'https://app.clubhouse.io/example-org/story/1'}
-        )
-
-        self.plugin.set_option('repo', 'getsentry/sentry', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
         assert self.plugin.get_issue_url(group, {
             'id': 1,

@@ -12,3 +12,4 @@ ghostdriver.log
 coverage.xml
 junit.xml
 *.codestyle.xml
+/.pytest_cache

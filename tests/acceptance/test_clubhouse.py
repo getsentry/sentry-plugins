@@ -30,5 +30,4 @@ class ClubhouseTest(AcceptanceTestCase):
         self.browser.get(self.path)
         self.browser.wait_until_not('.loading-indicator')
         self.browser.snapshot('clubhouse settings')
-        # NOTE: It doesn't appear that this does anything other than load the
-        # page, then take a snapshot, which I can't find.
+        assert self.browser.element_exists('.ref-plugin-config-clubhouse')

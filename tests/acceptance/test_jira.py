@@ -30,3 +30,4 @@ class JIRATest(AcceptanceTestCase):
         self.browser.get(self.path)
         self.browser.wait_until_not('.loading-indicator')
         self.browser.snapshot('jira settings')
+        assert self.browser.element_exists('.ref-plugin-config-jira')
