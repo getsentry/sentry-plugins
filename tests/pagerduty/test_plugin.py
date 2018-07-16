@@ -29,7 +29,6 @@ class PagerDutyPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'pagerduty'
 
     def test_entry_point(self):
-        self.assertAppInstalled('pagerduty', 'sentry_plugins.pagerduty')
         self.assertPluginInstalled('pagerduty', self.plugin)
 
     def test_is_configured(self):

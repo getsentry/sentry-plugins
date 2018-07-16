@@ -17,7 +17,6 @@ class PivotalPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'pivotal'
 
     def test_entry_point(self):
-        self.assertAppInstalled('pivotal', 'sentry_plugins.pivotal')
         self.assertPluginInstalled('pivotal', self.plugin)
 
     def test_get_issue_label(self):

@@ -17,7 +17,6 @@ class AmazonSQSPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'amazon-sqs'
 
     def test_entry_point(self):
-        self.assertAppInstalled('amazon_sqs', 'sentry_plugins.amazon_sqs')
         self.assertPluginInstalled('amazon_sqs', self.plugin)
 
     @patch('boto3.client')

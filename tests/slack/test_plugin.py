@@ -21,7 +21,6 @@ class SlackPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'slack'
 
     def test_entry_point(self):
-        self.assertAppInstalled('slack', 'sentry_plugins.slack')
         self.assertPluginInstalled('slack', self.plugin)
 
     @responses.activate

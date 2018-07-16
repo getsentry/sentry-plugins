@@ -18,7 +18,6 @@ class SplunkPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'splunk'
 
     def test_entry_point(self):
-        self.assertAppInstalled('splunk', 'sentry_plugins.splunk')
         self.assertPluginInstalled('splunk', self.plugin)
 
     @responses.activate

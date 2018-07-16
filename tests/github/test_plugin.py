@@ -26,7 +26,6 @@ class GitHubPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'github'
 
     def test_entry_point(self):
-        self.assertAppInstalled('github', 'sentry_plugins.github')
         self.assertPluginInstalled('github', self.plugin)
 
     def test_get_issue_label(self):

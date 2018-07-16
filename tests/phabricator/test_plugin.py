@@ -22,7 +22,6 @@ class PhabricatorPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'phabricator'
 
     def test_entry_point(self):
-        self.assertAppInstalled('phabricator', 'sentry_plugins.phabricator')
         self.assertPluginInstalled('phabricator', self.plugin)
 
     def test_get_issue_label(self):

@@ -26,7 +26,6 @@ class BitbucketPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'bitbucket'
 
     def test_entry_point(self):
-        self.assertAppInstalled('bitbucket', 'sentry_plugins.bitbucket')
         self.assertPluginInstalled('bitbucket', self.plugin)
 
     def test_get_issue_label(self):

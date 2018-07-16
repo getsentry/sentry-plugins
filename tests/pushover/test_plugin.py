@@ -24,7 +24,6 @@ class PushoverPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'pushover'
 
     def test_entry_point(self):
-        self.assertAppInstalled('pushover', 'sentry_plugins.pushover')
         self.assertPluginInstalled('pushover', self.plugin)
 
     def test_is_configured(self):

@@ -72,7 +72,6 @@ class VstsPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'vsts'
 
     def test_entry_point(self):
-        self.assertAppInstalled('vsts', 'sentry_plugins.vsts')
         self.assertPluginInstalled('vsts', self.plugin)
 
     def test_get_issue_label(self):

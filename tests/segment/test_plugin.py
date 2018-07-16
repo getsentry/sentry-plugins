@@ -18,7 +18,6 @@ class SegmentPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'segment'
 
     def test_entry_point(self):
-        self.assertAppInstalled('segment', 'sentry_plugins.segment')
         self.assertPluginInstalled('segment', self.plugin)
 
     @responses.activate

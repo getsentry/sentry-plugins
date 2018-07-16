@@ -24,7 +24,6 @@ class GitLabPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'gitlab'
 
     def test_entry_point(self):
-        self.assertAppInstalled('gitlab', 'sentry_plugins.gitlab')
         self.assertPluginInstalled('gitlab', self.plugin)
 
     def test_get_issue_label(self):

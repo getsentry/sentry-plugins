@@ -24,7 +24,6 @@ class ClubhousePluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'clubhouse'
 
     def test_entry_point(self):
-        self.assertAppInstalled('clubhouse', 'sentry_plugins.clubhouse')
         self.assertPluginInstalled('clubhouse', self.plugin)
 
     def test_get_issue_label(self):

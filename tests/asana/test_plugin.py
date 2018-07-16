@@ -26,7 +26,6 @@ class AsanaPluginTest(PluginTestCase):
         assert self.plugin.conf_key == 'asana'
 
     def test_entry_point(self):
-        self.assertAppInstalled('asana', 'sentry_plugins.asana')
         self.assertPluginInstalled('asana', self.plugin)
 
     def test_get_issue_label(self):
