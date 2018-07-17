@@ -24,7 +24,7 @@ from .client import GitHubClient, GitHubAppsClient
 
 API_ERRORS = {
     404: 'GitHub returned a 404 Not Found error. If this repository exists, ensure'
-         ' you have the appropriate write permissions for it, and that Sentry is'
+         ' you have Admin or Owner permissions on the repository, and that Sentry is'
          ' an authorized OAuth app in your GitHub account settings (https://github.com/settings/applications).',
     422: 'GitHub returned a 422 Validation failed. This usually means that there is '
          'already a webhook set up for Sentry for this repository. Please go to your '
