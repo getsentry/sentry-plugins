@@ -22,6 +22,7 @@ VERSION = '9.1.0.dev0'
 tests_require = [
     'exam',
     'flake8>=3.5.0<3.6.0',
+    'sentry-flake8>=0.0.1',
     'pycodestyle>=2.3.1<2.4.0',
     'responses',
     'sentry>=8.9.0',
