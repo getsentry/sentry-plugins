@@ -17,8 +17,13 @@ install-tests: develop install-chromedriver
 	pip install .[tests]
 
 setup-git:
+	@echo "--> Installing git hooks"
 	git config branch.autosetuprebase always
-	cd .git/hooks && ln -sf ../../hooks/* ./
+	git config core.ignorecase false
+	cd .git/hooks && ln -sf ../../config/hooks/* ./
+	pip install "pre-commit>=1.10.1,<1.11.0"
+	pre-commit install
+	@echo ""
 
 clean:
 	@echo "--> Cleaning static cache"
@@ -45,7 +50,7 @@ lint: lint-js lint-python
 
 lint-python:
 	@echo "--> Linting python"
-	bash -eo pipefail -c "${SENTRY_PATH}/bin/lint --python --parseable . | tee flake8.pycodestyle.log"
+	bash -eo pipefail -c "flake8 | tee flake8.pycodestyle.log"
 	@echo ""
 
 lint-js:
