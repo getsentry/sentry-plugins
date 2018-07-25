@@ -12,8 +12,8 @@ cache:
   yarn: true
   directories:
     - node_modules
-    - $HOME/.cache/pip/wheels
-    - $HOME/virtualenv/python2.7/src
+    - $HOME/.cache/pip
+    - $HOME/.cache/pre-commit
 addons:
   apt:
     sources:
