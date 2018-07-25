@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from sentry.exceptions import PluginError
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.utils.http import absolute_uri
-from six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import urljoin
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.utils import get_secret_field_config
@@ -37,7 +37,7 @@ class PhabricatorPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_api(self, project):
         return phabricator.Phabricator(
-            host=urlparse.urljoin(self.get_option('host', project), 'api/'),
+            host=urljoin(self.get_option('host', project), 'api/'),
             username=self.get_option('username', project),
             certificate=self.get_option('certificate', project),
             token=self.get_option('token', project),
@@ -76,7 +76,13 @@ class PhabricatorPlugin(CorePluginMixin, IssuePlugin2):
         }]
 
     def get_new_issue_fields(self, request, group, event, **kwargs):
-        fields = super(PhabricatorPlugin, self).get_new_issue_fields(request, group, event, **kwargs)
+        fields = super(
+            PhabricatorPlugin,
+            self).get_new_issue_fields(
+            request,
+            group,
+            event,
+            **kwargs)
         return fields + [
             {
                 'name': 'tags',
@@ -136,9 +142,10 @@ class PhabricatorPlugin(CorePluginMixin, IssuePlugin2):
                 json.loads(projectPHIDs)
             except ValueError:
                 raise PluginError('projectPHIDs field must be a valid JSON if present')
-        if config.get('host') and ((config.get('username') and config.get('certificate')) or config.get('token')):
+        if config.get('host') and (
+                (config.get('username') and config.get('certificate')) or config.get('token')):
             api = phabricator.Phabricator(
-                host=urlparse.urljoin(config['host'], 'api/'),
+                host=urljoin(config['host'], 'api/'),
                 username=config.get('username'),
                 certificate=config.get('certificate'),
                 token=config.get('token'),
@@ -170,7 +177,7 @@ class PhabricatorPlugin(CorePluginMixin, IssuePlugin2):
 
     def get_issue_url(self, group, issue_id, **kwargs):
         host = self.get_option('host', group.project)
-        return urlparse.urljoin(host, 'T%s' % issue_id)
+        return urljoin(host, 'T%s' % issue_id)
 
     def view_autocomplete(self, request, group, **kwargs):
         field = request.GET.get('autocomplete_field')
