@@ -1,4 +1,3 @@
-sudo: false
 language: python
 group: deprecated-2017Q4
 sudo: required
@@ -21,7 +20,6 @@ env:
     - PIP_DISABLE_PIP_VERSION_CHECK=on
     - SENTRY_SKIP_BACKEND_VALIDATION=1
     - TRAVIS_NODE_VERSION=8.9.1
-
 install:
   - 'export PATH=$PATH:~/.bin'
   - rvm install 2.2.5
