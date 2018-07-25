@@ -15,17 +15,11 @@ cache:
     - $HOME/.cache/pip
     - $HOME/.cache/pre-commit
 addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-4.8
   chrome: stable
 env:
   global:
     - PIP_DISABLE_PIP_VERSION_CHECK=on
     - SENTRY_SKIP_BACKEND_VALIDATION=1
-    - CXX=g++-4.8
     - TRAVIS_NODE_VERSION=8.9.1
 
 install:
