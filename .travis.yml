@@ -43,11 +43,11 @@ script:
 after_script:
   - codecov -e TEST_SUITE
   - npm install -g @zeus-ci/cli
-  - zeus upload -t "application/x-junit+xml" junit.xml
-  - zeus upload -t "application/x-cobertura+xml" coverage.xml
-  - zeus upload -t "text/html+pytest" pytest.html
-  - zeus upload -t "text/x-pycodestyle" flake8.pycodestyle.log
-  - zeus upload -t "application/x-checkstyle+xml" eslint.checkstyle.xml
+  - $(npm bin -g)/zeus upload -t "application/x-junit+xml" junit.xml
+    -t "application/x-cobertura+xml" coverage.xml
+    -t "text/html+pytest" pytest.html
+    -t "text/x-pycodestyle" flake8.pycodestyle.log
+    -t "application/x-checkstyle+xml" eslint.checkstyle.xml
 notifications:
   webhooks:
     urls:
