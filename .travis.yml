@@ -40,21 +40,14 @@ install:
 script:
   - make lint
   - py.test --cov . --cov-report="xml:coverage.xml" --junit-xml="junit.xml" --html="pytest.html" || exit 1
-after_success:
+after_script:
   - codecov -e TEST_SUITE
   - npm install -g @zeus-ci/cli
-  - zeus upload -t "text/xml+xunit" junit.xml
-  - zeus upload -t "text/xml+coverage" coverage.xml
+  - zeus upload -t "application/x-junit+xml" junit.xml
+  - zeus upload -t "application/x-cobertura+xml" coverage.xml
   - zeus upload -t "text/html+pytest" pytest.html
-  - zeus upload -t "text/plain+pycodestyle" flake8.pycodestyle.log
-  - zeus upload -t "text/xml+checkstyle" eslint.checkstyle.xml
-after_failure:
-  - npm install -g @zeus-ci/cli
-  - zeus upload -t "text/xml+xunit" junit.xml
-  - zeus upload -t "text/xml+coverage" coverage.xml
-  - zeus upload -t "text/html+pytest" pytest.html
-  - zeus upload -t "text/plain+pycodestyle" flake8.pycodestyle.log
-  - zeus upload -t "text/xml+checkstyle" eslint.checkstyle.xml
+  - zeus upload -t "text/x-pycodestyle" flake8.pycodestyle.log
+  - zeus upload -t "application/x-checkstyle+xml" eslint.checkstyle.xml
 notifications:
   webhooks:
     urls:
