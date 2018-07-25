@@ -1,7 +1,10 @@
+from __future__ import absolute_import
+
 from rest_framework.response import Response
 from sentry.exceptions import PluginError
 from sentry.plugins.bases.issue2 import IssuePlugin2, IssueGroupActionEndpoint
 from sentry.utils.http import absolute_uri
+from six.moves.urllib.parse import urlparse
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.utils import get_secret_field_config
@@ -9,7 +12,6 @@ from sentry_plugins.utils import get_secret_field_config
 import httplib
 import json
 import phabricator
-import urlparse
 
 
 def query_to_result(field, result):
