@@ -14,3 +14,4 @@ junit.xml
 *.codestyle.xml
 /.pytest_cache
 /.vscode/tags
+/.artifacts

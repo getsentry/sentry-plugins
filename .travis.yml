@@ -31,15 +31,20 @@ install:
   - pip freeze
 script:
   - make lint
-  - py.test --cov . --cov-report="xml:coverage.xml" --junit-xml="junit.xml" --html="pytest.html" || exit 1
-after_script:
+  - py.test --cov . --cov-report="xml:.artifacts/coverage.xml" --junit-xml=".artifacts/junit.xml" --html="artifacts/pytest.html" || exit 1
+after_success:
   - codecov -e TEST_SUITE
+after_failure:
+  - dmesg | tail -n 100
+after_script:
   - npm install -g @zeus-ci/cli
-  - $(npm bin -g)/zeus upload -t "application/x-junit+xml" junit.xml
-    -t "application/x-cobertura+xml" coverage.xml
-    -t "text/html+pytest" pytest.html
-    -t "text/x-pycodestyle" flake8.pycodestyle.log
-    -t "application/x-checkstyle+xml" eslint.checkstyle.xml
+  - zeus upload -t "text/xml+xunit" .artifacts/*.junit.xml
+    -t "text/xml+coverage" .artifacts/*.coverage.xml
+    -t "text/xml+coverage" .artifacts/coverage/cobertura-coverage.xml
+    -t "text/html+pytest" .artifacts/*.pytest.html
+    -t "text/plain+pycodestyle" .artifacts/*.pycodestyle.log
+    -t "text/xml+checkstyle" .artifacts/*.checkstyle.xml
+    -t "application/webpack-stats+json" .artifacts/webpack-stats.json
 notifications:
   webhooks:
     urls:

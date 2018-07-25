@@ -50,12 +50,12 @@ lint: lint-js lint-python
 
 lint-python:
 	@echo "--> Linting python"
-	bash -eo pipefail -c "flake8 | tee flake8.pycodestyle.log"
+	bash -eo pipefail -c "flake8 | tee .artifacts/flake8.pycodestyle.log"
 	@echo ""
 
 lint-js:
 	@echo "--> Linting javascript"
-	bash -eo pipefail -c "${SENTRY_PATH}/bin/lint --js --parseable . | tee eslint.codestyle.xml"
+	bash -eo pipefail -c "${SENTRY_PATH}/bin/lint --js --parseable . | tee .artifacts/eslint.codestyle.xml"
 	@echo ""
 
 test: install-tests
