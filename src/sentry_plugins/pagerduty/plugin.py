@@ -25,12 +25,23 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
             service_key, 'PagerDuty\'s Sentry service Integration Key', include_prefix=True
         )
         secret_field.update({'name': 'service_key', 'label': 'Service Key'})
-        return [secret_field]
-
-    def get_client(self, project):
-        return PagerDutyClient(
-            service_key=self.get_option('service_key', project),
-        )
+        return [
+            secret_field,
+            {
+                'name': 'routes',
+                'label': 'Tag routing',
+                'type': 'textarea',
+                'placeholder': 'environment,production,KEY1\ndevice,Other,KEY2',
+                'required': False,
+                'help': (
+                    'Route each event to a different PagerDuty service key based '
+                    'on the event\'s tags. Each line should contain a tag, '
+                    'value, and service key separated by commas. The first '
+                    'line that matches a tag\'s key and value will send to that '
+                    'integration key instead of the main service key above.'
+                )
+            },
+        ]
 
     def notify_users(self, group, event, fail_silently=False):
         if not self.is_configured(group.project):
@@ -38,6 +49,7 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
 
         description = event.get_legacy_message()[:1024]
 
+        tags = dict(event.get_tags())
         details = {
             'event_id': event.event_id,
             'project': group.project.name,
@@ -45,11 +57,23 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
             'platform': event.platform,
             'culprit': event.culprit,
             'datetime': event.datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-            'tags': dict(event.get_tags()),
+            'tags': tags,
             'url': group.get_absolute_url(),
         }
 
-        client = self.get_client(group.project)
+        service_key = self.get_option('service_key', group.project)
+
+        routes = self.get_option('routes', group.project) or ''
+        for route in (r.strip() for r in routes.split('\n')):
+            fields = [f.strip() for f in route.split(',')]
+            if len(fields) != 3:
+                continue
+            tag_key, tag_value, route_service_key = fields
+            if tag_key in tags and tags[tag_key] == tag_value:
+                service_key = route_service_key
+                break
+
+        client = PagerDutyClient(service_key=service_key)
         response = client.trigger_incident(
             description=description,
             event_type='trigger',
