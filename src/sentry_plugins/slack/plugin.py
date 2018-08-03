@@ -71,11 +71,11 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 'help': 'Optional #channel name or @user',
             }, {
                 'name': 'custom_message',
-                'label': 'Custom message',
+                'label': 'Custom Message',
                 'type': 'string',
                 'placeholder': 'e.g. Hey <!everyone> there is something wrong',
                 'required': False,
-                'help': 'Optional e.g. <!channel> for send notification to everyone in channel',
+                'help': 'Optional - Slack message formatting can be used',
             }, {
                 'name': 'include_tags',
                 'label': 'Include Tags',
