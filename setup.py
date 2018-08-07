@@ -106,6 +106,7 @@ setup(
         'sentry.apps': [
             'hipchat_ac = sentry_plugins.hipchat_ac',
             'jira_ac = sentry_plugins.jira_ac',
+            'sessionstack = sentry_plugins.sessionstack',
         ],
         'sentry.plugins': [
             'amazon_sqs = sentry_plugins.amazon_sqs.plugin:AmazonSQSPlugin',
