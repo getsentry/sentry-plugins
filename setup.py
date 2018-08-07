@@ -49,6 +49,7 @@ class BuildAssetsCommand(BuildAssetsCommand):
         return [
             'src/sentry_plugins/hipchat_ac/static/hipchat_ac/dist',
             'src/sentry_plugins/jira/static/jira/dist',
+            'src/sentry_plugins/sessionstack/static/sessionstack/dist',
         ]
 
 
