@@ -195,13 +195,15 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 # Make sure it's an absolute uri since we're sending this
                 # outside of Sentry into Slack
                 rule_link = absolute_uri(rule_link)
-                rules.append((rule_link, rule.label.encode('utf-8')))
+                rules.append((rule_link, rule.label))
 
             if rules:
+                value = u', '.join(u'<{} | {}>'.format(*r) for r in rules)
+
                 fields.append(
                     {
                         'title': 'Triggered By',
-                        'value': u', '.join(u'<{} | {}>'.format(*r) for r in rules),
+                        'value': value.encode('utf-8'),
                         'short': False,
                     }
                 )
