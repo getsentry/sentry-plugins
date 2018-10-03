@@ -498,7 +498,7 @@ class GitHubAppsRepositoryProvider(GitHubRepositoryProvider):
         if int(integration.external_id) not in allowed_gh_installations:
             raise PluginError('You do not have access to that integration')
 
-        integration.add_organization(organization.id)
+        integration.add_organization(organization)
 
         for repo in self.get_repositories(integration):
             # TODO(jess): figure out way to migrate from github --> github apps

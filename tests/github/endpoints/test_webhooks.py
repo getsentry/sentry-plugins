@@ -224,7 +224,7 @@ class InstallationPushEventWebhookTest(APITestCase):
             name='dummyorg',
         )
 
-        inst.add_organization(self.project.organization.id)
+        inst.add_organization(self.project.organization)
 
         Repository.objects.create(
             organization_id=project.organization.id,
@@ -305,7 +305,7 @@ class InstallationRepoInstallEventWebhookTest(APITestCase):
             name='octocat',
         )
 
-        integration.add_organization(project.organization.id)
+        integration.add_organization(project.organization)
 
         response = self.client.post(
             path=url,
@@ -336,7 +336,7 @@ class InstallationRepoInstallEventWebhookTest(APITestCase):
             name='octocat',
         )
 
-        integration.add_organization(project.organization.id)
+        integration.add_organization(project.organization)
 
         repo = Repository.objects.create(
             provider='github',
