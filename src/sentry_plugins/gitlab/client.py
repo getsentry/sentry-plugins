@@ -68,5 +68,5 @@ class GitLabClient(object):
     def list_project_members(self, repo):
         return self.request(
             'GET',
-            '/projects/{}/members'.format(quote(repo, safe='')),
+            '/projects/{}/members?per_page=100'.format(quote(repo, safe='')),
         )
