@@ -124,7 +124,7 @@ class HipchatPlugin(CorePluginMixin, NotifyPlugin):
             for tenant in Tenant.objects.filter(projects__in=[project]):
                 disable_plugin_for_tenant(project, tenant)
 
-    def notify_users(self, group, event, fail_silently=False):
+    def notify_users(self, group, event, fail_silently=False, **kwargs):
         tenants = Tenant.objects.filter(projects=event.project)
         for tenant in tenants:
             with Context.for_tenant(tenant) as ctx:
