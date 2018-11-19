@@ -58,7 +58,7 @@ class PushoverPluginTest(PluginTestCase):
         assert payload == {
             'message': ['{}\n\nTags: level=warning'.format(event.get_legacy_message())],
             'title': ['Bar: Hello world'],
-            'url': ['http://example.com/baz/bar/issues/{}/'.format(group.id)],
+            'url': ['http://example.com/baz/bar/issues/{}/?referrer=pushover_plugin'.format(group.id)],
             'url_title': ['Issue Details'],
             'priority': ['0'],
             'user': ['abcdef'],
@@ -95,7 +95,7 @@ class PushoverPluginTest(PluginTestCase):
         assert payload == {
             'message': ['{}\n\nTags: level=warning'.format(event.get_legacy_message())],
             'title': ['Bar: Hello world'],
-            'url': ['http://example.com/baz/bar/issues/{}/'.format(group.id)],
+            'url': ['http://example.com/baz/bar/issues/{}/?referrer=pushover_plugin'.format(group.id)],
             'url_title': ['Issue Details'],
             'priority': ['2'],
             'user': ['abcdef'],

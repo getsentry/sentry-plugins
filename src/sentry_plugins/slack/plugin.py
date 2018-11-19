@@ -231,7 +231,7 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
                 {
                     'fallback': '[%s] %s' % (project_name, title),
                     'title': title,
-                    'title_link': self.add_notification_referrer_param(group.get_absolute_url()),
+                    'title_link': group.get_absolute_url(params={'referrer': 'slack'}),
                     'color': self.color_for_event(event),
                     'fields': fields,
                 }

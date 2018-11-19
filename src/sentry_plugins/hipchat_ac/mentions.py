@@ -54,7 +54,9 @@ def get_recent_mentions(tenant):
 
     for item in items:
         item['project'] = projects.get(item['project'])
-        item['group'] = groups.get(item['group'])
+        group = groups.get(item['group'])
+        item['group'] = group
+        item['group_url'] = group.get_absolute_url(params={'referrer': 'hipchat_plugin'})
         item['event'] = events.get(item['event'])
         if item['event'] is None and item['group'] is not None:
             item['event'] = item['group'].get_latest_event()

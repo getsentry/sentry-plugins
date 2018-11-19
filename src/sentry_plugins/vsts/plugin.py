@@ -91,7 +91,7 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
                 'name': 'comment',
                 'label': 'Comment',
                 'default': 'I\'ve identified this issue in Sentry: {}'.format(
-                    absolute_uri(group.get_absolute_url()),
+                    absolute_uri(group.get_absolute_url(params={'referrer': 'vsts_plugin'})),
                 ),
                 'type': 'textarea',
                 'help': ('Markdown is supported. Leave blank if you don\'t want to add a comment.'),
@@ -113,7 +113,7 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
 
         title = form_data['title']
         description = form_data['description']
-        link = absolute_uri(group.get_absolute_url())
+        link = absolute_uri(group.get_absolute_url(params={'referrer': 'vsts_plugin'}))
         try:
             created_item = client.create_work_item(
                 instance=instance,
@@ -139,7 +139,7 @@ class VstsPlugin(VisualStudioMixin, IssueTrackingPlugin2):
                 work_item = client.update_work_item(
                     instance=instance,
                     id=form_data['item_id'],
-                    link=absolute_uri(group.get_absolute_url()),
+                    link=absolute_uri(group.get_absolute_url(params={'referrer': 'vsts_plugin'})),
                     comment=markdown(form_data['comment']) if form_data.get(
                         'comment') else None,
                 )

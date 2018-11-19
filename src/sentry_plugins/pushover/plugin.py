@@ -89,7 +89,7 @@ class PushoverPlugin(CorePluginMixin, NotifyPlugin):
         expire = int(self.get_option('expire', project) or 90)
 
         title = '%s: %s' % (project.name, group.title)
-        link = group.get_absolute_url()
+        link = group.get_absolute_url(params={'referrer': 'pushover_plugin'})
 
         message = event.get_legacy_message()[:256]
 

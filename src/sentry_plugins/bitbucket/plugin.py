@@ -87,7 +87,7 @@ class BitbucketPlugin(BitbucketMixin, IssuePlugin2):
             }, {
                 'name': 'comment',
                 'label': 'Comment',
-                'default': absolute_uri(group.get_absolute_url()),
+                'default': absolute_uri(group.get_absolute_url(params={'referrer': 'bitbucket_plugin'})),
                 'type': 'textarea',
                 'help':
                 ('Leave blank if you don\'t want to '

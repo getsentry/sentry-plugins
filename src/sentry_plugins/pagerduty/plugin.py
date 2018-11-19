@@ -58,7 +58,7 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
             'culprit': event.culprit,
             'datetime': event.datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
             'tags': tags,
-            'url': group.get_absolute_url(),
+            'url': group.get_absolute_url(params={'referrer': 'pagerduty_plugin'}),
         }
 
         service_key = self.get_option('service_key', group.project)
@@ -82,7 +82,7 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
             contexts=[
                 {
                     'type': 'link',
-                    'href': absolute_uri(group.get_absolute_url()),
+                    'href': absolute_uri(group.get_absolute_url(params={'referrer': 'pagerduty_plugin'})),
                     'text': 'Issue Details',
                 }
             ],

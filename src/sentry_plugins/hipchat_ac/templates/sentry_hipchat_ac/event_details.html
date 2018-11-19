@@ -41,7 +41,7 @@
           {% endif %}
           <h3>{{ event.error }}</h3>
           <p class="culprit">{{ event.culprit }}
-          <p><a href="{{ group.get_absolute_url }}" target="_blank" class="btn orange">View in Sentry</a>
+          <p><a href="{{ group_url }}" target="_blank" class="btn orange">View in Sentry</a>
           {% url 'sentry-stream' group.project.organization.slug group.project.slug as project_link %}
 
           <hr>

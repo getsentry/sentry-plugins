@@ -16,7 +16,7 @@
         {% if events %}
           {% for me in events %}
             <li class="event">
-              <h4><a href="{{ me.group.get_absolute_url }}" onclick="return openEvent({{ me.event.id }})" target="_blank">{{ me.event.message }}</a></h4>
+              <h4><a href="{{ me.group_url }}" onclick="return openEvent({{ me.event.id }})" target="_blank">{{ me.event.message }}</a></h4>
               <p class="culprit">{{ me.event.culprit }}
               <p class="meta"><strong>Project:</strong>
                 <a target="_blank" href="{{ me.event.project.get_absolute_url }}">{{ me.event.project.name }}</a>

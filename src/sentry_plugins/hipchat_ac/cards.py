@@ -45,9 +45,10 @@ def _make_event_card(
     compact=False
 ):
     project = event.project
-    link = group.get_absolute_url()
+    link = group.get_absolute_url(params={'referrer': 'hipchat_plugin'})
     if event_target:
-        link = '%s/events/%s/' % (link.rstrip('/'), event.id)
+        parts = link.split('?')
+        link = '%s/events/%s/?%s' % (parts[0].rstrip('/'), event.id, parts[1])
 
     event_title = '%sSentry %s Issue' % (new and 'New ' or '', group.get_level_display().title(), )
     if title is None:
@@ -159,9 +160,10 @@ def make_event_notification(group, event, tenant, new=True, event_target=False):
     project = event.project
     level = group.get_level_display().upper()
 
-    link = group.get_absolute_url()
+    link = group.get_absolute_url(params={'referrer': 'hipchat_plugin'})
     if event_target:
-        link = '%s/events/%s/' % (link.rstrip('/'), event.id)
+        parts = link.split('?')
+        link = '%s/events/%s/?%s' % (parts[0].rstrip('/'), event.id, parts[1])
 
     color = COLORS.get(level, 'purple')
 
@@ -210,7 +212,7 @@ def make_activity_notification(activity, tenant):
     event = activity.group.get_latest_event()
     Event.objects.bind_nodes([event], 'data')
     project = activity.project
-    link = activity.group.get_absolute_url()
+    link = activity.group.get_absolute_url(params={'referrer': 'hipchat_plugin'})
 
     legacy_message = (
         '%(project_name)s %(message)s (%(event)s, %(culprit)s) '

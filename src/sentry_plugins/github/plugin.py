@@ -123,7 +123,7 @@ class GitHubPlugin(GitHubMixin, IssuePlugin2):
             }, {
                 'name': 'comment', 'label': 'Comment',
                 'default': u'Sentry issue: [{issue_id}]({url})'.format(
-                    url=absolute_uri(group.get_absolute_url()),
+                    url=absolute_uri(group.get_absolute_url(params={'referrer': 'github_plugin'})),
                     issue_id=group.qualified_short_id
                 ),
                 'type': 'textarea',

@@ -55,7 +55,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
     def get_group_description(self, request, group, event):
         # mostly the same as parent class, but change ``` to {code}
         output = [
-            absolute_uri(group.get_absolute_url()),
+            absolute_uri(group.get_absolute_url(params={'referrer': 'jira_plugin'})),
         ]
         body = self.get_group_body(request, group, event)
         if body:
@@ -234,7 +234,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
             }, {
                 'name': 'comment',
                 'label': 'Comment',
-                'default': absolute_uri(group.get_absolute_url()),
+                'default': absolute_uri(group.get_absolute_url(params={'referrer': 'jira_plugin'})),
                 'type': 'textarea',
                 'help': ('Leave blank if you don\'t want to '
                          'add a comment to the JIRA issue.'),

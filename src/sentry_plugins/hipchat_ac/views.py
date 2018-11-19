@@ -556,6 +556,7 @@ def event_details(request, context):
             'event': event,
             'from_recent': request.GET.get('from_recent') == 'yes',
             'group': group,
+            'group_url': group.get_absolute_url(params={'referrer': 'hipchat_plugin'}),
             'interfaces': interface_data,
             'bad_event': bad_event,
             'tags': tags,

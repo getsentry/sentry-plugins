@@ -102,7 +102,7 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
             }, {
                 'name': 'comment',
                 'label': 'Comment',
-                'default': absolute_uri(group.get_absolute_url()),
+                'default': absolute_uri(group.get_absolute_url(params={'referrer': 'asana_plugin'})),
                 'type': 'textarea',
                 'help': ('Leave blank if you don\'t want to '
                          'add a comment to the Asana issue.'),
