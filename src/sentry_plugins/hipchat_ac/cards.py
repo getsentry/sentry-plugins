@@ -85,7 +85,7 @@ def _make_event_card(
     if description is None:
         description = '<a href="%(link)s"><em>%(err)s</em></a>' % {
             'link': escape(link),
-            'err': escape(event.error()),
+            'err': escape(event.title),
         }
     if description:
         description = '<p>%s</p>' % description
@@ -113,7 +113,7 @@ def _make_event_card(
             }, {
                 'label': 'title',
                 'value': {
-                    'label': event.error()
+                    'label': event.title
                 },
             }
         ] + attributes
@@ -172,7 +172,7 @@ def make_event_notification(group, event, tenant, new=True, event_target=False):
                '[<a href="%(link)s">view</a>]') % {
                    'level': escape(level),
                    'project_name': '<strong>%s</strong>' % escape(project.name),
-                   'message': escape(event.error()),
+                   'message': escape(event.title),
                    'link': escape(link),
     }
 
@@ -219,7 +219,7 @@ def make_activity_notification(activity, tenant):
         '[<a href="%(link)s">view</a>]'
     ) % {
         'project_name': '<strong>%s</strong>' % escape(project.name),
-        'event': escape(event.error()),
+        'event': escape(event.title),
         'message': message,
         'culprit': escape(event.culprit),
         'link': escape(link),
@@ -235,7 +235,7 @@ def make_activity_notification(activity, tenant):
             activity.group,
             event,
             title=message,
-            subtitle='%s, %s' % (event.error(), event.culprit),
+            subtitle='%s, %s' % (event.title, event.culprit),
             compact=True
         ),
         'format':

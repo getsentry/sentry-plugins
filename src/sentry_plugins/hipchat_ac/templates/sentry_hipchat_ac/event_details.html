@@ -39,7 +39,7 @@
           {% if from_recent %}
           <p class="back"><a href="#" onclick="return backToRecentEvents()">Back to Recent Issues</a>
           {% endif %}
-          <h3>{{ event.error }}</h3>
+          <h3>{{ event.title }}</h3>
           <p class="culprit">{{ event.culprit }}
           <p><a href="{{ group_url }}" target="_blank" class="btn orange">View in Sentry</a>
           {% url 'sentry-stream' group.project.organization.slug group.project.slug as project_link %}
