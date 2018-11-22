@@ -102,7 +102,7 @@ class VstsPluginTest(PluginTestCase):
     def test_create_issue(self):
         responses.add(
             responses.PATCH,
-            'https://fabrikam-fiber-inc.visualstudio.com/DefaultProject/_apis/wit/workitems/$Bug?api-version=3.0',
+            'https://fabrikam-fiber-inc.visualstudio.com/DefaultProject/_apis/wit/workitems/$Bug',
             body=WORK_ITEM_RESPONSE,
             content_type='application/json',
         )
@@ -167,7 +167,7 @@ class VstsPluginTest(PluginTestCase):
     def test_link_issue_without_comment(self):
         responses.add(
             responses.GET,
-            'https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/wit/workitems/309?api-version=3.0',
+            'https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/wit/workitems/309',
             body=WORK_ITEM_RESPONSE,
             content_type='application/json',
         )
@@ -206,7 +206,7 @@ class VstsPluginTest(PluginTestCase):
     def test_link_issue_with_comment(self):
         responses.add(
             responses.PATCH,
-            'https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/wit/workitems/309?api-version=3.0',
+            'https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/wit/workitems/309',
             body=WORK_ITEM_RESPONSE,
             content_type='application/json',
         )
