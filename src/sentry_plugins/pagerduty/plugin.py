@@ -74,17 +74,20 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
                 break
 
         client = PagerDutyClient(service_key=service_key)
-        response = client.trigger_incident(
-            description=description,
-            event_type='trigger',
-            incident_key=group.id,
-            details=details,
-            contexts=[
-                {
-                    'type': 'link',
-                    'href': absolute_uri(group.get_absolute_url(params={'referrer': 'pagerduty_plugin'})),
-                    'text': 'Issue Details',
-                }
-            ],
-        )
-        assert response['status'] == 'success'
+        try:
+            response = client.trigger_incident(
+                description=description,
+                event_type='trigger',
+                incident_key=group.id,
+                details=details,
+                contexts=[
+                    {
+                        'type': 'link',
+                        'href': absolute_uri(group.get_absolute_url(params={'referrer': 'pagerduty_plugin'})),
+                        'text': 'Issue Details',
+                    }
+                ],
+            )
+            assert response['status'] == 'success'
+        except Exception as e:
+            self.raise_error(e)
