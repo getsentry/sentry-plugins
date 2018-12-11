@@ -35,5 +35,6 @@
     // tests is often in your way and misclicked
     "python.unitTest.pyTestEnabled": false,
     "python.unitTest.unittestEnabled": false,
-    "python.unitTest.nosetestsEnabled": false
+    "python.unitTest.nosetestsEnabled": false,
+    "restructuredtext.confPath": ""
 }

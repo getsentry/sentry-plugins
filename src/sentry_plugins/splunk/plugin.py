@@ -15,7 +15,7 @@ For more details on the payload: http://dev.splunk.com/view/event-collector/SP-C
 
 from __future__ import absolute_import
 
-from sentry import http
+from sentry import http, tagstore
 from sentry.app import ratelimiter
 from sentry.plugins.base import Plugin
 from sentry.plugins.base.configuration import react_plugin_config
@@ -46,8 +46,8 @@ class SplunkPlugin(CorePluginMixin, Plugin):
             'label': 'Instance URL',
             'type': 'url',
             'required': True,
-            'help': 'The URL to your HEC Splunk instance.',
-            'placeholder': 'e.g. https://my-splunk.example.com:8088',
+            'help': 'The HTTP Event Collector endpoint for your Splunk instance.',
+            'placeholder': 'e.g. https://input-foo.cloud.splunk.com:8088',
         }, {
             'name': 'index',
             'label': 'Index',
@@ -82,10 +82,13 @@ class SplunkPlugin(CorePluginMixin, Plugin):
     def get_event_payload(self, event):
         props = {
             'event_id': event.event_id,
+            'project_id': event.project.slug,
             'transaction': event.get_tag('transaction') or '',
             'release': event.get_tag('sentry:release') or '',
             'environment': event.get_tag('environment') or '',
         }
+        props['tags'] = [[k.format(tagstore.get_standardized_key(k)), v]
+                         for k, v in event.get_tags()]
         if 'sentry.interfaces.Http' in event.interfaces:
             http = event.interfaces['sentry.interfaces.Http']
             headers = http.headers
