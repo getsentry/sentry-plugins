@@ -43,6 +43,7 @@ class VictorOpsClient(object):
         state_message,
         entity_display_name=None,
         monitoring_tool=None,
+        issue_url=None,
         **kwargs
     ):
         kwargs.update(
@@ -53,6 +54,7 @@ class VictorOpsClient(object):
                 'timestamp': timestamp,
                 'state_message': state_message,
                 'monitoring_tool': monitoring_tool or self.monitoring_tool,
+                'issue_url': issue_url,
             }
         )
         return self.request(kwargs)

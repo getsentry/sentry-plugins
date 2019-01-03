@@ -82,6 +82,7 @@ class VictorOpsPlugin(CorePluginMixin, NotifyPlugin):
             entity_display_name=event.title,
             state_message=self.build_description(event),
             timestamp=int(event.datetime.strftime('%s')),
+            issue_url=group.get_absolute_url(),
         )
 
         assert response['result'] == 'success'
