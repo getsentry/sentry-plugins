@@ -19,6 +19,7 @@ from sentry import http, tagstore
 from sentry.app import ratelimiter
 from sentry.plugins.base import Plugin
 from sentry.plugins.base.configuration import react_plugin_config
+from sentry.utils import metrics
 from sentry.utils.hashlib import md5_text
 
 from sentry_plugins.base import CorePluginMixin
@@ -119,6 +120,11 @@ class SplunkPlugin(CorePluginMixin, Plugin):
         index = self.get_option('index', event.project)
         instance = self.get_option('instance', event.project)
         if not (token and index and instance):
+            metrics.incr('integrations.splunk.forward-event.unconfigured', tags={
+                'project_id': event.project_id,
+                'organization_id': event.project.organization_id,
+                'event_type': event.get_event_type(),
+            })
             return
 
         if not instance.endswith('/services/collector'):
@@ -129,6 +135,11 @@ class SplunkPlugin(CorePluginMixin, Plugin):
         rl_key = 'splunk:{}'.format(md5_text(token).hexdigest())
         # limit splunk to 50 requests/second
         if ratelimiter.is_limited(rl_key, limit=50, window=1):
+            metrics.incr('integrations.splunk.forward-event.rate-limited', tags={
+                'project_id': event.project_id,
+                'organization_id': event.project.organization_id,
+                'event_type': event.get_event_type(),
+            })
             return
 
         payload = {
@@ -142,12 +153,26 @@ class SplunkPlugin(CorePluginMixin, Plugin):
             payload['host'] = host
 
         session = http.build_session()
-        session.post(
-            instance,
-            json=payload,
-            # Splunk cloud instances certifcates dont play nicely
-            verify=False,
-            headers={
-                'Authorization': 'Splunk {}'.format(token)
-            },
-        ).raise_for_status()
+        try:
+            session.post(
+                instance,
+                json=payload,
+                # Splunk cloud instances certifcates dont play nicely
+                verify=False,
+                headers={
+                    'Authorization': 'Splunk {}'.format(token)
+                },
+            ).raise_for_status()
+        except Exception:
+            metrics.incr('integrations.splunk.forward-event.error', tags={
+                'project_id': event.project_id,
+                'organization_id': event.project.organization_id,
+                'event_type': event.get_event_type(),
+            })
+            raise
+
+        metrics.incr('integrations.splunk.forward-event.success', tags={
+            'project_id': event.project_id,
+            'organization_id': event.project.organization_id,
+            'event_type': event.get_event_type(),
+        })
