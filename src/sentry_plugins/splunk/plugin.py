@@ -180,6 +180,7 @@ class SplunkPlugin(CorePluginMixin, Plugin):
                 headers={
                     'Authorization': 'Splunk {}'.format(token)
                 },
+                timeout=5,
             ).raise_for_status()
         except Exception:
             metrics.incr('integrations.splunk.forward-event.error', tags={
