@@ -15,6 +15,8 @@ For more details on the payload: http://dev.splunk.com/view/event-collector/SP-C
 
 from __future__ import absolute_import
 
+import six
+
 from sentry import http, tagstore
 from sentry.app import ratelimiter
 from sentry.plugins.base import Plugin
@@ -24,6 +26,7 @@ from sentry.utils.hashlib import md5_text
 
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.utils import get_secret_field_config
+from sentry_plugins.anonymizeip import anonymize_ip
 
 
 class SplunkPlugin(CorePluginMixin, Plugin):
@@ -87,31 +90,46 @@ class SplunkPlugin(CorePluginMixin, Plugin):
             'transaction': event.get_tag('transaction') or '',
             'release': event.get_tag('sentry:release') or '',
             'environment': event.get_tag('environment') or '',
+            'type': event.get_event_type(),
         }
         props['tags'] = [[k.format(tagstore.get_standardized_key(k)), v]
                          for k, v in event.get_tags()]
-        if 'sentry.interfaces.Http' in event.interfaces:
-            http = event.interfaces['sentry.interfaces.Http']
-            headers = http.headers
-            if not isinstance(headers, dict):
-                headers = dict(headers or ())
+        for key, value in six.iteritems(event.interfaces):
+            if key == 'request':
+                headers = value.headers
+                if not isinstance(headers, dict):
+                    headers = dict(headers or ())
 
-            props.update({
-                'request_url': http.url,
-                'request_method': http.method,
-                'request_referer': headers.get('Referer', ''),
-            })
-        if 'sentry.interfaces.Exception' in event.interfaces:
-            exc = event.interfaces['sentry.interfaces.Exception'].values[0]
-            props.update({
-                'exception_type': exc.type,
-                'exception_value': exc.value,
-            })
-        elif 'sentry.interfaces.Message' in event.interfaces:
-            msg = event.interfaces['sentry.interfaces.Message']
-            props.update({
-                'message': msg.formatted or msg.message,
-            })
+                props.update({
+                    'request_url': value.url,
+                    'request_method': value.method,
+                    'request_referer': headers.get('Referer', ''),
+                })
+            elif key == 'exception':
+                exc = value.values[0]
+                props.update({
+                    'exception_type': exc.type,
+                    'exception_value': exc.value,
+                })
+            elif key == 'logentry':
+                props.update({
+                    'message': value.formatted or value.message,
+                })
+            elif key in ('csp', 'expectct', 'expectstable', 'hpkp'):
+                props.update({
+                    '{}_{}'.format(key.rsplit('.', 1)[-1].lower(), k): v
+                    for k, v in six.iteritems(value.to_json())
+                })
+            elif key == 'user':
+                user_payload = {}
+                if value.id:
+                    user_payload['user_id'] = value.id
+                if value.email:
+                    user_payload['user_email_hash'] = md5_text(value.email).hexdigest()
+                if value.ip_address:
+                    user_payload['user_ip_trunc'] = anonymize_ip(value.ip_address)
+                if user_payload:
+                    props.update(user_payload)
         return props
 
     # http://dev.splunk.com/view/event-collector/SP-CAAAE6M
