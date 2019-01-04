@@ -134,7 +134,7 @@ class SplunkPlugin(CorePluginMixin, Plugin):
 
         rl_key = 'splunk:{}'.format(md5_text(token).hexdigest())
         # limit splunk to 50 requests/second
-        if ratelimiter.is_limited(rl_key, limit=50, window=1):
+        if ratelimiter.is_limited(rl_key, limit=1000, window=1):
             metrics.incr('integrations.splunk.forward-event.rate-limited', tags={
                 'project_id': event.project_id,
                 'organization_id': event.project.organization_id,
