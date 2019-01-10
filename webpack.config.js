@@ -2,6 +2,7 @@
 /*eslint import/no-nodejs-modules:0 */
 const path = require('path');
 const webpack = require('webpack');
+const babelConfig = require('./babel.config');
 const CompressionPlugin = require('compression-webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 
@@ -33,9 +34,18 @@ function getConfig(app) {
       rules: [
         {
           test: /\.jsx?$/,
-          use: 'babel-loader',
           include: path.join(__dirname, staticPrefix),
           exclude: /(vendor|node_modules)/,
+          use: [
+            {
+              loader: 'babel-loader',
+              // Disable loading the configFile for when plugins are being
+              // built by a webpack devserver *outside* of this directory.
+              // Otherwise the loader will try and locate the babel.config.js
+              // file, which will be sentry or getsentrys.
+              options: {...babelConfig, configFile: false},
+            },
+          ],
         },
       ],
     },
