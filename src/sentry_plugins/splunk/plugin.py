@@ -29,6 +29,59 @@ from sentry_plugins.utils import get_secret_field_config
 from sentry_plugins.anonymizeip import anonymize_ip
 
 
+class SplunkError(Exception):
+    def __init__(self, status_code, code=0, text='unknown error'):
+        self.status_code = status_code
+        self.code = code
+        self.text = text
+        super(SplunkError, self).__init__(text)
+
+    @classmethod
+    def from_response(cls, response):
+        try:
+            body = response.json()
+        except Exception:
+            return cls(status_code=response.status_code, code=0,
+                       text='Unable to parse response body')
+
+        code = body.get('code')
+        if code in SplunkInvalidToken.KNOWN_CODES:
+            cls = SplunkInvalidToken
+        elif code in SplunkServerBusy.KNOWN_CODES:
+            cls = SplunkInvalidToken
+        elif code in SplunkConfigError.KNOWN_CODES:
+            cls = SplunkConfigError
+        return cls(status_code=response.status_code, code=code, text=body.get('text'))
+
+    def __repr__(self):
+        return '<%s: status_code=%s, code=%s, text=%s>' % (
+            type(self).__name__,
+            self.status_code,
+            self.code,
+            self.text,
+        )
+
+
+class SplunkInvalidToken(SplunkError):
+    # 1 - token disabled
+    # 2 - token required (should never happen)
+    # 3 - invalid authorization (should never happen)
+    # 4 - invalid token
+    KNOWN_CODES = frozenset([1, 2, 3, 4])
+
+
+class SplunkServerBusy(SplunkError):
+    # 9 - server is busy
+    KNOWN_CODES = frozenset([9])
+
+
+class SplunkConfigError(SplunkError):
+    # 7 - incorrect index
+    # 10 - data channel missing
+    # 11 - invalid data channel
+    KNOWN_CODES = frozenset([7, 10, 11])
+
+
 class SplunkPlugin(CorePluginMixin, Plugin):
     title = 'Splunk'
     slug = 'splunk'
@@ -172,7 +225,8 @@ class SplunkPlugin(CorePluginMixin, Plugin):
 
         session = http.build_session()
         try:
-            session.post(
+            # https://docs.splunk.com/Documentation/Splunk/7.2.3/Data/TroubleshootHTTPEventCollector
+            resp = session.post(
                 instance,
                 json=payload,
                 # Splunk cloud instances certifcates dont play nicely
@@ -181,12 +235,15 @@ class SplunkPlugin(CorePluginMixin, Plugin):
                     'Authorization': 'Splunk {}'.format(token)
                 },
                 timeout=5,
-            ).raise_for_status()
-        except Exception:
+            )
+            if resp.status_code != 200:
+                raise SplunkError.from_response(resp)
+        except Exception as exc:
             metrics.incr('integrations.splunk.forward-event.error', tags={
                 'project_id': event.project_id,
                 'organization_id': event.project.organization_id,
                 'event_type': event.get_event_type(),
+                'error_code': getattr(exc, 'code', None),
             })
             raise
 
