@@ -3,7 +3,7 @@ UNAME_S := $(shell uname -s)
 
 develop: setup-git install-yarn
 	pip install "pip>=9,<10"
-	pip install -e git+https://github.com/getsentry/sentry.git#egg=sentry[dev]
+	pip install -e git+https://github.com/getsentry/sentry.git#egg=sentry[dev,optional]
 	pip install -e ".[tests]"
 	yarn install
 

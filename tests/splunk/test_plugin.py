@@ -74,7 +74,7 @@ class SplunkPluginTest(PluginTestCase):
         )
 
         result = self.plugin.get_event_payload(event)
-        assert result['request_url'] == 'http://example.com'
+        assert result['request_url'] == 'http://example.com/'
         assert result['request_method'] == 'POST'
         assert result['request_referer'] == 'http://example.com/foo'
 

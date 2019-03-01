@@ -14,6 +14,11 @@ cache:
     - $HOME/.cache/pip
     - $HOME/.cache/pre-commit
 addons:
+  apt:
+    update: true
+    packages:
+      - libxmlsec1-dev
+      - libgeoip-dev
   chrome: stable
 env:
   global:
