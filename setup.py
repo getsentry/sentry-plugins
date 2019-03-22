@@ -106,6 +106,7 @@ setup(
         'sentry.apps': [
             'hipchat_ac = sentry_plugins.hipchat_ac',
             'jira_ac = sentry_plugins.jira_ac',
+            'jira = sentry_plugins.jira',
             'sessionstack = sentry_plugins.sessionstack',
         ],
         'sentry.plugins': [
