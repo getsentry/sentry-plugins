@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import logging
+import re
 
 from django.conf import settings
 from django.conf.urls import url
@@ -312,7 +313,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
 
             jira_client = self.get_jira_client(group.project)
 
-            is_user_api = '/rest/api/latest/user/' in jira_url
+            is_user_api = re.search('/rest/api/(latest|[0-9])/user/', jira_url)
 
             is_user_picker = '/rest/api/1.0/users/picker' in jira_url
 
