@@ -140,6 +140,10 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         client = self.get_jira_client(group.project)
         try:
             meta = client.get_create_meta_for_project(jira_project_key)
+        except ApiError as e:
+            raise PluginError(
+                u'JIRA responded with an error. We received a status code of {}'.format(e.code)
+            )
         except ApiUnauthorized:
             raise PluginError(
                 'JIRA returned: Unauthorized. '
@@ -514,7 +518,9 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         username = self.get_option('username', project)
         pw = self.get_option('password', project)
         jira_project = self.get_option('default_project', project)
+
         default_priority = self.get_option('default_priority', project)
+
         default_issue_type = self.get_option('default_issue_type', project)
 
         project_choices = []
@@ -543,6 +549,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
                         priority_choices = [
                             (p.get('id'), '%s' % (p.get('name'))) for p in priorities
                         ]
+
                         default_priority = default_priority or priorities[0]['id']
 
                 try:
