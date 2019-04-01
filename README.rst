@@ -70,7 +70,7 @@ and click save changes.
 It's recommended to create a specific user for Sentry with only `Reporter` privileges on your projects.
 
 Bitbucket
--------
+---------
 
 Go to https://bitbucket.org/account/user/**YOUR_USERNAME**/api
 
