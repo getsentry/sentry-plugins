@@ -2,9 +2,11 @@ from __future__ import absolute_import
 
 import six
 
+from sentry.exceptions import PluginError
 from sentry.plugins.bases.notify import NotifyPlugin
 
 from sentry_plugins.base import CorePluginMixin
+from sentry_plugins.exceptions import ApiError
 from sentry_plugins.utils import get_secret_field_config
 
 from .client import VictorOpsClient
@@ -76,13 +78,17 @@ class VictorOpsPlugin(CorePluginMixin, NotifyPlugin):
             message_type = 'CRITICAL'
 
         client = self.get_client(group.project)
-        response = client.trigger_incident(
-            message_type=message_type,
-            entity_id=group.id,
-            entity_display_name=event.title,
-            state_message=self.build_description(event),
-            timestamp=int(event.datetime.strftime('%s')),
-            issue_url=group.get_absolute_url(),
-        )
+        try:
+            response = client.trigger_incident(
+                message_type=message_type,
+                entity_id=group.id,
+                entity_display_name=event.title,
+                state_message=self.build_description(event),
+                timestamp=int(event.datetime.strftime('%s')),
+                issue_url=group.get_absolute_url(),
+            )
+        except ApiError as e:
+            message = 'Could not communicate with victorops. Got %s' % e
+            raise PluginError(message)
 
         assert response['result'] == 'success'
