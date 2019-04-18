@@ -81,7 +81,7 @@ class PagerDutyPluginTest(PluginTestCase):
             'details': {
                 'project': self.project.name,
                 'release': None,
-                'url': 'http://example.com/baz/bar/issues/1/?referrer=pagerduty_plugin',
+                'url': 'http://example.com/baz/bar/issues/{}/?referrer=pagerduty_plugin'.format(group.id),
                 'culprit': group.culprit,
                 'platform': 'python',
                 'event_id': event.event_id,

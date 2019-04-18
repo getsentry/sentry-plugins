@@ -34,7 +34,8 @@ class GitLabPluginTest(PluginTestCase):
         self.plugin.set_option('gitlab_url', 'https://gitlab.com', self.project)
         self.plugin.set_option('gitlab_repo', 'getsentry/sentry', self.project)
         group = self.create_group(message='Hello world', culprit='foo.bar')
-        assert self.plugin.get_issue_url(group, 1) == 'https://gitlab.com/getsentry/sentry/issues/1'
+        assert self.plugin.get_issue_url(
+            group, group.id) == 'https://gitlab.com/getsentry/sentry/issues/%s' % group.id
 
     def test_is_configured(self):
         assert self.plugin.is_configured(None, self.project) is False

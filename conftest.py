@@ -2,11 +2,6 @@ from __future__ import absolute_import
 
 from django.conf import settings
 
-import os
-
-# Run tests against sqlite for simplicity
-os.environ.setdefault('DB', 'sqlite')
-
 pytest_plugins = ['sentry.utils.pytest']
 
 

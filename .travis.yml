@@ -35,6 +35,8 @@ install:
   - make install-tests
   - python -m pip install codecov
   - pip freeze
+before_script:
+  - psql -c 'create database sentry;' -U postgres
 script:
   - make lint
   - py.test --cov . --cov-report="xml:.artifacts/coverage.xml" --junit-xml=".artifacts/junit.xml" --html="artifacts/pytest.html" || exit 1
