@@ -4,6 +4,5 @@ module.exports = {
   plugins: [
     'lodash',
     '@babel/plugin-proposal-object-rest-spread',
-    ['babel-plugin-transform-builtin-extend', {globals: ['Array', 'Error']}],
   ],
 };
