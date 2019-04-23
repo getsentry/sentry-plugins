@@ -47,7 +47,6 @@ install_requires = [
 class BuildAssetsCommand(BuildAssetsCommand):
     def get_dist_paths(self):
         return [
-            'src/sentry_plugins/hipchat_ac/static/hipchat_ac/dist',
             'src/sentry_plugins/jira/static/jira/dist',
             'src/sentry_plugins/sessionstack/static/sessionstack/dist',
         ]
@@ -104,7 +103,6 @@ setup(
     include_package_data=True,
     entry_points={
         'sentry.apps': [
-            'hipchat_ac = sentry_plugins.hipchat_ac',
             'jira_ac = sentry_plugins.jira_ac',
             'jira = sentry_plugins.jira',
             'sessionstack = sentry_plugins.sessionstack',
@@ -117,7 +115,6 @@ setup(
             'github = sentry_plugins.github.plugin:GitHubPlugin',
             'gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin',
             'heroku = sentry_plugins.heroku.plugin:HerokuPlugin',
-            'hipchat_ac = sentry_plugins.hipchat_ac.plugin:HipchatPlugin',
             'jira = sentry_plugins.jira.plugin:JiraPlugin',
             'jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin',
             'pagerduty = sentry_plugins.pagerduty.plugin:PagerDutyPlugin',

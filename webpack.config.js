@@ -6,7 +6,7 @@ const babelConfig = require('./babel.config');
 const CompressionPlugin = require('compression-webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 
-const APPS = ['hipchat-ac', 'jira', 'sessionstack'];
+const APPS = ['jira', 'sessionstack'];
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const WEBPACK_MODE = IS_PRODUCTION ? 'production' : 'development';
