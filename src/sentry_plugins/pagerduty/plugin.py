@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import six
+
 from sentry.plugins.bases.notify import NotifyPlugin
 from sentry.utils.http import absolute_uri
 
@@ -78,7 +80,7 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
             response = client.trigger_incident(
                 description=description,
                 event_type='trigger',
-                incident_key=group.id,
+                incident_key=six.text_type(group.id),
                 details=details,
                 contexts=[
                     {

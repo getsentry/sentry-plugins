@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import responses
+import six
 
 from exam import fixture
 from django.core.urlresolvers import reverse
@@ -63,10 +64,8 @@ class PagerDutyPluginTest(PluginTestCase):
         request = responses.calls[0].request
         payload = json.loads(request.body)
         assert payload == {
-            'client_url':
-            'http://example.com',
-            'event_type':
-            'trigger',
+            'client_url': 'http://example.com',
+            'event_type': 'trigger',
             'contexts': [
                 {
                     'text': 'Issue Details',
@@ -74,10 +73,8 @@ class PagerDutyPluginTest(PluginTestCase):
                     'type': 'link',
                 }
             ],
-            'incident_key':
-            group.id,
-            'client':
-            'sentry',
+            'incident_key': six.text_type(group.id),
+            'client': 'sentry',
             'details': {
                 'project': self.project.name,
                 'release': None,
@@ -90,10 +87,8 @@ class PagerDutyPluginTest(PluginTestCase):
                 },
                 'datetime': event.datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
             },
-            'service_key':
-            'abcdef',
-            'description':
-            event.get_legacy_message(),
+            'service_key': 'abcdef',
+            'description': event.get_legacy_message(),
         }
 
     def test_no_secrets(self):
