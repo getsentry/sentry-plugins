@@ -139,6 +139,7 @@ class SplunkPlugin(CorePluginMixin, Plugin):
     def get_event_payload(self, event):
         props = {
             'event_id': event.event_id,
+            'issue_id': event.group_id,
             'project_id': event.project.slug,
             'transaction': event.get_tag('transaction') or '',
             'release': event.get_tag('sentry:release') or '',
