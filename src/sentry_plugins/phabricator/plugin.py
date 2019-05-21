@@ -156,7 +156,7 @@ class PhabricatorPlugin(CorePluginMixin, IssuePlugin2):
             try:
                 api.user.whoami()
             except phabricator.APIError as e:
-                raise PluginError('%s %s' % (e.code, e.message))
+                raise PluginError('%s %s' % (e.code, e))
             except httplib.HTTPException as e:
                 raise PluginError('Unable to reach Phabricator host: %s' % (e,))
             except Exception as e:
@@ -217,9 +217,9 @@ class PhabricatorPlugin(CorePluginMixin, IssuePlugin2):
                 projectPHIDs=form_data.get('tags'),
             )
         except phabricator.APIError as e:
-            raise PluginError('%s %s' % (e.code, e.message))
+            raise PluginError('%s %s' % (e.code, e))
         except httplib.HTTPException as e:
-            raise PluginError('Unable to reach Phabricator host: %s' % (e.message,))
+            raise PluginError('Unable to reach Phabricator host: %s' % e)
 
         return data['id']
 

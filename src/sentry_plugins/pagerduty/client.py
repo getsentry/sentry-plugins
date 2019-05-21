@@ -1,21 +1,24 @@
 from __future__ import absolute_import
 
-from requests.exceptions import HTTPError
-from sentry.http import build_session
 from sentry.utils.http import absolute_uri
-
-from sentry_plugins.exceptions import ApiError
+from sentry_plugins.client import ApiClient
 
 # https://v2.developer.pagerduty.com/docs/events-api
 INTEGRATION_API_URL = \
     'https://events.pagerduty.com/generic/2010-04-15/create_event.json'
 
 
-class PagerDutyClient(object):
+class PagerDutyClient(ApiClient):
     client = 'sentry'
+    plugin_name = 'pagerduty'
+    allow_redirects = False
 
     def __init__(self, service_key=None):
         self.service_key = service_key
+        super(PagerDutyClient, self).__init__()
+
+    def build_url(self, path):
+        return INTEGRATION_API_URL
 
     def request(self, data):
         payload = {
@@ -23,17 +26,11 @@ class PagerDutyClient(object):
         }
         payload.update(data)
 
-        session = build_session()
-        try:
-            resp = session.post(
-                url=INTEGRATION_API_URL,
-                json=payload,
-                allow_redirects=False,
-            )
-            resp.raise_for_status()
-        except HTTPError as e:
-            raise ApiError.from_response(e.response)
-        return resp.json()
+        return self._request(
+            path='',
+            method='post',
+            data=payload
+        )
 
     def trigger_incident(
         self,

@@ -15,6 +15,7 @@ class GitHubClientMixin(AuthApiClient):
     allow_redirects = True
 
     base_url = 'https://api.github.com'
+    plugin_name = 'github'
 
     def get_last_commits(self, repo, end_sha):
         # return api request that fetches last ~30 commits

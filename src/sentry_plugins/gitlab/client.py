@@ -1,34 +1,28 @@
 from __future__ import absolute_import
 
-from requests.exceptions import HTTPError
 from six.moves.urllib.parse import quote
-from sentry.http import build_session
+from sentry_plugins.client import ApiClient
 
 from sentry_plugins.exceptions import ApiError
 
 
-class GitLabClient(object):
+class GitLabClient(ApiClient):
+    allow_redirects = False
+    plugin_name = 'gitlab'
+
     def __init__(self, url, token):
-        self.url = url
+        super(GitLabClient, self).__init__()
+        self.base_url = url
         self.token = token
+
+    def build_url(self, path):
+        return '{}/api/v4/{}'.format(self.base_url, path.lstrip('/'))
 
     def request(self, method, path, data=None, params=None):
         headers = {
             'Private-Token': self.token,
         }
-        session = build_session()
-        try:
-            resp = getattr(session, method.lower())(
-                url='{}/api/v4/{}'.format(self.url, path.lstrip('/')),
-                headers=headers,
-                json=data,
-                params=params,
-                allow_redirects=False,
-            )
-            resp.raise_for_status()
-        except HTTPError as e:
-            raise ApiError.from_response(e.response)
-        return resp.json()
+        return self._request(method, path, headers=headers, params=params, data=data)
 
     def auth(self):
         return self.request('GET', '/user')

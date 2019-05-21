@@ -14,6 +14,7 @@ FIELD_MAP = {
 
 class VstsClient(AuthApiClient):
     api_version = '4.1'
+    plugin_name = 'vsts'
 
     def request(self, method, path, data=None, params=None):
         headers = {

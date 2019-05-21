@@ -1,17 +1,17 @@
 from __future__ import absolute_import
 
-from requests.exceptions import HTTPError
-from sentry.http import build_session
-
-from sentry_plugins.exceptions import ApiError
+from sentry_plugins.client import ApiClient
 
 
-class PushoverClient(object):
+class PushoverClient(ApiClient):
     base_url = 'https://api.pushover.net/1'
+    allow_redirects = False
+    plugin_name = 'pushover'
 
     def __init__(self, userkey=None, apikey=None):
         self.userkey = userkey
         self.apikey = apikey
+        super(PushoverClient, self).__init__()
 
     def request(self, method, path, data):
         # see https://pushover.net/api
@@ -22,18 +22,7 @@ class PushoverClient(object):
             'token': self.apikey,
         }
         payload.update(data)
-
-        session = build_session()
-        try:
-            resp = getattr(session, method.lower())(
-                url='{}{}'.format(self.base_url, path),
-                data=payload,
-                allow_redirects=False,
-            )
-            resp.raise_for_status()
-        except HTTPError as e:
-            raise ApiError.from_response(e.response)
-        return resp.json()
+        return self._request(path=path, method=method, data=payload, json=False)
 
     def send_message(self, data):
         return self.request('POST', '/messages.json', data)

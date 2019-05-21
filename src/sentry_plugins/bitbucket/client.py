@@ -11,6 +11,7 @@ from sentry_plugins.client import AuthApiClient
 
 class BitbucketClient(AuthApiClient):
     base_url = 'https://api.bitbucket.org'
+    plugin_name = 'bitbucket'
 
     def has_auth(self):
         return (

@@ -5,6 +5,7 @@ from sentry_plugins.client import AuthApiClient
 
 class AsanaClient(AuthApiClient):
     base_url = u'https://app.asana.com/api/1.0'
+    plugin_name = 'asana'
 
     def get_workspaces(self):
         return self.get('/workspaces')

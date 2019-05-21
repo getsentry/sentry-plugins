@@ -1,39 +1,34 @@
 from __future__ import absolute_import
 
-from requests.exceptions import HTTPError
-from sentry.http import build_session
-
-from sentry_plugins.exceptions import ApiError
+from sentry_plugins.client import ApiClient
 
 
-class VictorOpsClient(object):
+class VictorOpsClient(ApiClient):
     monitoring_tool = 'sentry'
     routing_key = 'everyone'
+    plugin_name = 'victorops'
+    allow_redirects = False
 
     def __init__(self, api_key, routing_key=None):
         self.api_key = api_key
 
         if routing_key:
             self.routing_key = routing_key
+        super(VictorOpsClient, self).__init__()
 
-    # http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/
-    def request(self, data):
-        endpoint = 'https://alert.victorops.com/integrations/generic/20131114/alert/{}/{}'.format(
+    def build_url(self, path):
+        # http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/
+        return 'https://alert.victorops.com/integrations/generic/20131114/alert/{}/{}'.format(
             self.api_key,
             self.routing_key,
         )
 
-        session = build_session()
-        try:
-            resp = session.post(
-                url=endpoint,
-                json=data,
-                allow_redirects=False,
-            )
-            resp.raise_for_status()
-        except HTTPError as e:
-            raise ApiError.from_response(e.response)
-        return resp.json()
+    def request(self, data):
+        return self._request(
+            path='',
+            method='post',
+            data=data
+        )
 
     def trigger_incident(
         self,

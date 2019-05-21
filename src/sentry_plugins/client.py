@@ -10,6 +10,7 @@ from django.utils.datastructures import SortedDict
 from requests.exceptions import ConnectionError, HTTPError
 
 from sentry.http import build_session
+from sentry.utils import metrics
 
 from .exceptions import ApiHostError, ApiError, ApiUnauthorized, UnsupportedResponseType
 
@@ -105,6 +106,13 @@ class SequenceApiResponse(list, BaseApiResponse):
         return self
 
 
+def track_response_metric(plugin, code):
+    metrics.incr('sentry-plugins.http_response', tags={
+        'status': code,
+        'plugin': plugin
+    })
+
+
 class ApiClient(object):
     base_url = None
 
@@ -113,6 +121,8 @@ class ApiClient(object):
     allow_redirects = None
 
     logger = logging.getLogger('sentry.plugins')
+
+    plugin_name = 'undefined'
 
     def __init__(self, verify_ssl=True):
         self.verify_ssl = verify_ssl
@@ -137,6 +147,8 @@ class ApiClient(object):
             allow_redirects = method.upper() == 'GET'
 
         full_url = self.build_url(path)
+        metrics.incr('sentry-plugins.http_request', tags={'plugin': self.plugin_name})
+
         session = build_session()
         try:
             resp = getattr(session, method.lower())(
@@ -155,12 +167,16 @@ class ApiClient(object):
         except HTTPError as e:
             resp = e.response
             if resp is None:
+                track_response_metric(self.plugin_name, 'unknown')
                 self.logger.exception('request.error', extra={
+                    'plugin': self.plugin_name,
                     'url': full_url,
                 })
                 raise ApiError('Internal Error')
+            track_response_metric(self.plugin_name, resp.status_code)
             raise ApiError.from_response(resp)
 
+        track_response_metric(self.plugin_name, resp.status_code)
         if resp.status_code == 204:
             return {}
 
