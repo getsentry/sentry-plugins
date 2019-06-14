@@ -15,7 +15,10 @@ For more details on the payload: http://dev.splunk.com/view/event-collector/SP-C
 
 from __future__ import absolute_import
 
+import logging
+
 import six
+from requests.exceptions import ReadTimeout
 
 from sentry import http, tagstore
 from sentry.app import ratelimiter
@@ -27,6 +30,8 @@ from sentry.utils.hashlib import md5_text
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.utils import get_secret_field_config
 from sentry_plugins.anonymizeip import anonymize_ip
+
+logger = logging.getLogger(__name__)
 
 
 class SplunkError(Exception):
@@ -240,12 +245,26 @@ class SplunkPlugin(CorePluginMixin, Plugin):
             if resp.status_code != 200:
                 raise SplunkError.from_response(resp)
         except Exception as exc:
-            metrics.incr('integrations.splunk.forward-event.error', tags={
+            metric = 'integrations.splunk.forward-event.error'
+            metrics.incr(metric, tags={
                 'project_id': event.project_id,
                 'organization_id': event.project.organization_id,
                 'event_type': event.get_event_type(),
                 'error_code': getattr(exc, 'code', None),
             })
+            logger.info(
+                metric,
+                extra={
+                    'instance': instance,
+                    'project_id': event.project_id,
+                    'organization_id': event.project.organization_id,
+                },
+            )
+
+            if isinstance(exc, ReadTimeout):
+                # If we get a ReadTimeout we don't need to raise an error here.
+                # Just log and return.
+                return
             raise
 
         metrics.incr('integrations.splunk.forward-event.success', tags={
