@@ -1,12 +1,19 @@
 from __future__ import absolute_import
 
-import boto3
+import logging
 
-from sentry.plugins.bases.data_forwarding import DataForwardingPlugin
-from sentry.utils import json
+import boto3
+from botocore.client import ClientError
 
 from sentry_plugins.base import CorePluginMixin
+from sentry.plugins.bases.data_forwarding import DataForwardingPlugin
 from sentry_plugins.utils import get_secret_field_config
+from sentry.utils import (
+    json,
+    metrics,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def get_regions():
@@ -61,16 +68,40 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
         if len(message) > 256 * 1024:
             return False
 
-        client = boto3.client(
-            service_name='sqs',
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=region,
-        )
-
-        client.send_message(
-            QueueUrl=queue_url,
-            MessageBody=message,
-        )
+        try:
+            client = boto3.client(
+                service_name='sqs',
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=region,
+            )
+            client.send_message(
+                QueueUrl=queue_url,
+                MessageBody=message,
+            )
+        except ClientError as e:
+            if e.message.startswith('An error occurred (AccessDenied)'):
+                # If there's an issue with the user's token then we can't do
+                # anything to recover. Just log and continue.
+                metrics_name = 'sentry_plugins.amazon_sqs.access_token_invalid'
+                logger.info(
+                    metrics_name,
+                    extra={
+                        'queue_url': queue_url,
+                        'access_key': access_key,
+                        'region': region,
+                        'project_id': event.project.id,
+                        'organization_id': event.project.organization_id,
+                    },
+                )
+                metrics.incr(
+                    metrics_name,
+                    tags={
+                        'project_id': event.project_id,
+                        'organization_id': event.project.organization_id,
+                    },
+                )
+                return False
+            raise
 
         return True
