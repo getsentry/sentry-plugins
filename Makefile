@@ -13,7 +13,7 @@ install-yarn:
 	# Use NODE_ENV=development so that yarn installs both dependencies + devDependencies
 	NODE_ENV=development yarn install --ignore-optional
 
-install-tests: develop install-chromedriver
+install-tests: develop
 	pip install .[tests]
 
 setup-git:
@@ -33,18 +33,6 @@ clean:
 	@echo "--> Cleaning python build artifacts"
 	rm -rf build/ dist/ src/sentry_plugins/assets.json
 	@echo ""
-
-install-chromedriver:
-ifeq ($(UNAME_S), Darwin)
-	@echo "NOTE: Install chromedriver via Homebrew, with: brew install chromedriver"
-else
-	wget -N http://chromedriver.storage.googleapis.com/2.33/chromedriver_linux64.zip -P ~/
-	unzip ~/chromedriver_linux64.zip -d ~/
-	rm ~/chromedriver_linux64.zip
-	chmod +x ~/chromedriver
-	mkdir -p ~/.bin
-	mv ~/chromedriver ~/.bin/
-endif
 
 lint: lint-js lint-python
 
