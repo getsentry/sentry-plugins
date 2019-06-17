@@ -69,7 +69,7 @@ class PagerDutyPluginTest(PluginTestCase):
             'contexts': [
                 {
                     'text': 'Issue Details',
-                    'href': 'http://example.com/baz/bar/issues/{}/?referrer=pagerduty_plugin'.format(group.id),
+                    'href': 'http://example.com/organizations/baz/issues/{}/?referrer=pagerduty_plugin'.format(group.id),
                     'type': 'link',
                 }
             ],
@@ -78,7 +78,7 @@ class PagerDutyPluginTest(PluginTestCase):
             'details': {
                 'project': self.project.name,
                 'release': None,
-                'url': 'http://example.com/baz/bar/issues/{}/?referrer=pagerduty_plugin'.format(group.id),
+                'url': 'http://example.com/organizations/baz/issues/{}/?referrer=pagerduty_plugin'.format(group.id),
                 'culprit': group.culprit,
                 'platform': 'python',
                 'event_id': event.event_id,

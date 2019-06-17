@@ -63,7 +63,7 @@ class SlackPluginTest(PluginTestCase):
                     '[bar] Hello world',
                     'title':
                     'Hello world',
-                    'title_link': 'http://example.com/baz/bar/issues/%s/?referrer=slack' % group.id,
+                    'title_link': 'http://example.com/organizations/baz/issues/%s/?referrer=slack' % group.id,
                 },
             ],
         }
@@ -101,7 +101,7 @@ class SlackPluginTest(PluginTestCase):
                     ],
                     'fallback': '[bar] Hello world',
                     'title': 'Hello world',
-                    'title_link': 'http://example.com/baz/bar/issues/%s/?referrer=slack' % group.id,
+                    'title_link': 'http://example.com/organizations/baz/issues/%s/?referrer=slack' % group.id,
                 },
             ],
         }
@@ -139,7 +139,7 @@ class SlackPluginTest(PluginTestCase):
                     ],
                     'fallback': '[bar] Hello world',
                     'title': 'Hello world',
-                    'title_link': 'http://example.com/baz/bar/issues/%s/?referrer=slack' % group.id,
+                    'title_link': 'http://example.com/organizations/baz/issues/%s/?referrer=slack' % group.id,
                 },
             ],
         }
