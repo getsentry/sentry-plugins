@@ -1,7 +1,7 @@
 sentry-plugins
 ==============
 
-Extensions for Sentry. Includes Slack and GitHub.
+Extensions for Sentry.
 
 Install the package via ``pip``::
 
@@ -11,147 +11,28 @@ Run migrations after installation is complete
 
     sentry upgrade
 
-Asana
------
-You'll have to create an application in Asana to get a client ID and secret. Use the following for the redirect URL::
+**Active Plugins**
 
-    <URL_TO_SENTRY>/account/settings/social/associate/complete/asana/
+ * `Splunk<src/sentry_plugins/splunk/README.rst>`_
+ * `Asana<src/sentry_plugins/asana/README.rst>`_
+ * Amazon SQS
+ * Heroku
+ * Pagerduty
+ * Phabricator
+ * Pivotal
+ * Clubhouse
+ * Pushover
+ * Segment
+ * Sessionstack
+ * Victorops
 
-Ensure you've configured Asana auth in Sentry::
+**Deprecated Plugins**
 
-    ASANA_CLIENT_ID = 'Asana Client ID'
-    ASANA_CLIENT_SECRET = 'Asana Client Secret'
+These plugins have been replaced with Sentry's built in `Global Integrations<https://docs.sentry.io/workflow/integrations/global-integrations/>`_.
 
-GitHub
-------
-
-You'll have to create an application in GitHub to get the app ID and API secret. Use the following for the Authentication redirect URL::
-
-    <URL_TO_SENTRY>/account/settings/social/associate/complete/github/
-
-Ensure you've configured GitHub auth in Sentry::
-
-    GITHUB_APP_ID = 'GitHub Application Client ID'
-    GITHUB_API_SECRET = 'GitHub Application Client Secret'
-    GITHUB_EXTENDED_PERMISSIONS = ['repo']
-
-If the callback URL you've registered with GitHub uses HTTPS, you'll need this in your config::
-
-    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
-
-If your server is behind a reverse proxy, you'll need to enable the X-Forwarded-Proto
-and X-Forwarded-Host headers, and use this config::
-
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    USE_X_FORWARDED_HOST = True
-
-
-Associate your account with GitHub (if you haven't already) via Account -> Identities. If you had
-already associated your account, and you hadn't configured extended permissions, you'll need to
-disconnect and reconnect the account.
-
-You'll now see a new action on groups which allows quick creation of GitHub issues.
-
-
-Caveats
-~~~~~~~
-
-If you have multiple GitHub identities associated in Sentry, the plugin will just select
-one to use.
-
-GitLab
-------
-
-Go to your project's configuration page (Projects -> [Project] -> Issue Tracking) and select
-GitLab. Enter the required credentials (use a `personal access
-token<https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html>`_)
-and click save changes.
-
-It's recommended to create a specific user for Sentry with only `Reporter` privileges on your projects.
-
-Bitbucket
----------
-
-Go to https://bitbucket.org/account/user/**YOUR_USERNAME**/api
-
-Create OAuth consumer key and secret and then put
-
-::
-
-    BITBUCKET_CONSUMER_KEY = '<Key>'
-    BITBUCKET_CONSUMER_SECRET = '<Secret>'
-
-
-into ``sentry.conf.py``
-
-Slack
--------
-
-Go to your project's configuration page (Projects -> [Project]) and select the
-Slack tab. Enter the required credentials and click save changes.
-
-Splunk
-------
-
-These docs are specific to a Splunk Cloud (self-service) instance. For more details on the HEC endpoint, see the `official docs <https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector#Send_data_to_HTTP_Event_Collector_on_Splunk_Cloud_instances>`_.
-
-- In your Splunk instance, navigate to Settings -> Data Inputs -> HTTP Event Collector
-- Create a new token; enter a name ("sentry") and select an index ("main")
-- Under Global Settings, Enable the HEC endpoint noting the port (8088), and SSL requirement (true)
-- In Sentry, enable the Splunk plugin, and paste the newly acquired token.
-- For the endpoint, use https://input-[splunk-instance].cloud.splunk.com:8088
-- Ensure that `enable indexer acknowledgement` is not checked.
-
-Visual Studio (Team Services)
------------------------------
-
-You'll have to `create an application in Visual Studio <https://app.vsaex.visualstudio.com/app/register>`_ to get a client ID and secret.
-
-**Redirect URL:**
-
-::
-
-    <URL_TO_SENTRY>/account/settings/social/associate/complete/visualstudio/
-
-
-**Scopes:**
-
-- Code (read) -- ``vso.code``
-- Work items (read and write) -- ``vso.work_write``
-- Project and Team (read) -- ``vso.project``
-- Releases (read) -- ``vso.release``
-
-Add the configured application credentials to your Sentry config:
-
-.. code-block:: python
-
-    VISUALSTUDIO_APP_ID = 'App ID'
-    VISUALSTUDIO_APP_SECRET = 'App Secret'
-    VISUALSTUDIO_CLIENT_SECRET = 'Client Secret'
-    VISUALSTUDIO_SCOPES = ['vso.project', 'vso.work_write', 'vso.code', 'vso.release']
-
-Development
-~~~~~~~~~~~
-
-Create a tunnel to localhost using something like https://ngrok.com/download::
-
-    ngrok http 8000
-
-Start Sentry with the following parameters set::
-
-    AC_BASE_URL=https://<xxx>.ngrok.io HTTPS=on sentry devserver
-
-
-JIRA (Atlassian Connect UI Plugin)
-----------------------------------
-
-Enable the plugin by adding it in the Add-on Management page in JIRA.
-
-Development
-~~~~~~~~~~~
-
-Use https://ngrok.com to expose your local Sentry to the internet. Update your config.yml to use your ngrok url::
-
-    system.url-prefix: 'https://<xxx>.ngrok.io'
-
-From the manage add-on page in JIRA, choose 'Upload add-on' and copy the URL for the descriptor view.
+ * `Slack<src/sentry_plugins/slack/README.rst>`_
+ * `GitHub<src/sentry_plugins/github/README.rst>`_
+ * `Gitlab<src/sentry_plugins/gitlab/README.rst>`_
+ * `Bitbucket<src/sentry_plugins/bitbucket/README.rst>`_
+ * `Visual Studio Team Services<src/sentry_plugins/vsts/README.rst>`_
+ * Jira
