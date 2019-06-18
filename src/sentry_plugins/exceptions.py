@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
-from BeautifulSoup import BeautifulStoneSoup
 from collections import OrderedDict
+
+from BeautifulSoup import BeautifulStoneSoup
 from simplejson.decoder import JSONDecodeError
 from six.moves.urllib.parse import urlparse
+
 from sentry.utils import json
 
 
@@ -43,14 +45,14 @@ class ApiHostError(ApiError):
 
     @classmethod
     def from_exception(cls, exception):
-        if hasattr(exception, 'request'):
+        if hasattr(exception, "request"):
             return cls.from_request(exception.request)
-        return cls('Unable to reach host')
+        return cls("Unable to reach host")
 
     @classmethod
     def from_request(cls, request):
         host = urlparse(request.url).netloc
-        return cls('Unable to reach host: {}'.format(host))
+        return cls("Unable to reach host: {}".format(host))
 
 
 class ApiUnauthorized(ApiError):
