@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import logging
 
 from sentry.exceptions import PluginError
+
 from sentry_plugins.base import CorePluginMixin
 from sentry_plugins.constants import ERR_UNAUTHORIZED
 
@@ -10,9 +11,9 @@ from .client import VstsClient
 
 
 class VisualStudioMixin(CorePluginMixin):
-    logger = logging.getLogger("sentry.plugins.visualstudio")
-    title = "Visual Studio Team Services"
-    short_title = "VSTS"
+    logger = logging.getLogger('sentry.plugins.visualstudio')
+    title = 'Visual Studio Team Services'
+    short_title = 'VSTS'
 
     def get_client(self, user):
         auth = self.get_auth(user=user)
