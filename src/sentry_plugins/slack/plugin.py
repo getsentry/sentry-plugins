@@ -251,4 +251,4 @@ class SlackPlugin(CorePluginMixin, notify.NotificationPlugin):
 
         # Apparently we've stored some bad data from before we used `URLField`.
         webhook = webhook.strip(' ')
-        return http.safe_urlopen(webhook, method='POST', data=values)
+        return http.safe_urlopen(webhook, method='POST', data=values, timeout=5)
