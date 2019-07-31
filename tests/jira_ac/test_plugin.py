@@ -17,8 +17,8 @@ class JiraPluginTest(PluginTestCase):
         return RequestFactory()
 
     def test_conf_key(self):
-        assert self.plugin.conf_key == 'jira-ac'
+        assert self.plugin.conf_key == "jira-ac"
 
     def test_entry_point(self):
-        self.assertAppInstalled('jira_ac', 'sentry_plugins.jira_ac')
-        self.assertPluginInstalled('jira_ac', self.plugin)
+        self.assertAppInstalled("jira_ac", "sentry_plugins.jira_ac")
+        self.assertPluginInstalled("jira_ac", self.plugin)

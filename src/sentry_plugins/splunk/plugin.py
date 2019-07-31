@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class SplunkError(Exception):
-    def __init__(self, status_code, code=0, text='unknown error'):
+    def __init__(self, status_code, code=0, text="unknown error"):
         self.status_code = status_code
         self.code = code
         self.text = text
@@ -46,20 +46,21 @@ class SplunkError(Exception):
         try:
             body = response.json()
         except Exception:
-            return cls(status_code=response.status_code, code=0,
-                       text='Unable to parse response body')
+            return cls(
+                status_code=response.status_code, code=0, text="Unable to parse response body"
+            )
 
-        code = body.get('code')
+        code = body.get("code")
         if code in SplunkInvalidToken.KNOWN_CODES:
             cls = SplunkInvalidToken
         elif code in SplunkServerBusy.KNOWN_CODES:
             cls = SplunkInvalidToken
         elif code in SplunkConfigError.KNOWN_CODES:
             cls = SplunkConfigError
-        return cls(status_code=response.status_code, code=code, text=body.get('text'))
+        return cls(status_code=response.status_code, code=code, text=body.get("text"))
 
     def __repr__(self):
-        return '<%s: status_code=%s, code=%s, text=%s>' % (
+        return "<%s: status_code=%s, code=%s, text=%s>" % (
             type(self).__name__,
             self.status_code,
             self.code,
@@ -88,10 +89,10 @@ class SplunkConfigError(SplunkError):
 
 
 class SplunkPlugin(CorePluginMixin, Plugin):
-    title = 'Splunk'
-    slug = 'splunk'
-    description = 'Send Sentry events into Splunk.'
-    conf_key = 'splunk'
+    title = "Splunk"
+    slug = "splunk"
+    description = "Send Sentry events into Splunk."
+    conf_key = "splunk"
 
     def configure(self, project, request):
         return react_plugin_config(self, project, request)
@@ -100,40 +101,43 @@ class SplunkPlugin(CorePluginMixin, Plugin):
         return True
 
     def get_plugin_type(self):
-        return 'data-forwarding'
+        return "data-forwarding"
 
     def get_config(self, project, **kwargs):
-        return [{
-            'name': 'instance',
-            'label': 'Instance URL',
-            'type': 'url',
-            'required': True,
-            'help': 'The HTTP Event Collector endpoint for your Splunk instance.',
-            'placeholder': 'e.g. https://input-foo.cloud.splunk.com:8088',
-        }, {
-            'name': 'index',
-            'label': 'Index',
-            'type': 'string',
-            'required': True,
-            'default': 'main',
-        }, {
-            'name': 'source',
-            'label': 'Source',
-            'type': 'string',
-            'required': True,
-            'default': 'sentry',
-        }, get_secret_field_config(
-            name='token',
-            label='Token',
-            secret=self.get_option('token', project),
-        )]
+        return [
+            {
+                "name": "instance",
+                "label": "Instance URL",
+                "type": "url",
+                "required": True,
+                "help": "The HTTP Event Collector endpoint for your Splunk instance.",
+                "placeholder": "e.g. https://input-foo.cloud.splunk.com:8088",
+            },
+            {
+                "name": "index",
+                "label": "Index",
+                "type": "string",
+                "required": True,
+                "default": "main",
+            },
+            {
+                "name": "source",
+                "label": "Source",
+                "type": "string",
+                "required": True,
+                "default": "sentry",
+            },
+            get_secret_field_config(
+                name="token", label="Token", secret=self.get_option("token", project)
+            ),
+        ]
 
     def get_host_for_splunk(self, event):
-        host = event.get_tag('server_name')
+        host = event.get_tag("server_name")
         if host:
             return host
 
-        user_interface = event.interfaces.get('sentry.interfaces.User')
+        user_interface = event.interfaces.get("sentry.interfaces.User")
         if user_interface:
             host = user_interface.ip_address
             if host:
@@ -143,91 +147,97 @@ class SplunkPlugin(CorePluginMixin, Plugin):
 
     def get_event_payload(self, event):
         props = {
-            'event_id': event.event_id,
-            'issue_id': event.group_id,
-            'project_id': event.project.slug,
-            'transaction': event.get_tag('transaction') or '',
-            'release': event.get_tag('sentry:release') or '',
-            'environment': event.get_tag('environment') or '',
-            'type': event.get_event_type(),
+            "event_id": event.event_id,
+            "issue_id": event.group_id,
+            "project_id": event.project.slug,
+            "transaction": event.get_tag("transaction") or "",
+            "release": event.get_tag("sentry:release") or "",
+            "environment": event.get_tag("environment") or "",
+            "type": event.get_event_type(),
         }
-        props['tags'] = [[k.format(tagstore.get_standardized_key(k)), v]
-                         for k, v in event.get_tags()]
+        props["tags"] = [
+            [k.format(tagstore.get_standardized_key(k)), v] for k, v in event.get_tags()
+        ]
         for key, value in six.iteritems(event.interfaces):
-            if key == 'request':
+            if key == "request":
                 headers = value.headers
                 if not isinstance(headers, dict):
                     headers = dict(headers or ())
 
-                props.update({
-                    'request_url': value.url,
-                    'request_method': value.method,
-                    'request_referer': headers.get('Referer', ''),
-                })
-            elif key == 'exception':
+                props.update(
+                    {
+                        "request_url": value.url,
+                        "request_method": value.method,
+                        "request_referer": headers.get("Referer", ""),
+                    }
+                )
+            elif key == "exception":
                 exc = value.values[0]
-                props.update({
-                    'exception_type': exc.type,
-                    'exception_value': exc.value,
-                })
-            elif key == 'logentry':
-                props.update({
-                    'message': value.formatted or value.message,
-                })
-            elif key in ('csp', 'expectct', 'expectstable', 'hpkp'):
-                props.update({
-                    '{}_{}'.format(key.rsplit('.', 1)[-1].lower(), k): v
-                    for k, v in six.iteritems(value.to_json())
-                })
-            elif key == 'user':
+                props.update({"exception_type": exc.type, "exception_value": exc.value})
+            elif key == "logentry":
+                props.update({"message": value.formatted or value.message})
+            elif key in ("csp", "expectct", "expectstable", "hpkp"):
+                props.update(
+                    {
+                        "{}_{}".format(key.rsplit(".", 1)[-1].lower(), k): v
+                        for k, v in six.iteritems(value.to_json())
+                    }
+                )
+            elif key == "user":
                 user_payload = {}
                 if value.id:
-                    user_payload['user_id'] = value.id
+                    user_payload["user_id"] = value.id
                 if value.email:
-                    user_payload['user_email_hash'] = md5_text(value.email).hexdigest()
+                    user_payload["user_email_hash"] = md5_text(value.email).hexdigest()
                 if value.ip_address:
-                    user_payload['user_ip_trunc'] = anonymize_ip(value.ip_address)
+                    user_payload["user_ip_trunc"] = anonymize_ip(value.ip_address)
                 if user_payload:
                     props.update(user_payload)
         return props
 
     # http://dev.splunk.com/view/event-collector/SP-CAAAE6M
     def post_process(self, event, **kwargs):
-        token = self.get_option('token', event.project)
-        index = self.get_option('index', event.project)
-        instance = self.get_option('instance', event.project)
+        token = self.get_option("token", event.project)
+        index = self.get_option("index", event.project)
+        instance = self.get_option("instance", event.project)
         if not (token and index and instance):
-            metrics.incr('integrations.splunk.forward-event.unconfigured', tags={
-                'project_id': event.project_id,
-                'organization_id': event.project.organization_id,
-                'event_type': event.get_event_type(),
-            })
+            metrics.incr(
+                "integrations.splunk.forward-event.unconfigured",
+                tags={
+                    "project_id": event.project_id,
+                    "organization_id": event.project.organization_id,
+                    "event_type": event.get_event_type(),
+                },
+            )
             return
 
-        if not instance.endswith('/services/collector'):
-            instance = instance.rstrip('/') + '/services/collector'
+        if not instance.endswith("/services/collector"):
+            instance = instance.rstrip("/") + "/services/collector"
 
-        source = self.get_option('source', event.project) or 'sentry'
+        source = self.get_option("source", event.project) or "sentry"
 
-        rl_key = 'splunk:{}'.format(md5_text(token).hexdigest())
+        rl_key = "splunk:{}".format(md5_text(token).hexdigest())
         # limit splunk to 50 requests/second
         if ratelimiter.is_limited(rl_key, limit=1000, window=1):
-            metrics.incr('integrations.splunk.forward-event.rate-limited', tags={
-                'project_id': event.project_id,
-                'organization_id': event.project.organization_id,
-                'event_type': event.get_event_type(),
-            })
+            metrics.incr(
+                "integrations.splunk.forward-event.rate-limited",
+                tags={
+                    "project_id": event.project_id,
+                    "organization_id": event.project.organization_id,
+                    "event_type": event.get_event_type(),
+                },
+            )
             return
 
         payload = {
-            'time': int(event.datetime.strftime('%s')),
-            'source': source,
-            'index': index,
-            'event': self.get_event_payload(event),
+            "time": int(event.datetime.strftime("%s")),
+            "source": source,
+            "index": index,
+            "event": self.get_event_payload(event),
         }
         host = self.get_host_for_splunk(event)
         if host:
-            payload['host'] = host
+            payload["host"] = host
 
         session = http.build_session()
         try:
@@ -237,27 +247,28 @@ class SplunkPlugin(CorePluginMixin, Plugin):
                 json=payload,
                 # Splunk cloud instances certifcates dont play nicely
                 verify=False,
-                headers={
-                    'Authorization': 'Splunk {}'.format(token)
-                },
+                headers={"Authorization": "Splunk {}".format(token)},
                 timeout=5,
             )
             if resp.status_code != 200:
                 raise SplunkError.from_response(resp)
         except Exception as exc:
-            metric = 'integrations.splunk.forward-event.error'
-            metrics.incr(metric, tags={
-                'project_id': event.project_id,
-                'organization_id': event.project.organization_id,
-                'event_type': event.get_event_type(),
-                'error_code': getattr(exc, 'code', None),
-            })
+            metric = "integrations.splunk.forward-event.error"
+            metrics.incr(
+                metric,
+                tags={
+                    "project_id": event.project_id,
+                    "organization_id": event.project.organization_id,
+                    "event_type": event.get_event_type(),
+                    "error_code": getattr(exc, "code", None),
+                },
+            )
             logger.info(
                 metric,
                 extra={
-                    'instance': instance,
-                    'project_id': event.project_id,
-                    'organization_id': event.project.organization_id,
+                    "instance": instance,
+                    "project_id": event.project_id,
+                    "organization_id": event.project.organization_id,
                 },
             )
 
@@ -267,8 +278,11 @@ class SplunkPlugin(CorePluginMixin, Plugin):
                 return
             raise
 
-        metrics.incr('integrations.splunk.forward-event.success', tags={
-            'project_id': event.project_id,
-            'organization_id': event.project.organization_id,
-            'event_type': event.get_event_type(),
-        })
+        metrics.incr(
+            "integrations.splunk.forward-event.success",
+            tags={
+                "project_id": event.project_id,
+                "organization_id": event.project.organization_id,
+                "event_type": event.get_event_type(),
+            },
+        )

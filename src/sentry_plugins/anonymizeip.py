@@ -30,9 +30,7 @@ from ipaddress import ip_address
 
 
 def anonymize_ip(
-    address,
-    ipv4_mask=u"255.255.255.0",
-    ipv6_mask=u"ffff:ffff:ffff:0000:0000:0000:0000:0000"
+    address, ipv4_mask="255.255.255.0", ipv6_mask="ffff:ffff:ffff:0000:0000:0000:0000:0000"
 ):
     """
     Anonymize the provided IPv4 or IPv6 address by setting parts of the
@@ -62,8 +60,7 @@ def anonymize_ip(
         return __apply_mask(address_packed, ipv6_mask_packed, 16)
     else:
         # Invalid address
-        raise ValueError("Address does not consist of 4 (IPv4) or 16 (IPv6) "
-                         "octets")
+        raise ValueError("Address does not consist of 4 (IPv4) or 16 (IPv6) " "octets")
 
 
 def __apply_mask(address_packed, mask_packed, nr_bytes):
@@ -90,40 +87,40 @@ def __apply_mask(address_packed, mask_packed, nr_bytes):
 def __validate_ipv4_mask(mask_packed):
     # Test that mask only contains valid numbers
     for byte in mask_packed:
-        if byte != b'\x00' and byte != b'\xff':
+        if byte != b"\x00" and byte != b"\xff":
             raise ValueError("ipv4_mask must only contain numbers 0 or 255")
 
     # Test that IP address does not get anonymized completely
-    if mask_packed == b'\x00\x00\x00\x00':
-        raise ValueError("ipv4_mask cannot be set to \"0.0.0.0\" (all "
-                         "anonymized addresses will be 0.0.0.0)")
+    if mask_packed == b"\x00\x00\x00\x00":
+        raise ValueError(
+            'ipv4_mask cannot be set to "0.0.0.0" (all ' "anonymized addresses will be 0.0.0.0)"
+        )
 
     # Test that IP address is changed by anonymization
-    if mask_packed == b'\xff\xff\xff\xff':
-        raise ValueError("ipv4_mask cannot be set to \"255.255.255.255\" "
-                         "(addresses will not be anonymized)")
+    if mask_packed == b"\xff\xff\xff\xff":
+        raise ValueError(
+            'ipv4_mask cannot be set to "255.255.255.255" ' "(addresses will not be anonymized)"
+        )
 
 
 def __validate_ipv6_mask(mask_packed):
     # Test that mask only contains valid numbers
     for byte in mask_packed:
-        if byte != b'\x00' and byte != b'\xff':
+        if byte != b"\x00" and byte != b"\xff":
             raise ValueError("ipv6_mask must only contain numbers 0 or ffff")
 
     # Test that IP address does not get anonymized completely
-    if (
-        mask_packed ==
-        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-    ):
-        raise ValueError("ipv6_mask cannot be set to "
-                         "\"0000:0000:0000:0000:0000:0000:0000:0000\" (all "
-                         "anonymized addresses will be 0.0.0.0)")
+    if mask_packed == b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00":
+        raise ValueError(
+            "ipv6_mask cannot be set to "
+            '"0000:0000:0000:0000:0000:0000:0000:0000" (all '
+            "anonymized addresses will be 0.0.0.0)"
+        )
 
     # Test that IP address is changed by anonymization
-    if (
-        mask_packed ==
-        b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
-    ):
-        raise ValueError("ipv6_mask cannot be set to "
-                         "\"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff\" "
-                         "(addresses will not be anonymized)")
+    if mask_packed == b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff":
+        raise ValueError(
+            "ipv6_mask cannot be set to "
+            '"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" '
+            "(addresses will not be anonymized)"
+        )

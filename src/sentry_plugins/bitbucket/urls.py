@@ -5,8 +5,8 @@ from django.conf.urls import patterns, url
 from .endpoints.webhook import BitbucketWebhookEndpoint
 
 urlpatterns = patterns(
-    '',
+    "",
     url(
-        r'^organizations/(?P<organization_id>[^\/]+)/webhook/$', BitbucketWebhookEndpoint.as_view()
+        r"^organizations/(?P<organization_id>[^\/]+)/webhook/$", BitbucketWebhookEndpoint.as_view()
     ),
 )

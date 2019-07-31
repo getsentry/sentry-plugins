@@ -12,36 +12,36 @@ from .client import PagerDutyClient
 
 
 class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
-    description = 'Send alerts to PagerDuty.'
-    slug = 'pagerduty'
-    title = 'PagerDuty'
+    description = "Send alerts to PagerDuty."
+    slug = "pagerduty"
+    title = "PagerDuty"
     conf_key = slug
     conf_title = title
 
     def is_configured(self, project, **kwargs):
-        return bool(self.get_option('service_key', project))
+        return bool(self.get_option("service_key", project))
 
     def get_config(self, **kwargs):
-        service_key = self.get_option('service_key', kwargs['project'])
+        service_key = self.get_option("service_key", kwargs["project"])
         secret_field = get_secret_field_config(
-            service_key, 'PagerDuty\'s Sentry service Integration Key', include_prefix=True
+            service_key, "PagerDuty's Sentry service Integration Key", include_prefix=True
         )
-        secret_field.update({'name': 'service_key', 'label': 'Service Key'})
+        secret_field.update({"name": "service_key", "label": "Service Key"})
         return [
             secret_field,
             {
-                'name': 'routes',
-                'label': 'Tag routing',
-                'type': 'textarea',
-                'placeholder': 'environment,production,KEY1\ndevice,Other,KEY2',
-                'required': False,
-                'help': (
-                    'Route each event to a different PagerDuty service key based '
-                    'on the event\'s tags. Each line should contain a tag, '
-                    'value, and service key separated by commas. The first '
-                    'line that matches a tag\'s key and value will send to that '
-                    'integration key instead of the main service key above.'
-                )
+                "name": "routes",
+                "label": "Tag routing",
+                "type": "textarea",
+                "placeholder": "environment,production,KEY1\ndevice,Other,KEY2",
+                "required": False,
+                "help": (
+                    "Route each event to a different PagerDuty service key based "
+                    "on the event's tags. Each line should contain a tag, "
+                    "value, and service key separated by commas. The first "
+                    "line that matches a tag's key and value will send to that "
+                    "integration key instead of the main service key above."
+                ),
             },
         ]
 
@@ -53,21 +53,21 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
 
         tags = dict(event.get_tags())
         details = {
-            'event_id': event.event_id,
-            'project': group.project.name,
-            'release': event.get_tag('sentry:release'),
-            'platform': event.platform,
-            'culprit': event.culprit,
-            'datetime': event.datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-            'tags': tags,
-            'url': group.get_absolute_url(params={'referrer': 'pagerduty_plugin'}),
+            "event_id": event.event_id,
+            "project": group.project.name,
+            "release": event.get_tag("sentry:release"),
+            "platform": event.platform,
+            "culprit": event.culprit,
+            "datetime": event.datetime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "tags": tags,
+            "url": group.get_absolute_url(params={"referrer": "pagerduty_plugin"}),
         }
 
-        service_key = self.get_option('service_key', group.project)
+        service_key = self.get_option("service_key", group.project)
 
-        routes = self.get_option('routes', group.project) or ''
-        for route in (r.strip() for r in routes.split('\n')):
-            fields = [f.strip() for f in route.split(',')]
+        routes = self.get_option("routes", group.project) or ""
+        for route in (r.strip() for r in routes.split("\n")):
+            fields = [f.strip() for f in route.split(",")]
             if len(fields) != 3:
                 continue
             tag_key, tag_value, route_service_key = fields
@@ -79,17 +79,19 @@ class PagerDutyPlugin(CorePluginMixin, NotifyPlugin):
         try:
             response = client.trigger_incident(
                 description=description,
-                event_type='trigger',
+                event_type="trigger",
                 incident_key=six.text_type(group.id),
                 details=details,
                 contexts=[
                     {
-                        'type': 'link',
-                        'href': absolute_uri(group.get_absolute_url(params={'referrer': 'pagerduty_plugin'})),
-                        'text': 'Issue Details',
+                        "type": "link",
+                        "href": absolute_uri(
+                            group.get_absolute_url(params={"referrer": "pagerduty_plugin"})
+                        ),
+                        "text": "Issue Details",
                     }
                 ],
             )
-            assert response['status'] == 'success'
+            assert response["status"] == "success"
         except Exception as e:
             self.raise_error(e)

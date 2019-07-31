@@ -16,53 +16,56 @@ from .exceptions import ApiHostError, ApiError, ApiUnauthorized, UnsupportedResp
 
 
 class BaseApiResponse(object):
-    text = ''
+    text = ""
 
     def __init__(self, headers=None, status_code=None):
         self.headers = headers
         self.status_code = status_code
 
     def __repr__(self):
-        return u'<%s: code=%s, content_type=%s>' % (
+        return u"<%s: code=%s, content_type=%s>" % (
             type(self).__name__,
             self.status_code,
-            self.headers.get('Content-Type', '') if self.headers else '',
+            self.headers.get("Content-Type", "") if self.headers else "",
         )
 
     @cached_property
     def rel(self):
         if not self.headers:
             return {}
-        link_header = self.headers.get('Link')
+        link_header = self.headers.get("Link")
         if not link_header:
             return {}
-        return {item['rel']: item['url'] for item in requests.utils.parse_header_links(link_header)}
+        return {item["rel"]: item["url"] for item in requests.utils.parse_header_links(link_header)}
 
     @classmethod
     def from_response(self, response, allow_text=False):
         # XXX(dcramer): this doesnt handle leading spaces, but they're not common
         # paths so its ok
-        if response.text.startswith(u'<?xml'):
+        if response.text.startswith(u"<?xml"):
             return XmlApiResponse(response.text, response.headers, response.status_code)
-        elif response.text.startswith('<'):
+        elif response.text.startswith("<"):
             if not allow_text:
-                raise ValueError('Not a valid response type: {}'.format(response.text[:128]))
+                raise ValueError("Not a valid response type: {}".format(response.text[:128]))
             elif response.status_code < 200 or response.status_code >= 300:
-                raise ValueError('Received unexpected plaintext response for code {}'.format(
-                    response.status_code,
-                ))
+                raise ValueError(
+                    "Received unexpected plaintext response for code {}".format(
+                        response.status_code
+                    )
+                )
             return TextApiResponse(response.text, response.headers, response.status_code)
 
         # Some APIs will return JSON with an invalid content-type, so we try
         # to decode it anyways
-        if 'application/json' not in response.headers['Content-Type']:
+        if "application/json" not in response.headers["Content-Type"]:
             try:
                 data = json.loads(response.text, object_pairs_hook=SortedDict)
             except (TypeError, ValueError):
                 if allow_text:
                     return TextApiResponse(response.text, response.headers, response.status_code)
                 raise UnsupportedResponseType(
-                    response.headers['Content-Type'], response.status_code)
+                    response.headers["Content-Type"], response.status_code
+                )
         else:
             data = json.loads(response.text, object_pairs_hook=SortedDict)
 
@@ -107,10 +110,7 @@ class SequenceApiResponse(list, BaseApiResponse):
 
 
 def track_response_metric(plugin, code):
-    metrics.incr('sentry-plugins.http_response', tags={
-        'status': code,
-        'plugin': plugin
-    })
+    metrics.incr("sentry-plugins.http_response", tags={"status": code, "plugin": plugin})
 
 
 class ApiClient(object):
@@ -120,22 +120,32 @@ class ApiClient(object):
 
     allow_redirects = None
 
-    logger = logging.getLogger('sentry.plugins')
+    logger = logging.getLogger("sentry.plugins")
 
-    plugin_name = 'undefined'
+    plugin_name = "undefined"
 
     def __init__(self, verify_ssl=True):
         self.verify_ssl = verify_ssl
 
     def build_url(self, path):
-        if path.startswith('/'):
+        if path.startswith("/"):
             if not self.base_url:
-                raise ValueError('Invalid URL: {}'.format(path))
-            return '{}{}'.format(self.base_url, path)
+                raise ValueError("Invalid URL: {}".format(path))
+            return "{}{}".format(self.base_url, path)
         return path
 
-    def _request(self, method, path, headers=None, data=None, params=None,
-                 auth=None, json=True, allow_text=None, allow_redirects=None):
+    def _request(
+        self,
+        method,
+        path,
+        headers=None,
+        data=None,
+        params=None,
+        auth=None,
+        json=True,
+        allow_text=None,
+        allow_redirects=None,
+    ):
 
         if allow_text is None:
             allow_text = self.allow_text
@@ -144,10 +154,10 @@ class ApiClient(object):
             allow_redirects = self.allow_redirects
 
         if allow_redirects is None:  # is still None
-            allow_redirects = method.upper() == 'GET'
+            allow_redirects = method.upper() == "GET"
 
         full_url = self.build_url(path)
-        metrics.incr('sentry-plugins.http_request', tags={'plugin': self.plugin_name})
+        metrics.incr("sentry-plugins.http_request", tags={"plugin": self.plugin_name})
 
         session = build_session()
         try:
@@ -167,12 +177,11 @@ class ApiClient(object):
         except HTTPError as e:
             resp = e.response
             if resp is None:
-                track_response_metric(self.plugin_name, 'unknown')
-                self.logger.exception('request.error', extra={
-                    'plugin': self.plugin_name,
-                    'url': full_url,
-                })
-                raise ApiError('Internal Error')
+                track_response_metric(self.plugin_name, "unknown")
+                self.logger.exception(
+                    "request.error", extra={"plugin": self.plugin_name, "url": full_url}
+                )
+                raise ApiError("Internal Error")
             track_response_metric(self.plugin_name, resp.status_code)
             raise ApiError.from_response(resp)
 
@@ -187,19 +196,19 @@ class ApiClient(object):
         return self._request(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        return self.request('DELETE', *args, **kwargs)
+        return self.request("DELETE", *args, **kwargs)
 
     def get(self, *args, **kwargs):
-        return self.request('GET', *args, **kwargs)
+        return self.request("GET", *args, **kwargs)
 
     def patch(self, *args, **kwargs):
-        return self.request('PATCH', *args, **kwargs)
+        return self.request("PATCH", *args, **kwargs)
 
     def post(self, *args, **kwargs):
-        return self.request('POST', *args, **kwargs)
+        return self.request("POST", *args, **kwargs)
 
     def put(self, *args, **kwargs):
-        return self.request('PUT', *args, **kwargs)
+        return self.request("PUT", *args, **kwargs)
 
 
 class AuthApiClient(ApiClient):
@@ -210,25 +219,25 @@ class AuthApiClient(ApiClient):
         super(AuthApiClient, self).__init__(*args, **kwargs)
 
     def has_auth(self):
-        return self.auth and 'access_token' in self.auth.tokens
+        return self.auth and "access_token" in self.auth.tokens
 
     def exception_means_unauthorized(self, exc):
         return isinstance(exc, ApiUnauthorized)
 
     def ensure_auth(self, **kwargs):
-        headers = kwargs['headers']
-        if 'Authorization' not in headers and self.has_auth() and 'auth' not in kwargs:
+        headers = kwargs["headers"]
+        if "Authorization" not in headers and self.has_auth() and "auth" not in kwargs:
             kwargs = self.bind_auth(**kwargs)
         return kwargs
 
     def bind_auth(self, **kwargs):
-        token = self.auth.tokens['access_token']
-        kwargs['headers']['Authorization'] = 'Bearer {}'.format(token)
+        token = self.auth.tokens["access_token"]
+        kwargs["headers"]["Authorization"] = "Bearer {}".format(token)
         return kwargs
 
     def _request(self, method, path, **kwargs):
-        headers = kwargs.setdefault('headers', {})
-        headers.setdefault('Accept', 'application/json, application/xml')
+        headers = kwargs.setdefault("headers", {})
+        headers.setdefault("Accept", "application/json, application/xml")
 
         # TODO(dcramer): we could proactively refresh the token if we knew
         # about expires
@@ -243,10 +252,9 @@ class AuthApiClient(ApiClient):
                 raise
 
         # refresh token
-        self.logger.info('token.refresh', extra={
-            'auth_id': self.auth.id,
-            'provider': self.auth.provider,
-        })
+        self.logger.info(
+            "token.refresh", extra={"auth_id": self.auth.id, "provider": self.auth.provider}
+        )
         self.auth.refresh_token()
         kwargs = self.bind_auth(**kwargs)
         return ApiClient._request(self, method, path, **kwargs)

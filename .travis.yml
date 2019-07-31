@@ -1,18 +1,18 @@
 language: python
-group: deprecated-2017Q4
 sudo: required
+dist: trusty
 services:
   - memcached
   - postgresql
   - redis-server
-python:
-  - '2.7'
+
 cache:
   yarn: true
   directories:
     - node_modules
     - $HOME/.cache/pip
     - $HOME/.cache/pre-commit
+
 addons:
   apt:
     update: true
@@ -20,44 +20,51 @@ addons:
       - libxmlsec1-dev
       - libgeoip-dev
   chrome: stable
+
 env:
   global:
     - PIP_DISABLE_PIP_VERSION_CHECK=on
     - SENTRY_SKIP_BACKEND_VALIDATION=1
     - TRAVIS_NODE_VERSION=8.15.1
     - YARN_VERSION="1.13.0"
-install:
-  - 'export PATH=$PATH:~/.bin'
-  - rvm install 2.2.5
-  - rvm use 2.2.5
-  - nvm install $TRAVIS_NODE_VERSION
-  - npm install -g "yarn@${YARN_VERSION}"
-  - make install-tests
-  - python -m pip install codecov
-  - pip freeze
-  - wget -N "https://chromedriver.storage.googleapis.com/$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_74)/chromedriver_linux64.zip" -P ~/
-  - unzip ~/chromedriver_linux64.zip -d ~/
-  - rm ~/chromedriver_linux64.zip
-  - sudo install -m755 ~/chromedriver /usr/local/bin/
 
-before_script:
-  - psql -c 'create database sentry;' -U postgres
-script:
-  - make lint
-  - py.test --cov . --cov-report="xml:.artifacts/coverage.xml" --junit-xml=".artifacts/junit.xml" --html="artifacts/pytest.html" || exit 1
-after_success:
-  - codecov -e TEST_SUITE
-after_failure:
-  - dmesg | tail -n 100
-after_script:
-  - npm install -g @zeus-ci/cli
-  - zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
-  - zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
-  - zeus upload -t "text/xml+coverage" .artifacts/coverage/cobertura-coverage.xml
-  - zeus upload -t "text/html+pytest" .artifacts/*pytest.html
-  - zeus upload -t "text/plain+pycodestyle" .artifacts/*pycodestyle.log
-  - zeus upload -t "text/xml+checkstyle" .artifacts/*checkstyle.xml
-  - zeus upload -t "application/webpack-stats+json" .artifacts/*webpack-stats.json
+matrix:
+  include:
+    - python: 2.7
+      install:
+        - 'export PATH=$PATH:~/.bin'
+        - nvm install $TRAVIS_NODE_VERSION
+        - npm install -g "yarn@${YARN_VERSION}"
+        # trusty comes with pyenv-managed 2.7 and 3.6 - we need python3 -> 3.6 on the PATH for pre-commit to install black during 2.7 tests.
+        - pyenv global 3.6.3 2.7.14
+        - make install-tests
+        # reset to system python(s) to avoid surprises.
+        - pyenv global system
+        - python -m pip install codecov
+        - pip freeze
+        - wget -N "https://chromedriver.storage.googleapis.com/$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_75)/chromedriver_linux64.zip" -P ~/
+        - unzip ~/chromedriver_linux64.zip -d ~/
+        - rm ~/chromedriver_linux64.zip
+        - sudo install -m755 ~/chromedriver /usr/local/bin/
+      before_script:
+        - psql -c 'create database sentry;' -U postgres
+      script:
+        - make lint
+        - py.test --cov . --cov-report="xml:.artifacts/coverage.xml" --junit-xml=".artifacts/junit.xml" --html="artifacts/pytest.html" || exit 1
+      after_success:
+        - codecov -e TEST_SUITE
+      after_failure:
+        - dmesg | tail -n 100
+      after_script:
+        - npm install -g @zeus-ci/cli
+        - zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
+        - zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
+        - zeus upload -t "text/xml+coverage" .artifacts/coverage/cobertura-coverage.xml
+        - zeus upload -t "text/html+pytest" .artifacts/*pytest.html
+        - zeus upload -t "text/plain+pycodestyle" .artifacts/*pycodestyle.log
+        - zeus upload -t "text/xml+checkstyle" .artifacts/*checkstyle.xml
+        - zeus upload -t "application/webpack-stats+json" .artifacts/*webpack-stats.json
+
 notifications:
   webhooks:
     urls:

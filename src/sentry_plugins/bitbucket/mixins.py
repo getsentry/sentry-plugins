@@ -10,12 +10,12 @@ from .client import BitbucketClient
 
 
 class BitbucketMixin(CorePluginMixin):
-    logger = logging.getLogger('sentry.plugins.bitbucket')
+    logger = logging.getLogger("sentry.plugins.bitbucket")
 
-    title = 'Bitbucket'
+    title = "Bitbucket"
 
     def get_client(self, user):
         auth = self.get_auth(user=user)
         if auth is None:
-            raise PluginError('You still need to associate an identity with Bitbucket.')
+            raise PluginError("You still need to associate an identity with Bitbucket.")
         return BitbucketClient(auth)

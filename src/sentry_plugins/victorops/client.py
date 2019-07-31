@@ -4,9 +4,9 @@ from sentry_plugins.client import ApiClient
 
 
 class VictorOpsClient(ApiClient):
-    monitoring_tool = 'sentry'
-    routing_key = 'everyone'
-    plugin_name = 'victorops'
+    monitoring_tool = "sentry"
+    routing_key = "everyone"
+    plugin_name = "victorops"
     allow_redirects = False
 
     def __init__(self, api_key, routing_key=None):
@@ -18,17 +18,12 @@ class VictorOpsClient(ApiClient):
 
     def build_url(self, path):
         # http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/
-        return 'https://alert.victorops.com/integrations/generic/20131114/alert/{}/{}'.format(
-            self.api_key,
-            self.routing_key,
+        return "https://alert.victorops.com/integrations/generic/20131114/alert/{}/{}".format(
+            self.api_key, self.routing_key
         )
 
     def request(self, data):
-        return self._request(
-            path='',
-            method='post',
-            data=data
-        )
+        return self._request(path="", method="post", data=data)
 
     def trigger_incident(
         self,
@@ -43,13 +38,13 @@ class VictorOpsClient(ApiClient):
     ):
         kwargs.update(
             {
-                'message_type': message_type,
-                'entity_id': entity_id,
-                'entity_display_name': entity_display_name,
-                'timestamp': timestamp,
-                'state_message': state_message,
-                'monitoring_tool': monitoring_tool or self.monitoring_tool,
-                'issue_url': issue_url,
+                "message_type": message_type,
+                "entity_id": entity_id,
+                "entity_display_name": entity_display_name,
+                "timestamp": timestamp,
+                "state_message": state_message,
+                "monitoring_tool": monitoring_tool or self.monitoring_tool,
+                "issue_url": issue_url,
             }
         )
         return self.request(kwargs)

@@ -19,36 +19,37 @@ issue on Sentry.
 
 
 class VictorOpsPlugin(CorePluginMixin, NotifyPlugin):
-    description = 'Send alerts to VictorOps.'
-    slug = 'victorops'
-    title = 'VictorOps'
+    description = "Send alerts to VictorOps."
+    slug = "victorops"
+    title = "VictorOps"
     conf_key = slug
     conf_title = title
 
     def is_configured(self, project, **kwargs):
-        return bool(self.get_option('api_key', project))
+        return bool(self.get_option("api_key", project))
 
     def get_config(self, **kwargs):
         return [
             get_secret_field_config(
-                name='api_key',
-                label='API Key',
-                secret=self.get_option('api_key', kwargs['project']),
-                help_text='VictorOps\'s Sentry API Key',
+                name="api_key",
+                label="API Key",
+                secret=self.get_option("api_key", kwargs["project"]),
+                help_text="VictorOps's Sentry API Key",
                 include_prefix=True,
-            ), {
-                'name': 'routing_key',
-                'label': 'Routing Key',
-                'type': 'string',
-                'default': 'everyone',
-                'required': False,
-            }
+            ),
+            {
+                "name": "routing_key",
+                "label": "Routing Key",
+                "type": "string",
+                "default": "everyone",
+                "required": False,
+            },
         ]
 
     def get_client(self, project):
         return VictorOpsClient(
-            api_key=self.get_option('api_key', project),
-            routing_key=self.get_option('routing_key', project),
+            api_key=self.get_option("api_key", project),
+            routing_key=self.get_option("routing_key", project),
         )
 
     def build_description(self, event):
@@ -63,19 +64,19 @@ class VictorOpsPlugin(CorePluginMixin, NotifyPlugin):
                 continue
             interface_list.append((interface.get_title(), body))
 
-        return u'\n\n'.join((u'{}\n-----------\n\n{}'.format(k, v) for k, v in interface_list))
+        return u"\n\n".join((u"{}\n-----------\n\n{}".format(k, v) for k, v in interface_list))
 
     def notify_users(self, group, event, fail_silently=False, **kwargs):
         if not self.is_configured(group.project):
             return
 
-        level = event.get_tag('level')
-        if level in ('info', 'debug'):
-            message_type = 'INFO'
-        if level == 'warning':
-            message_type = 'WARNING'
+        level = event.get_tag("level")
+        if level in ("info", "debug"):
+            message_type = "INFO"
+        if level == "warning":
+            message_type = "WARNING"
         else:
-            message_type = 'CRITICAL'
+            message_type = "CRITICAL"
 
         client = self.get_client(group.project)
         try:
@@ -84,11 +85,11 @@ class VictorOpsPlugin(CorePluginMixin, NotifyPlugin):
                 entity_id=group.id,
                 entity_display_name=event.title,
                 state_message=self.build_description(event),
-                timestamp=int(event.datetime.strftime('%s')),
+                timestamp=int(event.datetime.strftime("%s")),
                 issue_url=group.get_absolute_url(),
             )
         except ApiError as e:
-            message = 'Could not communicate with victorops. Got %s' % e
+            message = "Could not communicate with victorops. Got %s" % e
             raise PluginError(message)
 
-        assert response['result'] == 'success'
+        assert response["result"] == "success"

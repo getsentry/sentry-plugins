@@ -43,14 +43,14 @@ class ApiHostError(ApiError):
 
     @classmethod
     def from_exception(cls, exception):
-        if hasattr(exception, 'request'):
+        if hasattr(exception, "request"):
             return cls.from_request(exception.request)
-        return cls('Unable to reach host')
+        return cls("Unable to reach host")
 
     @classmethod
     def from_request(cls, request):
         host = urlparse(request.url).netloc
-        return cls('Unable to reach host: {}'.format(host))
+        return cls("Unable to reach host: {}".format(host))
 
 
 class ApiUnauthorized(ApiError):
