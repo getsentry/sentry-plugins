@@ -77,3 +77,41 @@ class AmazonSQSPluginTest(PluginTestCase):
         assert (
             logger.info.call_args_list[0][0][0] == "sentry_plugins.amazon_sqs.access_token_invalid"
         )
+
+    @patch("sentry_plugins.amazon_sqs.plugin.logger")
+    @patch("boto3.client")
+    def test_message_group_error(self, mock_client, logger):
+        mock_client.return_value.send_message.side_effect = ClientError(
+            {
+                "Error": {
+                    "Code": "MissingParameter",
+                    "Message": "The request must contain the parameter MessageGroupId.",
+                }
+            },
+            "SendMessage",
+        )
+
+        self.run_test()
+
+        assert len(logger.info.call_args_list) == 1
+        assert (
+            logger.info.call_args_list[0][0][0]
+            == "sentry_plugins.amazon_sqs.missing_message_group_id"
+        )
+
+    @patch("uuid.uuid4")
+    @patch("boto3.client")
+    def test_pass_message_group_id(self, mock_client, mock_uuid):
+        class uuid(object):
+            hex = "some-uuid"
+
+        mock_uuid.return_value = uuid
+        self.plugin.set_option("message_group_id", "my_group", self.project)
+        event = self.run_test()
+
+        mock_client.return_value.send_message.assert_called_once_with(
+            QueueUrl="https://sqs-us-east-1.amazonaws.com/12345678/myqueue",
+            MessageBody=json.dumps(self.plugin.get_event_payload(event)),
+            MessageGroupId="my_group",
+            MessageDeduplicationId="some-uuid",
+        )

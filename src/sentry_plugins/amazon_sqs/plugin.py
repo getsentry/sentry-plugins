@@ -4,7 +4,6 @@ import logging
 
 import boto3
 from botocore.client import ClientError
-
 from sentry_plugins.base import CorePluginMixin
 from sentry.plugins.bases.data_forwarding import DataForwardingPlugin
 from sentry_plugins.utils import get_secret_field_config
@@ -43,6 +42,13 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
             get_secret_field_config(
                 name="secret_key", label="Secret Key", secret=self.get_option("secret_key", project)
             ),
+            {
+                "name": "message_group_id",
+                "label": "Message Group ID",
+                "type": "text",
+                "required": False,
+                "placeholder": "Required for FIFO queues, exclude for standard queues",
+            },
         ]
 
     def forward_event(self, event, payload):
@@ -50,6 +56,7 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
         access_key = self.get_option("access_key", event.project)
         secret_key = self.get_option("secret_key", event.project)
         region = self.get_option("region", event.project)
+        message_group_id = self.get_option("message_group_id", event.project)
 
         if not all((queue_url, access_key, secret_key, region)):
             return
@@ -68,7 +75,20 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
                 aws_secret_access_key=secret_key,
                 region_name=region,
             )
-            client.send_message(QueueUrl=queue_url, MessageBody=message)
+
+            message = {"QueueUrl": queue_url, "MessageBody": message}
+
+            # need a MessageGroupId for FIFO queues
+            # note that if MessageGroupId is specified for non-FIFO, this will fail
+            if message_group_id:
+                from uuid import uuid4
+
+                message["MessageGroupId"] = message_group_id
+                # if content based de-duplication is not enabled, we need to provide a
+                # MessageDeduplicationId
+                message["MessageDeduplicationId"] = uuid4().hex
+
+            client.send_message(**message)
         except ClientError as e:
             if e.message.startswith("An error occurred (AccessDenied)"):
                 # If there's an issue with the user's token then we can't do
@@ -82,6 +102,27 @@ class AmazonSQSPlugin(CorePluginMixin, DataForwardingPlugin):
                         "region": region,
                         "project_id": event.project.id,
                         "organization_id": event.project.organization_id,
+                    },
+                )
+                metrics.incr(
+                    metrics_name,
+                    tags={
+                        "project_id": event.project_id,
+                        "organization_id": event.project.organization_id,
+                    },
+                )
+                return False
+            elif e.message.endswith("must contain the parameter MessageGroupId."):
+                metrics_name = "sentry_plugins.amazon_sqs.missing_message_group_id"
+                logger.info(
+                    metrics_name,
+                    extra={
+                        "queue_url": queue_url,
+                        "access_key": access_key,
+                        "region": region,
+                        "project_id": event.project.id,
+                        "organization_id": event.project.organization_id,
+                        "message_group_id": message_group_id,
                     },
                 )
                 metrics.incr(
