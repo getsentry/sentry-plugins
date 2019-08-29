@@ -168,10 +168,10 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
         ```
         """
         try:
-            config["workspace"] = int(config["workspace"])
+            int(config["workspace"])
         except ValueError as exc:
             self.logger.exception(six.text_type(exc))
-            raise PluginError("Invalid workspace value")
+            raise PluginError("Non-numeric workspace value")
         return config
 
     def get_config(self, *args, **kwargs):
