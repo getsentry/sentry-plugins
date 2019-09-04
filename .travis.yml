@@ -25,8 +25,8 @@ env:
   global:
     - PIP_DISABLE_PIP_VERSION_CHECK=on
     - SENTRY_SKIP_BACKEND_VALIDATION=1
-    - TRAVIS_NODE_VERSION=8.15.1
-    - YARN_VERSION="1.13.0"
+    - TRAVIS_NODE_VERSION=10.16.3
+    - YARN_VERSION="1.17.3"
 
 matrix:
   include:
