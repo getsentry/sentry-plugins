@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from sentry_plugins.client import AuthApiClient
+from six import text_type
 
 
 class AsanaClient(AuthApiClient):
@@ -14,12 +15,12 @@ class AsanaClient(AuthApiClient):
         return self.get("/tasks/%s" % issue_id)
 
     def create_issue(self, workspace, data):
-        asana_data = {"name": data["title"], "notes": data["description"], "workspace": workspace}
+        asana_data = {"name": data["title"], "notes": data["description"], "workspace": text_type(workspace)}
         if data.get("project"):
-            asana_data["projects"] = [data["project"]]
+            asana_data["projects"] = [text_type(data["project"])]
 
         if data.get("assignee"):
-            asana_data["assignee"] = data["assignee"]
+            asana_data["assignee"] = text_type(data["assignee"])
 
         return self.post("/tasks", data={"data": asana_data})
 

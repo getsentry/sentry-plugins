@@ -50,7 +50,7 @@ class AsanaPluginTest(PluginTestCase):
             json={"data": {"name": "Hello world!", "notes": "Fix this.", "id": 1}},
         )
 
-        self.plugin.set_option("workspace", 12345678, self.project)
+        self.plugin.set_option("workspace", "12345678", self.project)
         group = self.create_group(message="Hello world", culprit="foo.bar")
 
         request = self.request.get("/")
@@ -68,7 +68,7 @@ class AsanaPluginTest(PluginTestCase):
         assert self.plugin.create_issue(request, group, form_data) == 1
         request = responses.calls[0].request
         payload = json.loads(request.body)
-        assert payload == {"data": {"notes": "Fix this.", "name": "Hello", "workspace": 12345678}}
+        assert payload == {"data": {"notes": "Fix this.", "name": "Hello", "workspace": "12345678"}}
 
     @responses.activate
     def test_link_issue(self):
