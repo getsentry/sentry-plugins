@@ -20,27 +20,27 @@ from sentry.utils.distutils import BuildAssetsCommand
 VERSION = "10.0.0.dev0"
 
 tests_require = [
-    "exam",
-    "flake8>=3.5.0<3.6.0",
-    "sentry-flake8>=0.0.1",
-    "pycodestyle>=2.3.1<2.4.0",
-    "responses",
-    "sentry>=8.9.0",
+    "exam>=0.5.1",
+    "responses>=0.8.1,<0.9.0",
+    "pytest>=3.5.0,<3.6.0",
     "pytest-cov>=2.5.1,<2.6.0",
-    "pyjwt>=0.3.2",
+    "sentry>=8.9.0",
+    "sentry-flake8==0.1.1",
 ]
 
+# Any dependencies pinned here should be subdependencies of sentry that are explicitly
+# used by sentry-plugins. For the most part, the pins should be the same and synced with each other.
 install_requires = [
     "BeautifulSoup>=3.2.1",
-    # sentry also requires this, so we're just enforcing that it needs to exist
     "boto3>=1.4.4,<1.5.0",
-    "cached-property",
-    "mistune",
-    "phabricator>=0.6.0,<1.0",
-    "python-dateutil",
-    "PyJWT",
-    "requests-oauthlib>=0.3.0",
+    "mistune>0.7,<0.9",
+    "python-dateutil>=2.0.0,<3.0.0",
+    "PyJWT>=1.5.0,<1.6.0",
+    "requests-oauthlib==0.3.3",
     "unidiff>=0.5.4",
+    # below this line are sentry-plugins specific dependencies
+    "cached-property",
+    "phabricator>=0.6.0,<1.0",
 ]
 
 

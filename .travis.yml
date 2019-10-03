@@ -1,6 +1,5 @@
 language: python
-sudo: required
-dist: trusty
+dist: xenial
 services:
   - memcached
   - postgresql
@@ -23,6 +22,7 @@ addons:
 
 env:
   global:
+    - PYTHONDONTWRITEBYTECODE=true
     - PIP_DISABLE_PIP_VERSION_CHECK=on
     - SENTRY_SKIP_BACKEND_VALIDATION=1
     - TRAVIS_NODE_VERSION=10.16.3
@@ -36,11 +36,7 @@ matrix:
         - 'export PATH=$PATH:~/.bin'
         - nvm install $TRAVIS_NODE_VERSION
         - npm install -g "yarn@${YARN_VERSION}"
-        # trusty comes with pyenv-managed 2.7 and 3.6 - we need python3 -> 3.6 on the PATH for pre-commit to install black during 2.7 tests.
-        - pyenv global 3.6.3 2.7.14
         - make install-tests
-        # reset to system python(s) to avoid surprises.
-        - pyenv global system
         - python -m pip install codecov
         - pip freeze
         - |
