@@ -33,6 +33,7 @@ tests_require = [
 install_requires = [
     "BeautifulSoup>=3.2.1",
     "boto3>=1.4.4,<1.5.0",
+    "djangorestframework==3.1.3",
     "mistune>0.7,<0.9",
     "python-dateutil>=2.0.0,<3.0.0",
     "PyJWT>=1.5.0,<1.6.0",
