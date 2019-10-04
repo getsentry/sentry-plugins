@@ -24,6 +24,8 @@ tests_require = [
     "responses>=0.8.1,<0.9.0",
     "pytest>=3.5.0,<3.6.0",
     "pytest-cov>=2.5.1,<2.6.0",
+    "pytest-django>=2.9.1,<2.10.0",
+    "pytest-html>=1.9.0,<1.10.0",
     "sentry>=8.9.0",
     "sentry-flake8==0.1.1",
 ]

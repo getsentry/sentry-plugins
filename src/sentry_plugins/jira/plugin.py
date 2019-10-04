@@ -159,7 +159,7 @@ class JiraPlugin(CorePluginMixin, IssuePlugin2):
         issue_type = None
         if request is not None:
             if request.method == "POST":
-                issue_type = request.DATA.get("issuetype")
+                issue_type = request.data.get("issuetype")
             else:
                 issue_type = request.GET.get("issuetype")
 
