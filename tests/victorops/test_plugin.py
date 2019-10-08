@@ -74,6 +74,8 @@ class VictorOpsPluginTest(PluginTestCase):
             "state_message": 'Stacktrace\n-----------\n\nStacktrace (most recent call last):\n\n  File "sentry/models/foo.py", line 29, in build_msg\n    string_max_length=self.string_max_length)\n\nMessage\n-----------\n\nHello world',
             "timestamp": int(event.datetime.strftime("%s")),
             "issue_url": "http://example.com/organizations/baz/issues/%s/" % group.id,
+            "issue_id": group.id,
+            "project_id": group.project.id,
         } == payload
 
     def test_build_description_unicode(self):

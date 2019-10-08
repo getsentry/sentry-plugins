@@ -269,6 +269,6 @@ index 89821ce..9e09a8a 100644
 +++ b/README.md
 @@ -1 +1 @@
 -A twitter bot to when words are said by the NYT for the first time.
-\ No newline at end of file
+\\ No newline at end of file
 +A twitter bot to when words are said by the NYT for the first time.sdfsdf
-\ No newline at end of file"""
+\\ No newline at end of file"""
