@@ -22,10 +22,10 @@ VERSION = "10.0.0.dev0"
 tests_require = [
     "exam>=0.5.1",
     "responses>=0.8.1,<0.9.0",
-    "pytest>=3.5.0,<3.6.0",
-    "pytest-cov>=2.5.1,<2.6.0",
-    "pytest-django>=2.9.1,<2.10.0",
-    "pytest-html>=1.9.0,<1.10.0",
+    "pytest==4.6.5",
+    "pytest-cov==2.5.1",
+    "pytest-django==3.5.1",
+    "pytest-html==1.22.0",
     "sentry>=8.9.0",
     "sentry-flake8==0.1.1",
 ]
