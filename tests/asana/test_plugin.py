@@ -47,7 +47,7 @@ class AsanaPluginTest(PluginTestCase):
         responses.add(
             responses.POST,
             "https://app.asana.com/api/1.0/tasks",
-            json={"data": {"name": "Hello world!", "notes": "Fix this.", "id": 1}},
+            json={"data": {"name": "Hello world!", "notes": "Fix this.", "gid": 1}},
         )
 
         self.plugin.set_option("workspace", "12345678", self.project)

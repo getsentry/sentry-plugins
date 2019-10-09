@@ -62,7 +62,6 @@ matrix:
         - zeus upload -t "text/html+pytest" .artifacts/*pytest.html
         - zeus upload -t "text/plain+pycodestyle" .artifacts/*pycodestyle.log
         - zeus upload -t "text/xml+checkstyle" .artifacts/*checkstyle.xml
-        - zeus upload -t "application/webpack-stats+json" .artifacts/*webpack-stats.json
 
 notifications:
   webhooks:

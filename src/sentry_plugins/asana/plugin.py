@@ -135,7 +135,7 @@ class AsanaPlugin(CorePluginMixin, IssuePlugin2):
         except Exception as e:
             self.raise_error(e, identity=client.auth)
 
-        return response["data"]["id"]
+        return response["data"]["gid"]
 
     def link_issue(self, request, group, form_data, **kwargs):
         client = self.get_client(request.user)
