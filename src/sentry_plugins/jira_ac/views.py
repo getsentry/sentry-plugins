@@ -4,7 +4,7 @@ import json
 
 from six.moves.urllib.parse import urlparse
 
-from django.forms.util import ErrorList
+from django.forms.utils import ErrorList
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View

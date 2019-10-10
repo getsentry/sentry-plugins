@@ -30,8 +30,9 @@ tests_require = [
     "sentry-flake8==0.1.1",
 ]
 
-# Any dependencies pinned here should be subdependencies of sentry that are explicitly
-# used by sentry-plugins. For the most part, the pins should be the same and synced with each other.
+# Any dependencies pinned here should be subdependencies of sentry that are
+# explicitly used (as in imported) by sentry-plugins.
+# For the most part, the pins should be the same and synced with each other.
 install_requires = [
     "BeautifulSoup>=3.2.1",
     "boto3>=1.4.4,<1.5.0",
