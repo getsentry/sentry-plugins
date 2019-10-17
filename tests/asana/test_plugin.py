@@ -75,7 +75,7 @@ class AsanaPluginTest(PluginTestCase):
         responses.add(
             responses.GET,
             "https://app.asana.com/api/1.0/tasks/1",
-            json={"data": {"id": 1, "name": "Hello", "notes": "Fix this."}},
+            json={"data": {"gid": 1, "name": "Hello", "notes": "Fix this."}},
         )
         responses.add(
             responses.POST,
