@@ -111,7 +111,6 @@ setup(
             "sessionstack = sentry_plugins.sessionstack",
         ],
         "sentry.plugins": [
-            "amazon_sqs = sentry_plugins.amazon_sqs.plugin:AmazonSQSPlugin",
             "asana = sentry_plugins.asana.plugin:AsanaPlugin",
             "bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin",
             "clubhouse = sentry_plugins.clubhouse.plugin:ClubhousePlugin",
