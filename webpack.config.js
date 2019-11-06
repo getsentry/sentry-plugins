@@ -6,7 +6,7 @@ const babelConfig = require('./babel.config');
 const CompressionPlugin = require('compression-webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 
-const APPS = ['jira', 'sessionstack'];
+const APPS = ['jira'];
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const WEBPACK_MODE = IS_PRODUCTION ? 'production' : 'development';

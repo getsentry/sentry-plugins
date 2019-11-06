@@ -52,7 +52,6 @@ class BuildAssetsCommand(BuildAssetsCommand):
     def get_dist_paths(self):
         return [
             "src/sentry_plugins/jira/static/jira/dist",
-            "src/sentry_plugins/sessionstack/static/sessionstack/dist",
         ]
 
 
@@ -108,7 +107,6 @@ setup(
         "sentry.apps": [
             "jira_ac = sentry_plugins.jira_ac",
             "jira = sentry_plugins.jira",
-            "sessionstack = sentry_plugins.sessionstack",
         ],
         "sentry.plugins": [
             "asana = sentry_plugins.asana.plugin:AsanaPlugin",
@@ -124,7 +122,6 @@ setup(
             "pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin",
             "pushover = sentry_plugins.pushover.plugin:PushoverPlugin",
             "segment = sentry_plugins.segment.plugin:SegmentPlugin",
-            "sessionstack = sentry_plugins.sessionstack.plugin:SessionStackPlugin",
             "slack = sentry_plugins.slack.plugin:SlackPlugin",
             "splunk = sentry_plugins.splunk.plugin:SplunkPlugin",
             "victorops = sentry_plugins.victorops.plugin:VictorOpsPlugin",
