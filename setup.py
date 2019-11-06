@@ -5,8 +5,8 @@ sentry-plugins
 
 All of the plugins for Sentry (https://github.com/getsentry/sentry)
 
-:copyright: 2018 by the Sentry Team
-:license: Apache, see LICENSE for more details.
+:copyright: 2019 by the Sentry Team
+:license: BSL-1.1, see LICENSE for more details.
 """
 from __future__ import absolute_import
 
@@ -95,7 +95,7 @@ setup(
     url="https://github.com/getsentry/sentry-plugins",
     description="A collection of Sentry extensions",
     long_description=__doc__,
-    license="Apache",
+    license="BSL-1.1",
     package_dir={"": "src"},
     packages=find_packages("src"),
     zip_safe=False,
@@ -133,5 +133,6 @@ setup(
         "Intended Audience :: System Administrators",
         "Operating System :: OS Independent",
         "Topic :: Software Development",
+        "License :: Other/Proprietary License",
     ],
 )
