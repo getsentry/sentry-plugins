@@ -6,7 +6,7 @@ const babelConfig = require('./babel.config');
 const CompressionPlugin = require('compression-webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 
-const APPS = ['jira'];
+const APPS = [];
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const WEBPACK_MODE = IS_PRODUCTION ? 'production' : 'development';
@@ -28,7 +28,7 @@ function getConfig(app) {
       reflux: 'Reflux',
       moment: 'moment',
       sentry: 'SentryApp',
-      'prop-types': 'PropTypes',
+      'prop-types': 'PropTypes'
     },
     module: {
       rules: [
@@ -43,22 +43,22 @@ function getConfig(app) {
               // built by a webpack devserver *outside* of this directory.
               // Otherwise the loader will try and locate the babel.config.js
               // file, which will be sentry or getsentrys.
-              options: {...babelConfig, configFile: false},
-            },
-          ],
-        },
-      ],
+              options: {...babelConfig, configFile: false}
+            }
+          ]
+        }
+      ]
     },
     plugins: [new LodashModuleReplacementPlugin()],
     resolve: {
-      extensions: ['*', '.jsx', '.js'],
+      extensions: ['*', '.jsx', '.js']
     },
     output: {
       path: path.join(__dirname, distPath),
       filename: `${app}.js`,
-      sourceMapFilename: `${app}.js.map`,
+      sourceMapFilename: `${app}.js.map`
     },
-    devtool: IS_PRODUCTION ? 'source-map' : 'cheap-module-eval-source-map',
+    devtool: IS_PRODUCTION ? 'source-map' : 'cheap-module-eval-source-map'
   };
 
   // This compression-webpack-plugin generates pre-compressed files
@@ -68,7 +68,7 @@ function getConfig(app) {
     config.plugins.push(
       new CompressionPlugin({
         algorithm: 'gzip',
-        test: /\.(js|map|css|svg|html|txt|ico|eot|ttf)$/,
+        test: /\.(js|map|css|svg|html|txt|ico|eot|ttf)$/
       })
     );
   }

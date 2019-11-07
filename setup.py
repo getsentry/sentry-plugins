@@ -51,7 +51,6 @@ install_requires = [
 class BuildAssetsCommand(BuildAssetsCommand):
     def get_dist_paths(self):
         return [
-            "src/sentry_plugins/jira/static/jira/dist",
         ]
 
 
@@ -59,25 +58,17 @@ class SentrySDistCommand(SDistCommand):
     sub_commands = SDistCommand.sub_commands + [("build_assets", None)]
 
     def run(self):
-        cmd_obj = self.distribution.get_command_obj("build_assets")
-        cmd_obj.asset_json_path = "sentry_plugins/assets.json"
         SDistCommand.run(self)
 
 
 class SentryBuildCommand(BuildCommand):
     def run(self):
         BuildCommand.run(self)
-        cmd_obj = self.distribution.get_command_obj("build_assets")
-        cmd_obj.asset_json_path = "sentry_plugins/assets.json"
-        self.run_command("build_assets")
 
 
 class SentryDevelopCommand(DevelopCommand):
     def run(self):
         DevelopCommand.run(self)
-        cmd_obj = self.distribution.get_command_obj("build_assets")
-        cmd_obj.asset_json_path = "sentry_plugins/assets.json"
-        self.run_command("build_assets")
 
 
 cmdclass = {
@@ -104,28 +95,9 @@ setup(
     extras_require={"tests": tests_require},
     include_package_data=True,
     entry_points={
-        "sentry.apps": [
-            "jira_ac = sentry_plugins.jira_ac",
-            "jira = sentry_plugins.jira",
-        ],
         "sentry.plugins": [
-            "asana = sentry_plugins.asana.plugin:AsanaPlugin",
-            "bitbucket = sentry_plugins.bitbucket.plugin:BitbucketPlugin",
-            "clubhouse = sentry_plugins.clubhouse.plugin:ClubhousePlugin",
-            "github = sentry_plugins.github.plugin:GitHubPlugin",
-            "gitlab = sentry_plugins.gitlab.plugin:GitLabPlugin",
-            "heroku = sentry_plugins.heroku.plugin:HerokuPlugin",
-            "jira = sentry_plugins.jira.plugin:JiraPlugin",
-            "jira_ac = sentry_plugins.jira_ac.plugin:JiraACPlugin",
             "pagerduty = sentry_plugins.pagerduty.plugin:PagerDutyPlugin",
-            "phabricator = sentry_plugins.phabricator.plugin:PhabricatorPlugin",
-            "pivotal = sentry_plugins.pivotal.plugin:PivotalPlugin",
-            "pushover = sentry_plugins.pushover.plugin:PushoverPlugin",
-            "segment = sentry_plugins.segment.plugin:SegmentPlugin",
             "slack = sentry_plugins.slack.plugin:SlackPlugin",
-            "splunk = sentry_plugins.splunk.plugin:SplunkPlugin",
-            "victorops = sentry_plugins.victorops.plugin:VictorOpsPlugin",
-            "vsts = sentry_plugins.vsts.plugin:VstsPlugin",
         ],
     },
     classifiers=[
