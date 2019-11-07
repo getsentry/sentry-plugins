@@ -11,6 +11,10 @@ def pytest_configure(config):
     # Note: We could manually register/configure INSTALLED_APPS by traversing our entry points
     # or package directories, but this is easier assuming Sentry doesn't change APIs.
     # Note: Order of operations matters here.
+    from sentry.runner.importer import install_plugin_apps
+
+    install_plugin_apps("sentry.apps", settings)
+
     from sentry.runner.initializer import register_plugins
 
     register_plugins(settings)
