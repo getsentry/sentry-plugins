@@ -50,8 +50,7 @@ install_requires = [
 
 class BuildAssetsCommand(BuildAssetsCommand):
     def get_dist_paths(self):
-        return [
-        ]
+        return []
 
 
 class SentrySDistCommand(SDistCommand):
@@ -94,12 +93,7 @@ setup(
     install_requires=install_requires,
     extras_require={"tests": tests_require},
     include_package_data=True,
-    entry_points={
-        "sentry.plugins": [
-            "pagerduty = sentry_plugins.pagerduty.plugin:PagerDutyPlugin",
-            "slack = sentry_plugins.slack.plugin:SlackPlugin",
-        ],
-    },
+    entry_points={"sentry.plugins": []},
     classifiers=[
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
